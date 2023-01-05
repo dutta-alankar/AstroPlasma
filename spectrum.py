@@ -14,14 +14,21 @@ import subprocess
 
 warn = False 
 
-class interpolate_emission:
+class EmissionSpectrum:
     
     def __init__(self):    
-        #dummy read for parameters
+        '''
+        Prepares the location to read data for generating emisson spectrum.
+
+        Returns
+        -------
+        None.
+
+        '''
         _tmp = subprocess.check_output('pwd').decode("utf-8").split('/')[1:]
         _pos = None
         for i, val in enumerate(_tmp):
-            if val == 'MultiphaseGalacticHaloModel':
+            if val == 'AstroPlasma':
                 _pos = i
         _tmp = os.path.join('/',*_tmp[:_pos+1], 'misc', 'cloudy-data', 'emission')
         self.loc = _tmp #'./cloudy-data/emission'
@@ -38,6 +45,30 @@ class interpolate_emission:
         data.close()
     
     def interpolate(self, nH=1.2e-4, temperature=2.7e6, metallicity=0.5, redshift=0.2, mode='PIE'):
+        '''
+        Interpolate emission spectrum from pre-computed Cloudy table.
+
+        Parameters
+        ----------
+        nH : float, optional
+            Hydrogen number density (all hydrogen both neutral and ionized. The default is 1.2e-4.
+        temperature : float, optional
+            Plasma temperature. The default is 2.7e6.
+        metallicity : float, optional
+            Plasma metallicity with respect to solar. The default is 0.5.
+        redshift : float, optional
+            Cosmological redshift of the universe. The default is 0.2.
+        mode : str, optional
+            ionization condition either CIE (collisional) or PIE (photo). The default is 'PIE'.
+
+        Returns
+        -------
+        spectrum : numpy array 2d
+            returns the emitted spectrum as a 2d numpy array with two columns.
+            Column 0: Energy in keV
+            Column 1: spectral energy distribution (emissivity): 4*pi*nu*j_nu (Unit: erg cm^-3 s^-1)
+
+        '''
         
         i_vals, j_vals, k_vals, l_vals = None, None, None, None
         if (np.sum(nH==self.nH_data)==1): 

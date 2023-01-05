@@ -1,1 +1,2 @@
-from .coolLambda import cooling_approx
+from .Lambda import cooling_approx
+from .spectrum import EmissionSpectrum
