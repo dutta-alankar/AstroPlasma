@@ -44,32 +44,27 @@ class EmissionSpectrum:
         self.total_size = np.prod(np.array(data['header/total_size']))
         data.close()
     
-    def interpolate(self, nH=1.2e-4, temperature=2.7e6, metallicity=0.5, redshift=0.2, mode='PIE'):
+    def _findBatches(self, nH, temperature, metallicity, redshift):
         '''
-        Interpolate emission spectrum from pre-computed Cloudy table.
+        Find the batches needed from the data files.
 
         Parameters
         ----------
         nH : float, optional
-            Hydrogen number density (all hydrogen both neutral and ionized. The default is 1.2e-4.
+            Hydrogen number density (all hydrogen both neutral and ionized.
         temperature : float, optional
-            Plasma temperature. The default is 2.7e6.
+            Plasma temperature.
         metallicity : float, optional
-            Plasma metallicity with respect to solar. The default is 0.5.
+            Plasma metallicity with respect to solar.
         redshift : float, optional
-            Cosmological redshift of the universe. The default is 0.2.
-        mode : str, optional
-            ionization condition either CIE (collisional) or PIE (photo). The default is 'PIE'.
+            Cosmological redshift of the universe.
 
         Returns
         -------
-        spectrum : numpy array 2d
-            returns the emitted spectrum as a 2d numpy array with two columns.
-            Column 0: Energy in keV
-            Column 1: spectral energy distribution (emissivity): 4*pi*nu*j_nu (Unit: erg cm^-3 s^-1)
+        batch_ids : list
+            List of all the unique batch ids.
 
         '''
-        
         i_vals, j_vals, k_vals, l_vals = None, None, None, None
         if (np.sum(nH==self.nH_data)==1): 
             i_vals = [np.where(nH==self.nH_data)[0][0], np.where(nH==self.nH_data)[0][0]]
@@ -90,15 +85,9 @@ class EmissionSpectrum:
             l_vals = [np.where(redshift==self.red_data)[0][0], np.where(redshift==self.red_data)[0][0]]
         else:
             l_vals = [np.sum(redshift>self.red_data)-1,np.sum(redshift>self.red_data)]
-            
-        spectrum = np.zeros((self.energy.shape[0],2))
-        spectrum[:,0] = self.energy
-        
-        inv_weight = 0
-        #print(i_vals, j_vals, k_vals, l_vals)
         
         batch_ids = []
-        #identify unique batches
+        # identify unique batches
         for i, j, k, l in product(i_vals, j_vals, k_vals, l_vals):
             if (i==self.nH_data.shape[0]): 
                 if (warn): print("Problem: nH", nH)
@@ -131,7 +120,43 @@ class EmissionSpectrum:
             batch_id  = counter//self.batch_size 
             batch_ids.append(batch_id)
         batch_ids = set(batch_ids)
-        #print("Batches involved: ", batch_ids)
+        # print("Batches involved: ", batch_ids)
+        # later use this logic to fetch batches from cloud if not present
+        return batch_ids
+    
+    def interpolate(self, nH=1.2e-4, temperature=2.7e6, metallicity=0.5, redshift=0.2, mode='PIE'):
+        '''
+        Interpolate emission spectrum from pre-computed Cloudy table.
+
+        Parameters
+        ----------
+        nH : float, optional
+            Hydrogen number density (all hydrogen both neutral and ionized. The default is 1.2e-4.
+        temperature : float, optional
+            Plasma temperature. The default is 2.7e6.
+        metallicity : float, optional
+            Plasma metallicity with respect to solar. The default is 0.5.
+        redshift : float, optional
+            Cosmological redshift of the universe. The default is 0.2.
+        mode : str, optional
+            ionization condition either CIE (collisional) or PIE (photo). The default is 'PIE'.
+
+        Returns
+        -------
+        spectrum : numpy array 2d
+            returns the emitted spectrum as a 2d numpy array with two columns.
+            Column 0: Energy in keV
+            Column 1: spectral energy distribution (emissivity): 4*pi*nu*j_nu (Unit: erg cm^-3 s^-1)
+
+        '''
+        spectrum = np.zeros((self.energy.shape[0],2))
+        spectrum[:,0] = self.energy
+        
+        batch_ids = self._findBatches(nH, temperature, metallicity, redshift)
+        
+        inv_weight = 0.
+        # print(i_vals, j_vals, k_vals, l_vals)
+        
         data = []
         for batch_id in batch_ids:
             hdf = h5py.File('%s/emission.b_%06d.h5'%(self.loc,batch_id), 'r')
@@ -168,11 +193,11 @@ class EmissionSpectrum:
             d_k = np.abs(self.Z_data[k]-metallicity)
             d_l = np.abs(self.red_data[l]-redshift)
             
-            #print('Data vals: ', self.nH_data[i], self.T_data[j], self.Z_data[k], self.red_data[l] )
-            #print(i, j, k, l)
+            # print('Data vals: ', self.nH_data[i], self.T_data[j], self.Z_data[k], self.red_data[l] )
+            # print(i, j, k, l)
             epsilon = 1e-6
             weight = np.sqrt(d_i**2 + d_j**2 + d_k**2 + d_l**2 + epsilon)
-            
+            # nearest neighbour interpolation
             counter = (l)*self.Z_data.shape[0]*self.T_data.shape[0]*self.nH_data.shape[0]+ \
                       (k)*self.T_data.shape[0]*self.nH_data.shape[0] + \
                       (j)*self.nH_data.shape[0] + \
@@ -192,5 +217,4 @@ class EmissionSpectrum:
         for id_data in data:
             id_data[1].close()
         
-        #array starts from 0 but ion from 1            
         return spectrum 
