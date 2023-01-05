@@ -10,11 +10,11 @@ import numpy as np
 from scipy.interpolate import interp1d
 import os
 
-# Generated with a HM12 Xray-UV background
-# This doesn't take into account CIE vs PIE differences
 def cooling_approx(temperature, metallicity):
     '''
-    
+    Cooling function of an Astrophysical plasma. 
+    Generated with a HM12 Xray-UV background.
+    Currently, this doesn't take into account CIE vs PIE differences. I plan to add this feature shortly.
 
     Parameters
     ----------
@@ -29,6 +29,8 @@ def cooling_approx(temperature, metallicity):
         Plasma cooling function normalized by nH^2.
 
     '''
+    if type(temperature)==list: temperature = np.array(temperature)
+    if type(metallicity)==list: metallicity = np.array(metallicity)
     file_path = os.path.realpath(__file__)
     dir_loc   = os.path.split(file_path)[:-1]
     cooling = np.loadtxt(os.path.join(*dir_loc,'cooltable.dat'))
