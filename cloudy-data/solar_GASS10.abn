@@ -1,0 +1,50 @@
+#Grevesse, Asplund, Sauval, and Scott Solar Abundances 2010
+#refer Solar abund Grevesse, N., Asplund, M., Sauval, A. J., & Scott, P. 2010, Ap&SS, 48
+HYDROGEN	1
+HELIUM		8.51E-02
+LITHIUM	1.12E-11
+BERYLLIUM	2.40E-11
+BORON		5.01E-10
+CARBON		2.69E-04
+NITROGEN	6.76E-05
+OXYGEN		4.90E-04
+FLUORINE	3.63E-08
+NEON		8.51E-05
+SODIUM		1.74E-06
+MAGNESIUM	3.98E-05
+ALUMINIUM	2.82E-06
+SILICON	3.24E-05
+PHOSPHORUS	2.57E-07
+SULPHUR	1.32E-05
+CHLORINE	3.16E-07
+ARGON		2.51E-06
+POTASSIUM	1.07E-07
+CALCIUM	2.19E-06
+SCANDIUM	1.41E-09
+TITANIUM	8.91E-08
+VANADIUM	8.51E-09
+CHROMIUM	4.37E-07
+MANGANESE	2.69E-07
+IRON		3.16E-05
+COBALT		9.77E-08
+NICKEL		1.66E-06
+COPPER		1.55E-08
+ZINC		3.63E-08
+**************************************
+
+will use solar abundances from Grevesse et al.
+(2010). The abundances are listed in Table 7.4 . The
+command must appear as abundances GASS10.
+
+N. Grevesse, M. Asplund, A. J. Sauval, and P. Scott. The chemical composition of the Sun. Ap&SS, 328:
+179 183, July 2010. doi: 10.1007/s10509-010-0288-z.
+
+------------------------------------------------
+
+2014 Dec 19, three papers by this group have appeared in A&A:
+http://adsabs.harvard.edu/abs/2015A%26A...573A..25S 
+http://adsabs.harvard.edu/abs/2015A%26A...573A..26S 
+http://adsabs.harvard.edu/abs/2015A%26A...573A..27G
+
+Spot checks (of Ne and Fe) show that these are close to the above values.  The papers do not include C, N, O or
+the light elements.  The solar abundances will be updated when this series of papers is complete.
