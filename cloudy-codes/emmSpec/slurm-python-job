@@ -1,0 +1,2 @@
+#!/bin/bash
+srun --job-name="EmmSpec" -p debug -t 02-01:01:00 -n 224 --output=%x-%j.log /modules/comp_libs/anaconda3/bin/python generateCloudyScript-parallel.py

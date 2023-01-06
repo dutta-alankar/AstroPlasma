@@ -1,0 +1,3 @@
+#!/bin/sh
+g++ ./hazy_coolingcurve.cpp -o hazy_coolingcurve_PIE -lcloudy -lm -DPIE
+g++ ./hazy_coolingcurve.cpp -o hazy_coolingcurve_CIE -lcloudy -lm

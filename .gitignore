@@ -128,8 +128,16 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+# Libraries
+.so
+.a
+
 # repo specific
 cloudy-data/
+auto/
+data/
+cloudy.exe
 .h5
+.log
 ./cloudy-data/emission/*.h5
 ./cloudy-data/ionization/*.h5
