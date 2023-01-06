@@ -10,23 +10,22 @@ import numpy as np
 import h5py
 from itertools import product
 import os
-import subprocess
+from .constants import *
 
-mp     = 1.67262192369e-24
-me     = 9.1093837e-28
-mH     = 1.6735e-24
 warn   = False
-class interpolate_ionization:
+class Ionization:
     
     def __init__(self):    
-        #dummy read for parameters
-        _tmp = subprocess.check_output('pwd').decode("utf-8").split('/')[1:]
-        _pos = None
-        for i, val in enumerate(_tmp):
-            if val == 'MultiphaseGalacticHaloModel':
-                _pos = i
-        _tmp = os.path.join('/',*_tmp[:_pos+1], 'misc', 'cloudy-data', 'ionization')
-        self.loc = _tmp #'./cloudy-data/ionization'
+        '''
+        Prepares the location to read data for generating emisson spectrum.
+
+        Returns
+        -------
+        None.
+
+        '''
+        _tmp = os.path.join(os.path.dirname(__file__), 'cloudy-data', 'ionization')
+        self.loc = _tmp
         
         data = h5py.File('%s/ionization.b_%06d.h5'%(self.loc,0), 'r')
         self.nH_data   = np.array(data['params/nH'])
@@ -37,20 +36,28 @@ class interpolate_ionization:
         self.batch_size = np.prod(np.array(data['header/batch_dim']))
         self.total_size = np.prod(np.array(data['header/total_size']))
         data.close()
-    
-    def interpolate(self, nH=1.2e-4, temperature=2.7e6, metallicity=0.5, redshift=0.2, element=2, ion=1, mode='PIE'):
-        #element = 1: H, 2: He, 3: Li, ... 30: Zn
-        #ion = 1 : neutral, 2: +, 3: ++ .... (element+1): (++++... element times)
-        if (mode!='PIE' and mode!='CIE'):
-            print('Problem! Invalid mode: %s.'%mode)
-            return None
-        if (ion<0 or ion>element+1):
-            print('Problem! Invalid ion %d for element %d.'%(ion,element))
-            return None
-        if (element<0 or element>30):
-            print('Problem! Invalid element %d.'%element)
-            return None
         
+    def _findBatches(self, nH, temperature, metallicity, redshift):
+        '''
+        Find the batches needed from the data files.
+
+        Parameters
+        ----------
+        nH : float, optional
+            Hydrogen number density (all hydrogen both neutral and ionized.
+        temperature : float, optional
+            Plasma temperature.
+        metallicity : float, optional
+            Plasma metallicity with respect to solar.
+        redshift : float, optional
+            Cosmological redshift of the universe.
+
+        Returns
+        -------
+        batch_ids : list
+            List of all the unique batch ids.
+
+        '''
         i_vals, j_vals, k_vals, l_vals = None, None, None, None
         if (np.sum(nH==self.nH_data)==1): 
             i_vals = [np.where(nH==self.nH_data)[0][0], np.where(nH==self.nH_data)[0][0]]
@@ -71,14 +78,9 @@ class interpolate_ionization:
             l_vals = [np.where(redshift==self.red_data)[0][0], np.where(redshift==self.red_data)[0][0]]
         else:
             l_vals = [np.sum(redshift>self.red_data)-1,np.sum(redshift>self.red_data)]
-            
-        fracIon = np.zeros((element+1,), dtype=np.float64)
-        
-        inv_weight = 0
-        #print(i_vals, j_vals, k_vals, l_vals)
         
         batch_ids = []
-        #identify unique batches
+        # identify unique batches
         for i, j, k, l in product(i_vals, j_vals, k_vals, l_vals):
             if (i==self.nH_data.shape[0]): 
                 if (warn): print("Problem: nH", nH)
@@ -111,7 +113,68 @@ class interpolate_ionization:
             batch_id  = counter//self.batch_size 
             batch_ids.append(batch_id)
         batch_ids = set(batch_ids)
-        #print("Batches involved: ", batch_ids)
+        # print("Batches involved: ", batch_ids)
+        # later use this logic to fetch batches from cloud if not present
+        self.i_vals = i_vals
+        self.j_vals = j_vals
+        self.k_vals = k_vals
+        self.l_vals = l_vals 
+        return batch_ids
+    
+    def interpolateIonFrac(self, nH=1.2e-4, temperature=2.7e6, metallicity=0.5, redshift=0.2, element=2, ion=1, mode='PIE'):
+        '''
+        Interpolates the ionization fraction of the plasma from pre-computed Cloudy models of ion networks.
+        This fraction is with respect to the total number density of element to which the ion belongs to in the plasma. 
+        To get number fraction of the species, one must need to multiply with the abundance fraction of the element. 
+        Solar values are provided in a table in this repo. Other metallicities with respect to Solar can be simply scaled.
+
+        Parameters
+        ----------
+        nH : float, optional
+            Hydrogen number density (all hydrogen both neutral and ionized. The default is 1.2e-4.
+        temperature : float, optional
+            Plasma temperature. The default is 2.7e6.
+        metallicity : float, optional
+            Plasma metallicity with respect to solar. The default is 0.5.
+        redshift : float, optional
+            Cosmological redshift of the universe. The default is 0.2.
+        element : int, optional
+            Atomic number of the element. The default is 2.
+        ion : int, optional
+            Ionization species of the element. Must between 1 and element+1. The default is 1.
+            1:neutral, 2:+, 3:++, ...
+        mode : str, optional
+            ionization condition either CIE (collisional) or PIE (photo). The default is 'PIE'.
+
+        Returns
+        -------
+        float
+            ionization fraction of the requested ion species of the requested element.
+
+        '''
+        # element = 1: H, 2: He, 3: Li, ... 30: Zn
+        # ion = 1 : neutral, 2: +, 3: ++ .... (element+1): (++++... element times)
+        if (mode!='PIE' and mode!='CIE'):
+            print('Problem! Invalid mode: %s.'%mode)
+            return None
+        if (ion<0 or ion>element+1):
+            print('Problem! Invalid ion %d for element %d.'%(ion,element))
+            return None
+        if (element<0 or element>30):
+            print('Problem! Invalid element %d.'%element)
+            return None
+        
+        fracIon = np.zeros((element+1,), dtype=np.float64)
+        
+        batch_ids = self._findBatches(nH, temperature, metallicity, redshift)
+        i_vals = self.i_vals
+        j_vals = self.j_vals
+        k_vals = self.k_vals
+        l_vals = self.l_vals
+        
+        inv_weight = 0.
+        # print(i_vals, j_vals, k_vals, l_vals)
+        
         data = []
         for batch_id in batch_ids:
             hdf = h5py.File('%s/ionization.b_%06d.h5'%(self.loc,batch_id), 'r')
@@ -148,8 +211,8 @@ class interpolate_ionization:
             d_k = np.abs(self.Z_data[k]-metallicity)
             d_l = np.abs(self.red_data[l]-redshift)
             
-            #print('Data vals: ', self.nH_data[i], self.T_data[j], self.Z_data[k], self.red_data[l] )
-            #print(i, j, k, l)
+            # print('Data vals: ', self.nH_data[i], self.T_data[j], self.Z_data[k], self.red_data[l] )
+            # print(i, j, k, l)
             epsilon = 1e-6
             weight = np.sqrt(d_i**2 + d_j**2 + d_k**2 + d_l**2 + epsilon)
             
@@ -173,14 +236,37 @@ class interpolate_ionization:
         for id_data in data:
             id_data[1].close()
         
-        #array starts from 0 but ion from 1            
+        # array starts from 0 but ion from 1            
         return fracIon[ion-1] 
     
-    def num_dens(self, nH=1.2e-4, temperature=2.7e6, metallicity=0.5, redshift=0.2, mode='PIE', part_type='electron'):
-        #print(nH, temperature, metallicity, redshift, mode, part_type)
-        file_path = os.path.realpath(__file__)
-        dir_loc   = os.path.split(file_path)[:-1]
-        abn_file  = os.path.join(*dir_loc,'cloudy-data', 'solar_GASS10.abn')
+    def interpolateNumDens(self, nH=1.2e-4, temperature=2.7e6, metallicity=0.5, redshift=0.2, mode='PIE', part_type='electron'):
+        '''
+        Interpolates the number density of different species or the total number density of the plasma 
+        from pre-computed Cloudy models of ion networks.
+
+        Parameters
+        ----------
+        nH : float, optional
+            Hydrogen number density (all hydrogen both neutral and ionized. The default is 1.2e-4.
+        temperature : float, optional
+            Plasma temperature. The default is 2.7e6.
+        metallicity : float, optional
+            Plasma metallicity with respect to solar. The default is 0.5.
+        redshift : float, optional
+            Cosmological redshift of the universe. The default is 0.2.
+        mode : str, optional
+            ionization condition either CIE (collisional) or PIE (photo). The default is 'PIE'.
+        part_type : str, optional
+            DESCRIPTION. The default is 'electron'.
+
+        Returns
+        -------
+        float
+            number density of the requested species.
+
+        '''
+        # print(nH, temperature, metallicity, redshift, mode, part_type)
+        abn_file  = os.path.join(os.path.dirname(__file__), 'cloudy-data', 'solar_GASS10.abn')
         
         _tmp = None
         with open(abn_file, 'r') as file:
@@ -202,73 +288,22 @@ class interpolate_ionization:
         Yp = Y_solar*(1-metallicity*Z_solar)/(X_solar+Y_solar)
         Zp = metallicity*Z_solar # Z varied independent of nH and nHe
     
-        #element = 1: H, 2: He, 3: Li, ... 30: Zn
-        #ion = 1 : neutral, 2: +, 3: ++ .... (element+1): (++++... element times)
+        # element = 1: H, 2: He, 3: Li, ... 30: Zn
+        # ion = 1 : neutral, 2: +, 3: ++ .... (element+1): (++++... element times)
         if (mode!='PIE' and mode!='CIE'):
             print('Problem! Invalid mode: %s.'%mode)
             return None
         
-        i_vals, j_vals, k_vals, l_vals = None, None, None, None
-        if (np.sum(nH==self.nH_data)==1): 
-            i_vals = [np.where(nH==self.nH_data)[0][0], np.where(nH==self.nH_data)[0][0]]
-        else:
-            i_vals = [np.sum(nH>self.nH_data)-1,np.sum(nH>self.nH_data)]
-        
-        if (np.sum(temperature==self.T_data)==1): 
-            j_vals = [np.where(temperature==self.T_data)[0][0], np.where(temperature==self.T_data)[0][0]]
-        else:
-            j_vals = [np.sum(temperature>self.T_data)-1,np.sum(temperature>self.T_data)]
-        
-        if (np.sum(metallicity==self.Z_data)==1): 
-            k_vals = [np.where(metallicity==self.Z_data)[0][0], np.where(metallicity==self.Z_data)[0][0]]
-        else:
-            k_vals = [np.sum(metallicity>self.Z_data)-1,np.sum(metallicity>self.Z_data)]
-        
-        if (np.sum(redshift==self.red_data)==1): 
-            l_vals = [np.where(redshift==self.red_data)[0][0], np.where(redshift==self.red_data)[0][0]]
-        else:
-            l_vals = [np.sum(redshift>self.red_data)-1,np.sum(redshift>self.red_data)]
+        batch_ids = self._findBatches(nH, temperature, metallicity, redshift)
+        i_vals = self.i_vals
+        j_vals = self.j_vals
+        k_vals = self.k_vals
+        l_vals = self.l_vals
             
         fracIon = np.zeros((ion_count,), dtype=np.float64)
-        
         inv_weight = 0
-        #print(i_vals, j_vals, k_vals, l_vals)
+        # print(i_vals, j_vals, k_vals, l_vals)
         
-        batch_ids = []
-        #identify unique batches
-        for i, j, k, l in product(i_vals, j_vals, k_vals, l_vals):
-            if (i==self.nH_data.shape[0]): 
-                if (warn): print("Problem: nH", nH, type(nH))
-                i = i-1
-            if (i==-1): 
-                if (warn): print("Problem: nH", nH)
-                i = i+1
-            if (j==self.T_data.shape[0]): 
-                if (warn): print("Problem: T", temperature)
-                j = j-1
-            if (j==-1): 
-                if (warn): print("Problem: T", temperature)
-                j = j+1
-            if (k==self.Z_data.shape[0]): 
-                if (warn): print("Problem: met", metallicity)
-                k = k-1
-            if (k==-1): 
-                if (warn): print("Problem: met", metallicity)
-                k = k+1
-            if (l==self.red_data.shape[0]): 
-                if (warn): print("Problem: red", redshift)
-                l = l-1
-            if (l==-1): 
-                if (warn): print("Problem: red", redshift)
-                l = l+1
-            counter = (l)*self.Z_data.shape[0]*self.T_data.shape[0]*self.nH_data.shape[0]+ \
-                      (k)*self.T_data.shape[0]*self.nH_data.shape[0] + \
-                      (j)*self.nH_data.shape[0] + \
-                      (i)
-            batch_id  = counter//self.batch_size 
-            batch_ids.append(batch_id)
-        batch_ids = set(batch_ids)
-        #print("Batches involved: ", batch_ids)
         data = []
         for batch_id in batch_ids:
             hdf = h5py.File('%s/ionization.b_%06d.h5'%(self.loc,batch_id), 'r')
@@ -309,7 +344,7 @@ class interpolate_ionization:
             #print(i, j, k, l)
             epsilon = 1e-6
             weight = np.sqrt(d_i**2 + d_j**2 + d_k**2 + d_l**2 + epsilon)
-            
+            # nearest neighbour interpolation
             counter = (l)*self.Z_data.shape[0]*self.T_data.shape[0]*self.nH_data.shape[0]+ \
                       (k)*self.T_data.shape[0]*self.nH_data.shape[0] + \
                       (j)*self.nH_data.shape[0] + \
@@ -373,9 +408,34 @@ class interpolate_ionization:
             return nion
         
         else:
-            print (f'Invalid part_type: {part_type}')      
+            print (f'Invalid part_type: {part_type}')   
+        return None
             
-    def mu(self, nH=1.2e-4, temperature=2.7e6, metallicity=0.5, redshift=0.2, mode='PIE'):
+    def interpolateMu(self, nH=1.2e-4, temperature=2.7e6, metallicity=0.5, redshift=0.2, mode='PIE'):
+        '''
+        Interpolates the mean particle mass of the plasma from pre-computed Cloudy models of ion networks.
+        This mean particle mass changes as the ionization of the palsma changes the number of free electrons
+        in the plasma. Greater the ionization, hence the number of free electrons, lower the mean particle mass.
+
+        Parameters
+        ----------
+        nH : float, optional
+            Hydrogen number density (all hydrogen both neutral and ionized. The default is 1.2e-4.
+        temperature : float, optional
+            Plasma temperature. The default is 2.7e6.
+        metallicity : float, optional
+            Plasma metallicity with respect to solar. The default is 0.5.
+        redshift : float, optional
+            Cosmological redshift of the universe. The default is 0.2.
+        mode : str, optional
+            ionization condition either CIE (collisional) or PIE (photo). The default is 'PIE'.
+
+        Returns
+        -------
+        float
+            mean particle mass of the plasma.
+
+        '''
         file_path = os.path.realpath(__file__)
         dir_loc   = os.path.split(file_path)[:-1]
         abn_file  = os.path.join(*dir_loc,'cloudy-data', 'solar_GASS10.abn')
@@ -399,73 +459,23 @@ class interpolate_ionization:
         Yp = Y_solar*(1-metallicity*Z_solar)/(X_solar+Y_solar)
         Zp = metallicity*Z_solar # Z varied independent of nH and nHe
     
-        #element = 1: H, 2: He, 3: Li, ... 30: Zn
-        #ion = 1 : neutral, 2: +, 3: ++ .... (element+1): (++++... element times)
+        # element = 1: H, 2: He, 3: Li, ... 30: Zn
+        # ion = 1 : neutral, 2: +, 3: ++ .... (element+1): (++++... element times)
         if (mode!='PIE' and mode!='CIE'):
             print('Problem! Invalid mode: %s.'%mode)
             return None
         
-        i_vals, j_vals, k_vals, l_vals = None, None, None, None
-        if (np.sum(nH==self.nH_data)==1): 
-            i_vals = [np.where(nH==self.nH_data)[0][0], np.where(nH==self.nH_data)[0][0]]
-        else:
-            i_vals = [np.sum(nH>self.nH_data)-1,np.sum(nH>self.nH_data)]
+        batch_ids = self._findBatches(nH, temperature, metallicity, redshift)
+        i_vals = self.i_vals
+        j_vals = self.j_vals
+        k_vals = self.k_vals
+        l_vals = self.l_vals
         
-        if (np.sum(temperature==self.T_data)==1): 
-            j_vals = [np.where(temperature==self.T_data)[0][0], np.where(temperature==self.T_data)[0][0]]
-        else:
-            j_vals = [np.sum(temperature>self.T_data)-1,np.sum(temperature>self.T_data)]
-        
-        if (np.sum(metallicity==self.Z_data)==1): 
-            k_vals = [np.where(metallicity==self.Z_data)[0][0], np.where(metallicity==self.Z_data)[0][0]]
-        else:
-            k_vals = [np.sum(metallicity>self.Z_data)-1,np.sum(metallicity>self.Z_data)]
-        
-        if (np.sum(redshift==self.red_data)==1): 
-            l_vals = [np.where(redshift==self.red_data)[0][0], np.where(redshift==self.red_data)[0][0]]
-        else:
-            l_vals = [np.sum(redshift>self.red_data)-1,np.sum(redshift>self.red_data)]
-            
         fracIon = np.zeros((ion_count,), dtype=np.float64)
-        
         inv_weight = 0
-        #print(i_vals, j_vals, k_vals, l_vals)
+        # print(i_vals, j_vals, k_vals, l_vals)
         
-        batch_ids = []
-        #identify unique batches
-        for i, j, k, l in product(i_vals, j_vals, k_vals, l_vals):
-            if (i==self.nH_data.shape[0]): 
-                if (warn): print("Problem: nH", nH, type(nH))
-                i = i-1
-            if (i==-1): 
-                if (warn): print("Problem: nH", nH, type(nH))
-                i = i+1
-            if (j==self.T_data.shape[0]): 
-                if (warn): print("Problem: T", temperature)
-                j = j-1
-            if (j==-1): 
-                if (warn): print("Problem: T", temperature)
-                j = j+1
-            if (k==self.Z_data.shape[0]): 
-                if (warn): print("Problem: met", metallicity)
-                k = k-1
-            if (k==-1): 
-                if (warn): print("Problem: met", metallicity)
-                k = k+1
-            if (l==self.red_data.shape[0]): 
-                if (warn): print("Problem: red", redshift)
-                l = l-1
-            if (l==-1): 
-                if (warn): print("Problem: red", redshift)
-                l = l+1
-            counter = (l)*self.Z_data.shape[0]*self.T_data.shape[0]*self.nH_data.shape[0]+ \
-                      (k)*self.T_data.shape[0]*self.nH_data.shape[0] + \
-                      (j)*self.nH_data.shape[0] + \
-                      (i)
-            batch_id  = counter//self.batch_size 
-            batch_ids.append(batch_id)
-        batch_ids = set(batch_ids)
-        #print("Batches involved: ", batch_ids)
+        # print("Batches involved: ", batch_ids)
         data = []
         for batch_id in batch_ids:
             hdf = h5py.File('%s/ionization.b_%06d.h5'%(self.loc,batch_id), 'r')
@@ -501,8 +511,8 @@ class interpolate_ionization:
             d_k = np.abs(self.Z_data[k]-metallicity)
             d_l = np.abs(self.red_data[l]-redshift)
             
-            #print('Data vals: ', self.nH_data[i], self.T_data[j], self.Z_data[k], self.red_data[l] )
-            #print(i, j, k, l)
+            # print('Data vals: ', self.nH_data[i], self.T_data[j], self.Z_data[k], self.red_data[l] )
+            # print(i, j, k, l)
             epsilon = 1e-6
             weight = np.sqrt(d_i**2 + d_j**2 + d_k**2 + d_l**2 + epsilon)
             

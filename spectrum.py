@@ -10,7 +10,6 @@ import numpy as np
 import h5py
 from itertools import product
 import os
-import subprocess
 
 warn = False 
 
@@ -25,13 +24,8 @@ class EmissionSpectrum:
         None.
 
         '''
-        _tmp = subprocess.check_output('pwd').decode("utf-8").split('/')[1:]
-        _pos = None
-        for i, val in enumerate(_tmp):
-            if val == 'AstroPlasma':
-                _pos = i
-        _tmp = os.path.join('/',*_tmp[:_pos+1], 'misc', 'cloudy-data', 'emission')
-        self.loc = _tmp #'./cloudy-data/emission'
+        _tmp = os.path.join(os.path.dirname(__file__), 'cloudy-data', 'emission')
+        self.loc = _tmp
         
         data = h5py.File('%s/emission.b_%06d.h5'%(self.loc,0), 'r')
         self.nH_data   = np.array(data['params/nH'])
@@ -122,6 +116,10 @@ class EmissionSpectrum:
         batch_ids = set(batch_ids)
         # print("Batches involved: ", batch_ids)
         # later use this logic to fetch batches from cloud if not present
+        self.i_vals = i_vals
+        self.j_vals = j_vals
+        self.k_vals = k_vals
+        self.l_vals = l_vals 
         return batch_ids
     
     def interpolate(self, nH=1.2e-4, temperature=2.7e6, metallicity=0.5, redshift=0.2, mode='PIE'):
@@ -149,10 +147,18 @@ class EmissionSpectrum:
             Column 1: spectral energy distribution (emissivity): 4*pi*nu*j_nu (Unit: erg cm^-3 s^-1)
 
         '''
+        if (mode!='PIE' and mode!='CIE'):
+            print('Problem! Invalid mode: %s.'%mode)
+            return None
+        
         spectrum = np.zeros((self.energy.shape[0],2))
         spectrum[:,0] = self.energy
         
         batch_ids = self._findBatches(nH, temperature, metallicity, redshift)
+        i_vals = self.i_vals
+        j_vals = self.j_vals
+        k_vals = self.k_vals
+        l_vals = self.l_vals
         
         inv_weight = 0.
         # print(i_vals, j_vals, k_vals, l_vals)
