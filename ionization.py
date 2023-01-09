@@ -11,6 +11,7 @@ import h5py
 from itertools import product
 import os
 from .constants import *
+from .fetchData import fetch
 
 warn   = False
 class Ionization:
@@ -27,6 +28,7 @@ class Ionization:
         _tmp = os.path.join(os.path.dirname(__file__), 'cloudy-data', 'ionization')
         self.loc = _tmp
         
+        fetch(fileType='ionization', batch_id=0 , ip='localhost', port=8000)
         data = h5py.File('%s/ionization.b_%06d.h5'%(self.loc,0), 'r')
         self.nH_data   = np.array(data['params/nH'])
         self.T_data   = np.array(data['params/temperature'])
@@ -119,6 +121,10 @@ class Ionization:
         self.j_vals = j_vals
         self.k_vals = k_vals
         self.l_vals = l_vals 
+        
+        for batch_id in batch_ids:
+            fetch(fileType='ionization', batch_id=batch_id , ip='localhost', port=8000)
+            
         return batch_ids
     
     def interpolateIonFrac(self, nH=1.2e-4, temperature=2.7e6, metallicity=0.5, redshift=0.2, element=2, ion=1, mode='PIE'):

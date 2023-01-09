@@ -133,8 +133,8 @@ dmypy.json
 .a
 
 # repo specific
-cloudy-data/emission
-cloudy-data/ionization
+cloudy-data/emission/
+cloudy-data/ionization/
 auto/
 data/
 cloudy.exe
