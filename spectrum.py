@@ -28,7 +28,7 @@ class EmissionSpectrum:
         _tmp = os.path.join(os.path.dirname(__file__), 'cloudy-data', 'emission')
         self.loc = _tmp
         
-        fetch(fileType='emission', batch_id=0 , ip='localhost', port=8000)
+        fetch(fileType='emission', batch_id=0 , ip='localhost', port=4443)
         data = h5py.File('%s/emission.b_%06d.h5'%(self.loc,0), 'r')
         self.nH_data   = np.array(data['params/nH'])
         self.T_data   = np.array(data['params/temperature'])
@@ -124,7 +124,7 @@ class EmissionSpectrum:
         self.l_vals = l_vals 
         
         for batch_id in batch_ids:
-            fetch(fileType='emission', batch_id=batch_id , ip='localhost', port=8000)
+            fetch(fileType='emission', batch_id=batch_id , ip='localhost', port=4443)
             
         return batch_ids
     

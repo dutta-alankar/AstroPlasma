@@ -28,7 +28,7 @@ class Ionization:
         _tmp = os.path.join(os.path.dirname(__file__), 'cloudy-data', 'ionization')
         self.loc = _tmp
         
-        fetch(fileType='ionization', batch_id=0 , ip='localhost', port=8000)
+        fetch(fileType='ionization', batch_id=0 , ip='localhost', port=4443)
         data = h5py.File('%s/ionization.b_%06d.h5'%(self.loc,0), 'r')
         self.nH_data   = np.array(data['params/nH'])
         self.T_data   = np.array(data['params/temperature'])
@@ -123,7 +123,7 @@ class Ionization:
         self.l_vals = l_vals 
         
         for batch_id in batch_ids:
-            fetch(fileType='ionization', batch_id=batch_id , ip='localhost', port=8000)
+            fetch(fileType='ionization', batch_id=batch_id , ip='localhost', port=4443)
             
         return batch_ids
     

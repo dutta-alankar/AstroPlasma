@@ -9,10 +9,15 @@ Created on Mon Jan  9 20:28:15 2023
 import requests
 import os
 import sys
+import ssl
+import urllib3
 
 _verbose = False
 
-def fetch(fileType='ionization', batch_id=0 , ip='localhost', port=8000):
+def fetch(fileType='ionization', batch_id=0 , ip='localhost', port=4443):
+    os.environ['REQUESTS_CA_BUNDLE'] = '/etc/pki/tls/certs/ca-bundle.crt'
+    urllib3.disable_warnings()
+        
     path = os.path.join(os.path.dirname(__file__), 'cloudy-data', 'ionization')
     os.system('mkdir -p %s'%path)
     path = os.path.join(os.path.dirname(__file__), 'cloudy-data', 'emission')
@@ -23,10 +28,11 @@ def fetch(fileType='ionization', batch_id=0 , ip='localhost', port=8000):
         if(_verbose): print('File exists!')
         return
     # Set the server address and port
-    server_address = f'http://{ip}:{port}'
+    server_address = f'https://{ip}:{port}'
     
     # Send a GET request to the server 
-    response = requests.get(server_address + filename)
+    response = requests.get(server_address + filename, 
+                            verify=os.path.join(os.path.dirname(__file__), 'cloudy-data', 'cert.pem'))
     
     # Check if the request was successful
     if response.status_code == 200:

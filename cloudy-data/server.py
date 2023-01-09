@@ -8,12 +8,12 @@ Created on Mon Jan  9 19:54:37 2023
 
 import http.server
 import os
+import ssl
 
 class MyHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path == '/':
             self.path = '/index.html'
-        print(self.path)
         try:
             # Check if the file exists in the directory
             if os.path.exists(self.path[1:]):
@@ -34,12 +34,13 @@ class MyHTTPRequestHandler(http.server.BaseHTTPRequestHandler):
 
 def run():
     # Set the server address and port
-    server_address = ('0.0.0.0', 8000)
+    server_address = ('0.0.0.0', 4443)
     # Create the server
     httpd = http.server.HTTPServer(server_address, MyHTTPRequestHandler)
+    # Load the SSL certificate and key
+    httpd.socket = ssl.wrap_socket(httpd.socket, certfile='cert.pem', keyfile='key.pem', server_side=True)
     print('Starting server, use <Ctrl-C> to stop')
     # Run the server forever
     httpd.serve_forever()
 
 run()
-
