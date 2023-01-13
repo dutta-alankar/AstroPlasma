@@ -16,6 +16,9 @@ h5py = "^3.7.0"
 urllib3 = "^1.26.14"
 python-dotenv = "^0.21.0"
 scipy = {version = "^1.10.0", python = ">=3.10,<3.12"}
+mpi4py = "^3.1.4"
+matplotlib = "^3.6.3"
+colorama = "^0.4.6"
 
 
 [tool.poetry.group.dev.dependencies]
