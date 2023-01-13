@@ -7,7 +7,7 @@ A Cloudy database with functions to quickly interpolate physical state of astrop
 1. Clone the repository
 
    ```sh
-   git clone git@github.com:dutta-alankar/AstroPlasma.git
+   git clone git@github.com:dutta-alankar/AstroPlasma.git --recurse-submodules
    cd AstroPlasma
    ```
 
