@@ -45,7 +45,7 @@ Once you have performed the steps from the [Setup](#setup), you are good to go.
 
 ## Environment Variable Config
 
-|    Variable Name    | Description                                                                                                                                                                                                                          |
-| :-----------------: | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-|     CHUNK_SIZE      | (_Optional_) Amount of bytes of the file content to be downloaded and saved at a time. It should be adjusted based on the network bandwidth. Default is `4096` (aka 4 kB)                                                            |
+|    Variable Name    | Description |
+| :-----------------: | :---------- |
+|     CHUNK_SIZE      | (_Optional_) Amount of bytes of the file content to be downloaded and saved at a time. It should be adjusted based on the network bandwidth. Default is `4096` (aka 4 kB) |
 | WEB_SERVER_BASE_URL | (_Optional_) Base url of the downloader webserver (running from `server/` directory). It should only be set when that server is deployed on some remote web server or the default port is changed.Default is `http://localhost:8000` |
