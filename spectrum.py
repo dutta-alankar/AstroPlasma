@@ -9,7 +9,6 @@ Created on Thu Dec  1 18:23:40 2022
 import numpy as np
 import h5py
 from itertools import product
-import os
 from pathlib import Path
 from fetch_data import fetch
 
@@ -17,7 +16,7 @@ warn = False
 
 FILE_NAME_TEMPLATE = 'emission.b_{:06d}.h5'
 BASE_URL_TEMPLATE = 'emission/download/{:d}/'
-ZERO_BATCH_DOWNLOAD = [
+DOWNLOAD_IN_INIT = [
     (BASE_URL_TEMPLATE.format(0), FILE_NAME_TEMPLATE.format(0)),
 ]
 
@@ -36,9 +35,9 @@ class EmissionSpectrum:
         current_file = Path(__file__)
         self.base_dir = current_file.parent / 'cloudy-data' / 'emission'
 
-        fetch(urls=ZERO_BATCH_DOWNLOAD, base_dir=self.base_dir)
+        fetch(urls=DOWNLOAD_IN_INIT, base_dir=self.base_dir)
 
-        data = h5py.File(self.base_dir / ZERO_BATCH_DOWNLOAD[0][1], 'r')
+        data = h5py.File(self.base_dir / DOWNLOAD_IN_INIT[0][1], 'r')
         self.nH_data = np.array(data['params/nH'])
         self.T_data = np.array(data['params/temperature'])
         self.Z_data = np.array(data['params/metallicity'])

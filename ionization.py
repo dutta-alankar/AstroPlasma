@@ -18,7 +18,7 @@ warn = False
 
 FILE_NAME_TEMPLATE = 'ionization.b_{:06d}.h5'
 BASE_URL_TEMPLATE = 'ionization/download/{:d}/'
-ZERO_BATCH_DOWNLOAD = [
+DOWNLOAD_IN_INIT = [
     (BASE_URL_TEMPLATE.format(0), FILE_NAME_TEMPLATE.format(0)),
 ]
 
@@ -37,8 +37,8 @@ class Ionization:
         current_file = Path(__file__)
         self.base_dir = current_file.parent / 'cloudy-data' / 'ionization'
 
-        fetch(urls=ZERO_BATCH_DOWNLOAD, base_dir=self.base_dir)
-        data = h5py.File(self.base_dir/ZERO_BATCH_DOWNLOAD[0][1], 'r')
+        fetch(urls=DOWNLOAD_IN_INIT, base_dir=self.base_dir)
+        data = h5py.File(self.base_dir/DOWNLOAD_IN_INIT[0][1], 'r')
         self.nH_data = np.array(data['params/nH'])
         self.T_data = np.array(data['params/temperature'])
         self.Z_data = np.array(data['params/metallicity'])
@@ -310,15 +310,10 @@ class Ionization:
 
         '''
         # print(nH, temperature, metallicity, redshift, mode, part_type)
-        abn_file = os.path.join(os.path.dirname(
-            __file__), 'cloudy-data', 'solar_GASS10.abn')
-
-        _tmp = None
-        with open(abn_file, 'r') as file:
-            _tmp = file.readlines()
-
-        abn = np.array([float(element.split()[-1])
-                       for element in _tmp[2:32]])  # till Zinc
+        abn_file = Path(__file__).parent / 'cloudy-data' / 'solar_GASS10.abn'
+        with abn_file.open() as file:
+            abn = np.array([float(element.split()[-1])
+                            for element in file.readlines()[2:32]])  # till Zinc
 
         ion_count = 0
 
