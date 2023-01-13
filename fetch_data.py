@@ -6,12 +6,17 @@ Created on Mon Jan  9 20:28:15 2023
 @author: alankar
 """
 
+from dotenv import load_dotenv
+
 import requests
 import os
 from urllib.parse import urljoin
 from pathlib import Path
 from typing import List, Tuple
 from tqdm import tqdm
+
+# load env file to os.environ and can be access from os.getenv()
+load_dotenv()
 
 # download chunk size, # bytes to download at a time
 CHUNK_SIZE = int(os.getenv('CHUNK_SIZE', '4096'))
