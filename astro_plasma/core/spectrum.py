@@ -10,10 +10,11 @@ import numpy as np
 import h5py
 from itertools import product
 from pathlib import Path
-from fetch_data import fetch
-
+from astro_plasma.core.utils import fetch
+from typing import Optional
 warn = False
 
+DEFAULT_BASE_DIR = Path('.cache') / 'astro_plasma' / 'data' / 'spectrum'
 FILE_NAME_TEMPLATE = 'emission.b_{:06d}.h5'
 BASE_URL_TEMPLATE = 'emission/download/{:d}/'
 DOWNLOAD_IN_INIT = [
@@ -23,7 +24,7 @@ DOWNLOAD_IN_INIT = [
 
 class EmissionSpectrum:
 
-    def __init__(self):
+    def __init__(self, base_dir: Optional[Path | str] = None):
         '''
         Prepares the location to read data for generating emisson spectrum.
 
@@ -32,8 +33,13 @@ class EmissionSpectrum:
         None.
 
         '''
-        current_file = Path(__file__)
-        self.base_dir = current_file.parent / 'cloudy-data' / 'emission'
+
+        self.base_dir = DEFAULT_BASE_DIR if base_dir is None else base_dir
+        if type(base_dir) == str:
+            self.base_dir = Path(base_dir)
+
+        if not self.base_dir.exists():
+            self.base_dir.mkdir(mode=0o755, parents=True)
 
         fetch(urls=DOWNLOAD_IN_INIT, base_dir=self.base_dir)
 
