@@ -137,6 +137,7 @@ cloudy-data/emission/
 cloudy-data/ionization/
 auto/
 data/
+!astro_plasma/data
 cloudy.exe
 .h5
 .log
