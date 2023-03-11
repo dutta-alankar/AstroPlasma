@@ -10,12 +10,14 @@ import numpy as np
 import h5py
 from itertools import product
 import os
-from constants import *
+from .constants import *
 from pathlib import Path
-from fetch_data import fetch
+from typing import Optional
+from .utils import fetch, LOCAL_DATA_PATH
 
 warn = False
 
+DEFAULT_BASE_DIR = Path('.cache') / 'astro_plasma' / 'data' / 'ionization'
 FILE_NAME_TEMPLATE = 'ionization.b_{:06d}.h5'
 BASE_URL_TEMPLATE = 'ionization/download/{:d}/'
 DOWNLOAD_IN_INIT = [
@@ -25,7 +27,7 @@ DOWNLOAD_IN_INIT = [
 
 class Ionization:
 
-    def __init__(self):
+    def __init__(self, base_dir: Optional[Path | str] = None):
         '''
         Prepares the location to read data for generating emisson spectrum.
 
@@ -34,8 +36,13 @@ class Ionization:
         None.
 
         '''
-        current_file = Path(__file__)
-        self.base_dir = current_file.parent / 'cloudy-data' / 'ionization'
+
+        self.base_dir = DEFAULT_BASE_DIR if base_dir is None else base_dir
+        if type(base_dir) == str:
+            self.base_dir = Path(base_dir)
+
+        if not self.base_dir.exists():
+            self.base_dir.mkdir(mode=0o755, parents=True, exist_ok=True)
 
         fetch(urls=DOWNLOAD_IN_INIT, base_dir=self.base_dir)
         data = h5py.File(self.base_dir/DOWNLOAD_IN_INIT[0][1], 'r')
@@ -310,7 +317,7 @@ class Ionization:
 
         '''
         # print(nH, temperature, metallicity, redshift, mode, part_type)
-        abn_file = Path(__file__).parent / 'cloudy-data' / 'solar_GASS10.abn'
+        abn_file = LOCAL_DATA_PATH / 'solar_GASS10.abn'
         with abn_file.open() as file:
             abn = np.array([float(element.split()[-1])
                             for element in file.readlines()[2:32]])  # till Zinc

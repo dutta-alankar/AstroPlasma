@@ -16,6 +16,8 @@ from pathlib import Path
 from typing import List, Tuple
 from tqdm import tqdm
 
+LOCAL_DATA_PATH = Path(__file__).parent.parent / 'data'
+
 # load env file to os.environ and can be access from os.getenv()
 load_dotenv()
 

@@ -2,12 +2,16 @@
 
 A Cloudy database with functions to quickly interpolate physical state of astrophysical plasma without detailed Plasma modelling.
 
-## Setup
+## Install
+
+> **Note** Use the pypoetry tool to install directly from the server
+
+<!-- ## Setup
 
 1. Clone the repository
 
    ```sh
-   git clone git@github.com:dutta-alankar/AstroPlasma.git --recurse-submodules
+   git clone git@github.com:dutta-alankar/AstroPlasma.git
    cd AstroPlasma
    ```
 
@@ -49,9 +53,10 @@ Once you have performed the steps from the [Setup](#setup), you are good to go.
 | :-----------------: | :---------- |
 |     CHUNK_SIZE      | (_Optional_) Amount of bytes of the file content to be downloaded and saved at a time. It should be adjusted based on the network bandwidth. Default is `4096` (aka 4 kB) |
 | WEB_SERVER_BASE_URL | (_Optional_) Base url of the downloader webserver (running from `server/` directory). It should only be set when that server is deployed on some remote web server or the default port is changed. Default is `http://localhost:8000` |
-| PARALLEL_DOWNLOAD_JOBS | (_Optional_) Number of file download jobs to run parallely. Default is `3` | 
+| PARALLEL_DOWNLOAD_JOBS | (_Optional_) Number of file download jobs to run parallely. Default is `3` |  -->
 
 Note: We haven't made the server online yet. As a temporary measure, please download and use the data hosted [here](https://indianinstituteofscience-my.sharepoint.com/:f:/g/personal/alankardutta_iisc_ac_in/EhdL9SYY45FOq7zjrWGD0NQBcy3pn6oTP2B9pGhxPwLnkQ?e=E956ug):
+
 ```
 https://indianinstituteofscience-my.sharepoint.com/:f:/g/personal/alankardutta_iisc_ac_in/EhdL9SYY45FOq7zjrWGD0NQBcy3pn6oTP2B9pGhxPwLnkQ?e=E956ug
 ```
