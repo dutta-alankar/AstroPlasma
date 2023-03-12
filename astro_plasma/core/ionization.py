@@ -501,15 +501,10 @@ class Ionization:
             mean particle mass of the plasma.
 
         '''
-        file_path = os.path.realpath(__file__)
-        dir_loc = os.path.split(file_path)[:-1]
-        abn_file = os.path.join(*dir_loc, 'cloudy-data', 'solar_GASS10.abn')
-
-        _tmp = None
-        with open(abn_file, 'r') as file:
-            _tmp = file.readlines()
-        abn = np.array([float(element.split()[-1])
-                       for element in _tmp[2:32]])  # till Zinc
+        abn_file = LOCAL_DATA_PATH / 'solar_GASS10.abn'
+        with abn_file.open() as file:
+            abn = np.array([float(element.split()[-1])
+                            for element in file.readlines()[2:32]])  # till Zinc
 
         ion_count = 0
 
