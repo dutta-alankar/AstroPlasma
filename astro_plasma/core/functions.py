@@ -6,7 +6,7 @@ Created on Tue Dec 13 10:31:29 2022
 """
 
 import numpy as np
-# from scipy.interpolate import interp1d
+from scipy.interpolate import interp1d
 import os
 
 
@@ -36,8 +36,8 @@ def cooling_approx(temperature, metallicity):
         metallicity = np.array(metallicity)
     file_path = os.path.realpath(__file__)
     dir_loc = os.path.split(file_path)[:-1]
-    cooling = np.loadtxt(os.path.join(*dir_loc, "cooltable.dat"))
-    cooling = interp1d(cooling[:, 0], cooling[:, 1], fill_value="extrapolate")
+    cooling = np.loadtxt(os.path.join(*dir_loc, 'cooltable.dat'))
+    cooling = interp1d(cooling[:, 0], cooling[:, 1], fill_value='extrapolate')
 
     slope1 = -1 / (np.log10(8.7e3) - np.log10(1.2e4))
     slope2 = 1 / (np.log10(1.2e4) - np.log10(7e4))
