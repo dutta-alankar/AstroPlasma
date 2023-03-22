@@ -27,3 +27,9 @@ autopep8 = "^2.0.1"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+line-length = 160
+
+[tool.autopep8]
+max_line_length = 160
