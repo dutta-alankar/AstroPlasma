@@ -259,7 +259,7 @@ const int STDLEN = 32;
  *  AS_LOCAL_ONLY: search in the current working directory only
  *  versions with _TRY appended have the same meaning, except that they don't abort
  *  AS_SILENT_TRY: same as AS_LOCAL_ONLY_TRY, but does not write to ioQQQ in trace mode */
-typedef enum { AS_DEFAULT, AS_DATA_ONLY_TRY, AS_LOCAL_DATA_TRY, AS_LOCAL_ONLY_TRY, AS_DATA_ONLY, 
+typedef enum { AS_DEFAULT, AS_DATA_ONLY_TRY, AS_LOCAL_DATA_TRY, AS_LOCAL_ONLY_TRY, AS_DATA_ONLY,
 	       AS_DATA_OPTIONAL, AS_LOCAL_DATA, AS_LOCAL_ONLY, AS_SILENT_TRY } access_scheme;
 
 // the C++ openmodes below give the exact equivalent of the C modes "r", "w", "a", etc.
@@ -426,11 +426,11 @@ public:
 // Generate a (static) instance of this variable in *every* file.
 static t_cpu cpu;
 
-// The static (class) pointer is set in the first of these.  Obviously 
+// The static (class) pointer is set in the first of these.  Obviously
 // this is not thread safe...
 
-// Better engineered variants are available in Alexandrescu's book; 
-// better yet to reduce the number of globals and file-statics so 
+// Better engineered variants are available in Alexandrescu's book;
+// better yet to reduce the number of globals and file-statics so
 // this can just be initialized at the start of main().
 
 /** set_NaN - set variable or array to SNaN */
@@ -493,7 +493,7 @@ bool MyIsnan(const double &x);
 /* this needs to be before g++ since icc also sets __GNUC__ */
 #if defined __INTEL_COMPILER
 #	define	__COMP	"icc"
-#	define	__COMP_VER	__INTEL_COMPILER 
+#	define	__COMP_VER	__INTEL_COMPILER
 
 /* PathScale EKOPath compiler */
 /* this needs to be before g++ since pathCC also sets __GNUC__ */
@@ -541,19 +541,19 @@ bool MyIsnan(const double &x);
 #	define	__COMP_VER	_COMPILER_VERSION
 
 /* HP */
-#elif defined __HP_aCC 
+#elif defined __HP_aCC
 #	define	__COMP	"HP aCC"
-#	define	__COMP_VER	__HP_aCC  
+#	define	__COMP_VER	__HP_aCC
 
 /* DEC - this one may be broken for C++, no way to test it... */
-#elif defined __DECC 
+#elif defined __DECC
 #	define	__COMP	"DEC CC"
-#	define	__COMP_VER	__DECC_VER   
+#	define	__COMP_VER	__DECC_VER
 
 /* MS VS */
 #elif defined	_MSC_VER
 #	define	__COMP	"vs"
-#	define	__COMP_VER	_MSC_VER  
+#	define	__COMP_VER	_MSC_VER
 
 /* Oracle Solaris Studio */
 #elif defined	__SUNPRO_CC
@@ -563,7 +563,7 @@ bool MyIsnan(const double &x);
 /* unknown */
 #else
 #	define	__COMP	"unknown"
-#	define	__COMP_VER	0 
+#	define	__COMP_VER	0
 #endif
 
 /* ----------------------------  OS ---------------------------- */

@@ -19,7 +19,7 @@ int main( int argc, char *argv[] )
         double temperature = atof(argv[2]);
         double metallicity = atof(argv[3]);
         double redshift    = atof(argv[4]);
-        
+
 	try {
 		/* following is number of ion stages per line */
 #		define NELEM 15
@@ -73,18 +73,18 @@ int main( int argc, char *argv[] )
 		/* this is a pure collisional model to turn off photoionization */
 		cdRead( "no photoionization"  );
 		#endif
-		
+
 		sprintf(chLine, "sphere" );
 		cdRead( chLine );
 		sprintf(chLine, "radius 150 to 151 linear kiloparsec" );
 		cdRead( chLine );
-		
-		sprintf(chLine, "abundances \"solar_GASS10.abn\"" ); 
+
+		sprintf(chLine, "abundances \"solar_GASS10.abn\"" );
 		cdRead( chLine );
-		
+
 		sprintf(chLine, "metals %.3f linear", metallicity );
 		cdRead( chLine );
- 
+
 		/* just do the first zone - only want ionization distribution */
 		sprintf(chLine, "stop zone 1 "  );
 		cdRead( chLine );
@@ -101,7 +101,7 @@ int main( int argc, char *argv[] )
 		/* the log of the gas temperature */
 		sprintf(chLine, "constant temperature, T=%.3e K linear ", temperature );
 		cdRead( chLine );
-		
+
 		sprintf(chLine, "iterate convergence" );
 		cdRead( chLine );
 		sprintf(chLine, "age 1e9 years" );
@@ -130,9 +130,9 @@ int main( int argc, char *argv[] )
 			fprintf(ioRES,"#   Element %li %s\n", nelem+1,chElementName[nelem]);
 			fprintf(ioRES,"# ");
 			for(i=1; i<=nelem+2;++i) fprintf(ioRES,"%9li",i);
-			fprintf(ioRES,"\n  ");			
-			for(ion=1;ion<=nelem+2;++ion) fprintf(ioRES,"%9.2f",log10(xIonSave[nelem][ion]) );				
-			fprintf(ioRES,"\n");	
+			fprintf(ioRES,"\n  ");
+			for(ion=1;ion<=nelem+2;++ion) fprintf(ioRES,"%9.2f",log10(xIonSave[nelem][ion]) );
+			fprintf(ioRES,"\n");
 		}
 		#else
 		for( nelem=0; nelem<LIMELM; ++nelem){
@@ -243,4 +243,3 @@ int main( int argc, char *argv[] )
 
 	return exit_status;
 }
-

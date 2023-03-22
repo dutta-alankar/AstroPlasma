@@ -15,11 +15,11 @@ int main( int argc, char *argv[] )
 
 	DEBUG_ENTRY( "main()" );
 
-	try {  
+	try {
 	        setlocale(LC_CTYPE, "");
                 wchar_t block = 0x2588;
                 wchar_t cr    = 0x000D;
-    
+
 		double telog , cooling, hden , tehigh , dTelog;
 
 		FILE *ioRES;
@@ -39,7 +39,7 @@ int main( int argc, char *argv[] )
 		/* the log of the hydrogen density cm-3 */
 		hden = 1e-2;
 
-		/* the log of the initial and final temperatures 
+		/* the log of the initial and final temperatures
 		 * this calc has no ionization at very
 		 * low temperatures, except for cosmic ray collisions and the cosmic background */
 		telog = 1.;
@@ -47,13 +47,13 @@ int main( int argc, char *argv[] )
 
 		/* increment in log of T, normally 0.1 */
 		dTelog = atof(argv[2]);
-		
+
 		int models  = (int)ceil((tehigh-telog)/dTelog);
 		int counter = 0;
 
 		/* print simple header */
-		fprintf(ioRES, "# T (K)\tLambda=e_dot/nH^2 (erg cm^3 s^-1)\n" ); 
-		//fprintf(stderr, "# T (K)\tcool/nH^2 (erg cm^3 s^-1)\n" ); 
+		fprintf(ioRES, "# T (K)\tLambda=e_dot/nH^2 (erg cm^3 s^-1)\n" );
+		//fprintf(stderr, "# T (K)\tcool/nH^2 (erg cm^3 s^-1)\n" );
 
 		/* we do not want to generate any output */
 		#ifdef PIE
@@ -63,17 +63,17 @@ int main( int argc, char *argv[] )
 		sprintf(chLine, "hazy_coolingcurve_CIE_Z=%.2f.out",atof(argv[1]));
 		cdOutput( chLine );
 		#endif
-		
+
 		int totbars, nbars;
 		double barsize;
 		int now = 1;
-		
+
 		double redshift  = 0.;
 		double temperature;
-		
+
 		/* loop over all temperature */
 		while( telog <= (tehigh+0.0001) )
-		{       
+		{
 		        counter++;
 			/* initialize the code for this run */
 			cdInit();
@@ -93,7 +93,7 @@ int main( int argc, char *argv[] )
 			cdRead( chLine );
 			//#else
 			/* this is a pure collisional model to turn off photoionization */
-			//cdRead( "no photoionization "  ); 
+			//cdRead( "no photoionization "  );
 			//#endif
 
 			/* do only one zone */
@@ -102,30 +102,30 @@ int main( int argc, char *argv[] )
 			/* set the hydrogen density */
 			sprintf(chLine,"hden %f log",hden);
 			cdRead( chLine  );
-			
+
 			sprintf(chLine, "sphere" );
 			cdRead( chLine );
 			sprintf(chLine, "radius 150 to 151 linear kiloparsec" );
 			cdRead( chLine );
-			
-			sprintf(chLine, "abundances \"solar_GASS10.abn\"" ); 
+
+			sprintf(chLine, "abundances \"solar_GASS10.abn\"" );
 			cdRead( chLine );
-			
-			/* set metallicity */ 
+
+			/* set metallicity */
 			sprintf(chLine,"metals %.3f linear",atof(argv[1]));
-			cdRead( chLine  ); 
-			
+			cdRead( chLine  );
+
 			/* this says to compute very small stages of ionization - we normally trim up
 		 	* the ionizaton so that only important stages are done */
 			sprintf(chLine, "set trim -20 "  );
 			cdRead( chLine );
-			
+
 			/* the log of the gas temperature */
 			temperature = pow(10., telog);
 			/* sets the gas kinetic temperature */
 			sprintf(chLine, "constant temperature, T=%.3e K linear ", temperature );
 			cdRead( chLine );
-		
+
 			sprintf(chLine, "iterate convergence" );
 			cdRead( chLine );
 			sprintf(chLine, "age 1e9 years" );
@@ -145,9 +145,9 @@ int main( int argc, char *argv[] )
 			/* want to print cooling over density squared */
 			cooling = cooling / pow(10.,hden*hden);
 
-			fprintf(ioRES, "%12.6e\t%12.6e", pow(10,telog) , cooling ) ; 
-			printf("%12.6e\t%12.6e", pow(10,telog) , cooling ) ; 
-			//fprintf(stderr,"%12.6e\t%12.6e", pow(10,telog) , cooling ) ; 
+			fprintf(ioRES, "%12.6e\t%12.6e", pow(10,telog) , cooling ) ;
+			printf("%12.6e\t%12.6e", pow(10,telog) , cooling ) ;
+			//fprintf(stderr,"%12.6e\t%12.6e", pow(10,telog) , cooling ) ;
 
 			if( exit_status == ES_FAILURE )
 			{
@@ -161,7 +161,7 @@ int main( int argc, char *argv[] )
 			}
 
 			telog += dTelog;
-			
+
 			if ( (strcmp(argv[3],"True")==0) || (strcmp(argv[3],"true")==0))
 			{
 				barsize = 1.0;
@@ -170,7 +170,7 @@ int main( int argc, char *argv[] )
 				wprintf(L"%lc|", cr);
 				for (int i=0; i<nbars; i++) wprintf(L"%lc", block); //printf("#");
 				switch (now){
-				case 1: 
+				case 1:
 				    wprintf(L"-");
 				    break;
 				case 2:
@@ -179,7 +179,7 @@ int main( int argc, char *argv[] )
 				case 3:
 				    wprintf(L"|");
 				    break;
-				case 4: 
+				case 4:
 				    wprintf(L"/");
 				    break;
 				default:
@@ -192,15 +192,15 @@ int main( int argc, char *argv[] )
 				wprintf(L" %.2f%%",((double)counter/models*100));
 				fflush(stdout);
 			}
-			
+
 		}
-		
+
 		wprintf(L"%lc|", cr);
 		for (int i=0; i<totbars; i++) wprintf(L"%lc", block);
 		wprintf(L"|");
 		wprintf(L" %.2f%%\n",100.0);
 		fflush(stdout);
-		
+
 		fclose(ioRES);
 
 		cdEXIT(exit_status);
@@ -306,4 +306,3 @@ int main( int argc, char *argv[] )
 
 	return exit_status;
 }
-

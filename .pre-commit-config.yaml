@@ -1,0 +1,33 @@
+ci:
+  autofix_prs: false
+  autoupdate_schedule: quarterly
+
+repos:
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v4.4.0
+  hooks:
+  # - id: no-commit-to-branch
+  - id: debug-statements
+  - id: check-merge-conflict
+  - id: trailing-whitespace
+  - id: end-of-file-fixer
+  - id: check-shebang-scripts-are-executable
+  - id: check-executables-have-shebangs
+  - id: check-toml
+
+- repo: https://github.com/psf/black
+  rev: 23.1.0
+  hooks:
+  - id: black
+
+- repo: https://github.com/charliermarsh/ruff-pre-commit
+  rev: v0.0.255
+  hooks:
+  - id: ruff
+    args: [--fix]
+
+- repo: https://github.com/macisamuele/language-formatters-pre-commit-hooks
+  rev: v2.7.0
+  hooks:
+  - id: pretty-format-yaml
+    args: [--autofix, --indent, '2']

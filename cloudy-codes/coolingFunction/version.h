@@ -6,7 +6,7 @@
 
 /** version.h */
 
-class t_version : public Singleton<t_version> 
+class t_version : public Singleton<t_version>
 {
 	friend class Singleton<t_version>;
 protected:
@@ -27,7 +27,7 @@ public:
 	/** is this a release version?  if so do not print some internal comments */
 	bool lgRelease;
 
-	/** information about when and how the code was compiled, including 
+	/** information about when and how the code was compiled, including
 	 * compiler version */
 	char chInfo[INPUT_LINE_LENGTH];
 };

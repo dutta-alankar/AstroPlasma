@@ -34,7 +34,7 @@
 #include <cstdlib>
 #include <cctype>
 #ifdef _MSC_VER
-// MSVC needs this before cmath in order provide numeric constants 
+// MSVC needs this before cmath in order provide numeric constants
 // (M_PI etc.) defined by C99 but not C++ standards to date.
 #define _USE_MATH_DEFINES
 #endif
@@ -221,7 +221,7 @@ public:
  **************************************************************************/
 
 /** ioQQQ is the file handle to the output file itself,
- * ioQQQ is set to stdout by default, 
+ * ioQQQ is set to stdout by default,
  * and is reset to anything else by calling cdOutput */
 
 class Output
@@ -251,17 +251,17 @@ extern bool lgAbort;
 
 /** flag lgTestIt turned on if routine TestCode ever called, only generates
  * comment that test code is in place */
-extern bool lgTestCodeCalled; 
+extern bool lgTestCodeCalled;
 
 /** flag lgTestOn set true with SET TEST command
  * for some test code to be run somewhere */
 extern bool lgTestCodeEnabled;
 
-/** this is flag saying whether to print errors to 
+/** this is flag saying whether to print errors to
  * standard error output */
 extern bool lgPrnErr;
 
-/** nzone is zone counter, incremented in routine cloudy 
+/** nzone is zone counter, incremented in routine cloudy
  * is zero during search phase, 1 for first zone at illuminated face */
 extern long int nzone;
 
@@ -273,7 +273,7 @@ extern double fnzone;
 extern long int iteration;
 
 /**
- * this is the number zero, used to trick clever compilers when 
+ * this is the number zero, used to trick clever compilers when
  * dividing by it to crash program
  * there is a routine called zero - this name cannot overlap
  * definition is in cddefines.cpp
@@ -290,14 +290,14 @@ extern const double ZeroNum;
  * string that can be held is one less than this, due to the end
  * end of string sentinel in C.  Increase this is a larger string
  * is needed to hold the path on your system */
-const int FILENAME_PATH_LENGTH = 200; 
+const int FILENAME_PATH_LENGTH = 200;
 
 /** twice the above, so that we can add file name to end of full path */
-const int FILENAME_PATH_LENGTH_2  = FILENAME_PATH_LENGTH*2; 
+const int FILENAME_PATH_LENGTH_2  = FILENAME_PATH_LENGTH*2;
 
 /** this is limit to longest line of information that is scanned in,
- * end of line char is actually at this +1, dim of vector is this + 1 
- * all routines that scan in information should use this to dim vars */ 
+ * end of line char is actually at this +1, dim of vector is this + 1
+ * all routines that scan in information should use this to dim vars */
 const int INPUT_LINE_LENGTH = 2000;
 
 /** used for a few label vectors in lines.h and stopcalc.h */
@@ -380,23 +380,23 @@ const int ipKRYPTON = 35;
 
 /***************************************************************************
  * the following are prototypes for some routines that are part of the
- * debugging process - they come and go in any particular sub.  
+ * debugging process - they come and go in any particular sub.
  * it is not necessary to declare them when used since they are defined here
  **************************************************************************/
 
 /**
  fudge enter fudge factors, or some arbitrary number, with fudge command
- return value is the fudge factor 
- fudge(-1) queries the routine for the number of fudge parameters that 
+ return value is the fudge factor
+ fudge(-1) queries the routine for the number of fudge parameters that
  were entered, zero returned if none
  \param ipnt integer saying which of the possible numbers on the fudge
  command to use - 0 would be the first
- */ 
+ */
 double fudge(long int ipnt);
 
 /**
- broken set flag saying that the code is broken 
- */ 
+ broken set flag saying that the code is broken
+ */
 void broken(void);
 
 /**fixit set flag saying that this code needs attention, but is not broken,
@@ -419,7 +419,7 @@ public:
 		static Fixit fixit_s(__func__,__FILE__,__LINE__, (a)); 	\
 	} while (0)
 
-/**CodeReview - placed next to code that needs to be checked */ 
+/**CodeReview - placed next to code that needs to be checked */
 void CodeReview(void);
 
 /**TestCode set flag saying that test code is in place */
@@ -435,7 +435,7 @@ void *MyMalloc(size_t size, const char *file, int line);
 /** MyAssert a version of assert that fails gracefully
 \param *file
 \param line
-*/ 
+*/
 void MyAssert(const char *file, int line, const char *comment);
 
 /** prepare termination of the code, but do not terminate yet */
@@ -508,7 +508,7 @@ NORETURN void BadRead(void);
 
 /** dbg_printf is a debug print routine that was provided by Peter Teuben,
  * as a component from his NEMO package.  It offers run-time specification
- * of the level of debugging */ 
+ * of the level of debugging */
 int dbg_printf(int debug, const char *fmt, ...);
 
 /** dprintf -- version of fprintf which prepends DEBUG */
@@ -519,8 +519,8 @@ int fprintf (const Output& stream, const char *format, ...);
 
 int dprintf(const Output & stream, const char *format, ...);
 
-/**read_whole_line safe version of fgets - read a line, 
- * return null if cannot read line or if input line is too long 
+/**read_whole_line safe version of fgets - read a line,
+ * return null if cannot read line or if input line is too long
  \param char *chLine - previously allocated string where the line
  image will be stored
  \param int nChar size of chLine, we will return NULL if input line is
@@ -680,7 +680,7 @@ public:
 	{
 		fprintf(p_fp,"%*c%s\n",p_callLevel,'<',name);
 		--p_callLevel;
-	}		
+	}
 };
 
 /** entry and exit of each routine will go here,
@@ -692,7 +692,7 @@ protected:
 	t_nodebug()	{}
 public:
 	void enter(const char *) const {}
-	void leave(const char *) const {}		
+	void leave(const char *) const {}
 };
 
 template<class Trace>
@@ -834,7 +834,7 @@ inline double max( double a, sys_float b ) { double c = b; return ( (a > c) ? a 
 #define MAX4(a,b,c,d) (max(max(a,b),max(c,d)))
 /* */
 
-/** FP sign transfer (fortran sign function) - sign of y times abs value of x 
+/** FP sign transfer (fortran sign function) - sign of y times abs value of x
 \param x
 \param y
 */
@@ -1123,7 +1123,7 @@ template<class T> inline const T* get_ptr(const valarray<T> &v)
 	return const_cast<const T*>(&const_cast<valarray<T>&>(v)[0]);
 }
 template<class T, class U> inline const T* get_ptr(const vector<T,U> &v)
-{	
+{
 	return const_cast<const T*>(&const_cast<vector<T,U>&>(v)[0]);
 }
 
@@ -1242,20 +1242,20 @@ public:
 	}
 };
 
-/**csphot returns photoionization cross section from opacity stage using std pointers 
+/**csphot returns photoionization cross section from opacity stage using std pointers
 \param inu INU is array index pointing to frequency where opacity is to be evaluated on f not c scale
 \param ithr ITHR is pointer to threshold
 \param iofset IOFSET is offset as defined in opac0
 */
 double csphot(long int inu, long int ithr, long int iofset);
 
-/** normal random variate generator 
+/** normal random variate generator
 \param xMean mean value
 \param s standard deviation s
 */
 double RandGauss(double xMean, double s );
 
-/**A custom wrapper for RandGauss than truncates at two standard deviations. 
+/**A custom wrapper for RandGauss than truncates at two standard deviations.
 \param PctUncertainty
 */
 double MyGaussRand( double PctUncertainty );
@@ -1263,17 +1263,17 @@ double MyGaussRand( double PctUncertainty );
 /**AnuUnit produce continuum energy in arbitrary units, ip is on C scale */
 double AnuUnit(realnum energy);
 
-/**cap4 convert first 4 char of input line chLab into chCAP all in caps, null termination 
+/**cap4 convert first 4 char of input line chLab into chCAP all in caps, null termination
 \param chCAP output string, cap'd first 4 char of chLab,
 \param chLab with null terminating input string ending with eol
-*/ 
+*/
 void cap4(char *chCAP , const char *chLab);
 
-/**uncaps convert input command line (through eol) to all lowercase 
+/**uncaps convert input command line (through eol) to all lowercase
 \param chCard - line image as string of characters */
 void uncaps(char *chCard );
 
-/**caps convert input command line (through eol) to ALL CAPS 
+/**caps convert input command line (through eol) to ALL CAPS
 \param chCard - line image as string of characters */
 void caps(char *chCard );
 
@@ -1281,19 +1281,19 @@ void caps(char *chCard );
   \param *chCard string giving the line image
   \param *ipnt the index for the character in the string where we shall start
   \param last the number of characters in the string - do not search beyond it
-  \param *lgEOL true if hit end of line with no number 
- */ 
-double FFmtRead(const char *chCard, 
-		long int *ipnt, 
-		long int last, 
+  \param *lgEOL true if hit end of line with no number
+ */
+double FFmtRead(const char *chCard,
+		long int *ipnt,
+		long int last,
 		bool *lgEOL);
 
  /**nMatch determine whether match to a keyword occurs on command line,
-   return value is 0 if no match, and position of match within string if hit 
+   return value is 0 if no match, and position of match within string if hit
 	  \param *chKey
 	  \param *chCard
- */ 
-long nMatch(const char *chKey, 
+ */
+long nMatch(const char *chKey,
 	    const char *chCard);
 
 // these are safe versions of strstr, strchr, etc to work around a deficiency in glibc
@@ -1327,7 +1327,7 @@ size_t sncatf( char* buf, size_t bufSize, const char* fmt, ... );
 
 size_t sncatf( ostringstream& buf, const char* fmt, ... );
 
-/** print with 1p,e8.2 format onto stream FILE 
+/** print with 1p,e8.2 format onto stream FILE
  * all are located in printe82.c */
 void PrintE82( FILE*, double );
 
@@ -1338,7 +1338,7 @@ void PrintE71( FILE*, double );
 void PrintE93( FILE*, double );
 
 /** create string with val and format, to print with %s,
- * much faster than above, totally native on non-MS systems 
+ * much faster than above, totally native on non-MS systems
 \param *fmt
 \param val
 */
@@ -1358,10 +1358,10 @@ const double DSEXP_LIMIT = 680.;
 sys_float sexp(sys_float x);
 double sexp(double x);
 
-/**dsexp safe exponential function for doubles 
-\param x 
+/**dsexp safe exponential function for doubles
+\param x
 */
- 
+
 double dsexp(double x);
 
 /** exp10(x): faster alternative to pow(10.,x) */
@@ -1405,10 +1405,10 @@ inline sys_float exp10(sys_float x)
 	return exp10f(x);
 }
 
-/**plankf evaluate Planck function for any cell at current electron temperature 
+/**plankf evaluate Planck function for any cell at current electron temperature
 \param ip
 */
- 
+
 double plankf(long int ip);
 
 // safe version of getline() that correctly handles all types of EOL lf, crlf and cr...
@@ -1416,13 +1416,13 @@ istream& SafeGetline(istream& is, string& t);
 
 /**
    spsort netlib routine to sort array returning sorted indices
-   \param x[] input array to be sorted	   
-   \param  n number of values in x 	   
+   \param x[] input array to be sorted
+   \param  n number of values in x
    \param  iperm[]  permutation output array
    \param  kflag flag saying what to do - 1 sorts into increasing order, not changing
-   \param  kflag the original routine 
+   \param  kflag the original routine
    \param  *ier error condition, should be 0
- */ 
+ */
 void spsort( realnum x[], long int n, long int iperm[], int kflag, int *ier);
 
 /**************************************************************************
@@ -1460,4 +1460,3 @@ void spsort( realnum x[], long int n, long int iperm[], int kflag, int *ier);
 /*lint +e49 */
 
 #endif /* CDDEFINES_H_ */
-
