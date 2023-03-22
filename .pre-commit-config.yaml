@@ -15,10 +15,11 @@ repos:
   - id: check-executables-have-shebangs
   - id: check-toml
 
-- repo: https://github.com/psf/black
-  rev: 23.1.0
+- repo: https://github.com/pre-commit/mirrors-autopep8
+  rev: v2.0.2
   hooks:
-  - id: black
+  - id: autopep8
+    args: [--max-line-length=160]
 
 - repo: https://github.com/charliermarsh/ruff-pre-commit
   rev: v0.0.255
