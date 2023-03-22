@@ -19,7 +19,7 @@ repos:
   rev: v2.0.2
   hooks:
   - id: autopep8
-    args: [--max-line-length=160]
+    args: [--max-line-length=160, --in-place, --recursive, astro_plasma/]
 
 - repo: https://github.com/charliermarsh/ruff-pre-commit
   rev: v0.0.255

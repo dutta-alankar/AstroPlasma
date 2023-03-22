@@ -275,9 +275,12 @@ class EmissionSpectrum:
 
             epsilon = 1e-6
             d_i = np.abs(scaling_func(self.nH_data[i])-scaling_func(nH))
-            d_j = np.abs(scaling_func(self.T_data[j])-scaling_func(temperature))
-            d_k = np.abs(scaling_func(self.Z_data[k])-scaling_func(metallicity))
-            d_l = np.abs(scaling_func(epsilon+self.red_data[m])-scaling_func(epsilon+redshift))
+            d_j = np.abs(scaling_func(
+                self.T_data[j])-scaling_func(temperature))
+            d_k = np.abs(scaling_func(
+                self.Z_data[k])-scaling_func(metallicity))
+            d_l = np.abs(scaling_func(
+                epsilon+self.red_data[m])-scaling_func(epsilon+redshift))
 
             # print('Data vals: ', self.nH_data[i], self.T_data[j], self.Z_data[k], self.red_data[l] )
             # print(i, j, k, l)
@@ -299,7 +302,8 @@ class EmissionSpectrum:
                     hdf = id_data[1]
                     local_pos = counter % self.batch_size - 1
                     spectrum[:, 1] += (
-                        np.array(hdf[f"output/emission/{mode}/total"])[local_pos, :]
+                        np.array(
+                            hdf[f"output/emission/{mode}/total"])[local_pos, :]
                     ) / weight
 
             inv_weight += 1 / weight
