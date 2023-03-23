@@ -279,7 +279,7 @@ class EmissionSpectrum:
                 self.T_data[j])-scaling_func(temperature))
             d_k = np.abs(scaling_func(
                 self.Z_data[k])-scaling_func(metallicity))
-            d_l = np.abs(scaling_func(
+            d_m= np.abs(scaling_func(
                 epsilon+self.red_data[m])-scaling_func(epsilon+redshift))
 
             # print('Data vals: ', self.nH_data[i], self.T_data[j], self.Z_data[k], self.red_data[l] )
