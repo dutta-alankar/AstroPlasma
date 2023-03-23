@@ -183,8 +183,8 @@ class EmissionSpectrum:
 
         return batch_ids
 
-    def interpolate(self, nH=1.2e-4, temperature=2.7e6, metallicity=0.5, redshift=0.2, mode='PIE', scaling_func: Callable = lambda x: x):
-        '''
+    def interpolate(self, nH=1.2e-4, temperature=2.7e6, metallicity=0.5, redshift=0.2, mode="PIE", scaling_func: Callable = lambda x: x):
+        """
         Interpolate emission spectrum from pre-computed Cloudy table.
 
         Parameters
@@ -216,7 +216,7 @@ class EmissionSpectrum:
             Column 1: spectral energy distribution (emissivity):
             4*pi*nu*j_nu (Unit: erg cm^-3 s^-1)
 
-        '''
+        """
         if mode != "PIE" and mode != "CIE":
             print("Problem! Invalid mode: %s." % mode)
             return None
