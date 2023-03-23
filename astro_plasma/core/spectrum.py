@@ -284,7 +284,7 @@ class EmissionSpectrum:
 
             # print('Data vals: ', self.nH_data[i], self.T_data[j], self.Z_data[k], self.red_data[l] )
             # print(i, j, k, l)
-            weight = np.sqrt(d_i**2 + d_j**2 + d_k**2 + d_l**2 + epsilon)
+            weight = np.sqrt(d_i**2 + d_j**2 + d_k**2 + d_m**2 + epsilon)
             # nearest neighbour interpolation
             counter = (
                 (m)
