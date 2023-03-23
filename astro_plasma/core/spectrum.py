@@ -311,6 +311,6 @@ class EmissionSpectrum:
         spectrum[:, 1] = spectrum[:, 1] / inv_weight
 
         for id_data in data:
-            id_data[1].close
+            id_data[1].close()
 
         return spectrum
