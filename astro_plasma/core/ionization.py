@@ -395,8 +395,7 @@ class Ionization:
         abn_file = LOCAL_DATA_PATH / "solar_GASS10.abn"
         with abn_file.open() as file:
             abn = np.array(
-                [float(element.split()[-1])
-                 for element in file.readlines()[2:32]]
+                [float(element.split()[-1]) for element in file.readlines()[2:32]]
             )  # till Zinc
 
         ion_count = 0
@@ -580,11 +579,9 @@ class Ionization:
             for element in range(30):
                 for ion in range(1, element + 2):
                     if element + 1 == 1:  # H
-                        nion += (Xp / X_solar) * nH * \
-                            abn[element] * fracIon[ion_count]
+                        nion += (Xp / X_solar) * nH * abn[element] * fracIon[ion_count]
                     elif element + 1 == 2:  # He
-                        nion += (Yp / Y_solar) * nH * \
-                            abn[element] * fracIon[ion_count]
+                        nion += (Yp / Y_solar) * nH * abn[element] * fracIon[ion_count]
                     else:
                         nion += (
                             ion
@@ -641,8 +638,7 @@ class Ionization:
         abn_file = LOCAL_DATA_PATH / "solar_GASS10.abn"
         with abn_file.open() as file:
             abn = np.array(
-                [float(element.split()[-1])
-                 for element in file.readlines()[2:32]]
+                [float(element.split()[-1]) for element in file.readlines()[2:32]]
             )  # till Zinc
 
         ion_count = 0
