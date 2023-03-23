@@ -2,6 +2,13 @@
 
 A Cloudy database with functions to quickly interpolate physical state of astrophysical plasma without detailed Plasma modelling.
 
+[![PyPI](https://img.shields.io/badge/requires-Python%20≥%203.10-blue?logo=python&logoColor=white)](https://www.python.org/downloads/release/python-3100/)
+
+<!--- Tests and style --->
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/charliermarsh/ruff/main/assets/badge/v1.json)](https://github.com/charliermarsh/ruff)
+
+
 ## Install
 
 > **Note** Use the pypoetry tool to install directly from the server
@@ -60,3 +67,8 @@ Note: We haven't made the server online yet. As a temporary measure, please down
 ```
 https://indianinstituteofscience-my.sharepoint.com/:f:/g/personal/alankardutta_iisc_ac_in/EhdL9SYY45FOq7zjrWGD0NQBcy3pn6oTP2B9pGhxPwLnkQ?e=E956ug
 ```
+
+## Note to contributors
+
+If you wish to contribute, fork this repo and open pull requests to the `dev` branch of this repo. Once everything gets tested and is found working, the new code will be merged with the `master` branch. 
+For a successful merge, the code must atleast pass all the pre-existing tests. It is recommended to run `pre-commit` locally before pushing your changes to the repo for a proposed PR. To do so just run `pre-commit run --all-files`
