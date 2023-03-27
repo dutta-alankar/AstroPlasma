@@ -10,7 +10,7 @@ import h5py
 from itertools import product
 from pathlib import Path
 from astro_plasma.core.utils import fetch
-from typing import Optional
+from typing import Optional, Callable
 
 warn = False
 
@@ -184,7 +184,13 @@ class EmissionSpectrum:
         return batch_ids
 
     def interpolate(
-        self, nH=1.2e-4, temperature=2.7e6, metallicity=0.5, redshift=0.2, mode="PIE"
+        self,
+        nH=1.2e-4,
+        temperature=2.7e6,
+        metallicity=0.5,
+        redshift=0.2,
+        mode="PIE",
+        scaling_func: Callable = lambda x: x,
     ):
         """
         Interpolate emission spectrum from pre-computed Cloudy table.
@@ -275,18 +281,17 @@ class EmissionSpectrum:
                     print("Problem: red", redshift)
                 m = m + 1
 
-            d_i = np.abs(self.nH_data[i] - nH)
-            d_j = np.abs(self.T_data[j] - temperature)
-            d_k = np.abs(self.Z_data[k] - metallicity)
-            d_m = np.abs(self.red_data[m] - redshift)
-
-            # print('Data vals: ',
-            #        self.nH_data[i],
-            #        self.T_data[j],
-            #        self.Z_data[k],
-            #        self.red_data[m] )
-            # print(i, j, k, m)
             epsilon = 1e-6
+            d_i = np.abs(scaling_func(self.nH_data[i]) - scaling_func(nH))
+            d_j = np.abs(scaling_func(self.T_data[j]) - scaling_func(temperature))
+            d_k = np.abs(scaling_func(self.Z_data[k]) - scaling_func(metallicity))
+            d_m = np.abs(
+                scaling_func(epsilon + self.red_data[m])
+                - scaling_func(epsilon + redshift)
+            )
+
+            # print('Data vals: ', self.nH_data[i], self.T_data[j], self.Z_data[k], self.red_data[l] )
+            # print(i, j, k, l)
             weight = np.sqrt(d_i**2 + d_j**2 + d_k**2 + d_m**2 + epsilon)
             # nearest neighbour interpolation
             counter = (

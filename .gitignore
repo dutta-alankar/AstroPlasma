@@ -145,3 +145,6 @@ cloudy.exe
 cloudy-data/emission/*.h5
 cloudy-data/ionization/*.h5
 cloudy-data/key.pem
+
+# VSCode related
+.vscode

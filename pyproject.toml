@@ -15,15 +15,24 @@ numpy = "^1.24.1"
 h5py = "^3.7.0"
 urllib3 = "^1.26.14"
 python-dotenv = "^0.21.0"
-scipy = {version = "^1.10.1", python = ">=3.10,<3.12"}
 mpi4py = "^3.1.4"
 matplotlib = "^3.6.3"
 colorama = "^0.4.6"
+scipy = "1.9.3"
 
 
 [tool.poetry.group.dev.dependencies]
-autopep8 = "^2.0.1"
+ruff = "^0.0.258"
+black = "^23.1.0"
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+select = ["E", "F", "Q"]
+line-length = 160
+per-file-ignores = { "__init__.py"  = ["F401"] }
+
+[tool.autopep8]
+max_line_length = 160
