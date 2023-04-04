@@ -7,7 +7,7 @@ Created on Fri Aug 26 14:19:12 2022
 
 import numpy as np
 
-# useful constants
+## useful constants
 yr = 365 * 24 * 60**2
 Myr = 1e6 * yr
 pi = np.pi
@@ -30,12 +30,15 @@ MSun = 2.0e33
 X_solar = 0.7154
 Y_solar = 0.2703
 Z_solar = 0.0143
-fracZ = 0.5
-Xp = X_solar * (1 - fracZ * Z_solar) / (X_solar + Y_solar)
-Yp = Y_solar * (1 - fracZ * Z_solar) / (X_solar + Y_solar)
-Zp = fracZ * Z_solar
-mu = 1.0 / (2 * Xp + 0.75 * Yp + 0.5625 * Zp)
-mup = 1.0 / (2 * Xp + 0.75 * Yp + (9.0 / 16.0) * Zp)
-muHp = 1.0 / Xp
-mue = 2.0 / (1 + Xp)
-mui = 1.0 / (1 / mu - 1 / mue)
+
+
+def Xp(metallicity):
+    return X_solar * (1 - metallicity * Z_solar) / (X_solar + Y_solar)
+
+
+def Yp(metallicity):
+    return Y_solar * (1 - metallicity * Z_solar) / (X_solar + Y_solar)
+
+
+def Zp(metallicity):
+    return metallicity * Z_solar
