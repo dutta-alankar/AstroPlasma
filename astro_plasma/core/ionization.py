@@ -15,7 +15,7 @@ from .utils import fetch, LOCAL_DATA_PATH
 
 warn = False
 
-DEFAULT_BASE_DIR = Path(".cache") / "astro_plasma" / "data" / "ionization"
+DEFAULT_BASE_DIR = LOCAL_DATA_PATH / "ionization"
 FILE_NAME_TEMPLATE = "ionization.b_{:06d}.h5"
 BASE_URL_TEMPLATE = "ionization/download/{:d}/"
 DOWNLOAD_IN_INIT = [
@@ -24,9 +24,9 @@ DOWNLOAD_IN_INIT = [
 
 
 class Ionization:
-    def __init__(self, base_dir: Optional[Path | str] = None):
+    def __init__(self, base_dir: Optional[Path] = None):
         """
-        Prepares the location to read data for generating emisson spectrum.
+        Prepares the location to read data for generating ionization calculations.
 
         Returns
         -------
@@ -35,7 +35,9 @@ class Ionization:
         """
 
         self.base_dir = DEFAULT_BASE_DIR if base_dir is None else base_dir
-        if type(base_dir) == str:
+        # print(self.base_dir)
+
+        if type(self.base_dir) == str:
             self.base_dir = Path(base_dir)
 
         if not self.base_dir.exists():
@@ -181,7 +183,7 @@ class Ionization:
         fetch(urls=urls, base_dir=self.base_dir)
         return batch_ids
 
-    def interpolateIonFrac(
+    def interpolate_ion_frac(
         self,
         nH=1.2e-4,
         temperature=2.7e6,
@@ -347,7 +349,7 @@ class Ionization:
         # array starts from 0 but ion from 1
         return fracIon[ion - 1]
 
-    def interpolateNumDens(
+    def interpolate_num_dens(
         self,
         nH=1.2e-4,
         temperature=2.7e6,
@@ -597,7 +599,7 @@ class Ionization:
             print(f"Invalid part_type: {part_type}")
         return None
 
-    def interpolateMu(
+    def interpolate_mu(
         self, nH=1.2e-4, temperature=2.7e6, metallicity=0.5, redshift=0.2, mode="PIE"
     ):
         """

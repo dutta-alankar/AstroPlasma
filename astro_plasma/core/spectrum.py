@@ -9,12 +9,12 @@ import numpy as np
 import h5py
 from itertools import product
 from pathlib import Path
-from astro_plasma.core.utils import fetch
+from .utils import fetch, LOCAL_DATA_PATH
 from typing import Optional, Callable
 
 warn = False
 
-DEFAULT_BASE_DIR = Path(".cache") / "astro_plasma" / "data" / "spectrum"
+DEFAULT_BASE_DIR = LOCAL_DATA_PATH / "emission"
 FILE_NAME_TEMPLATE = "emission.b_{:06d}.h5"
 BASE_URL_TEMPLATE = "emission/download/{:d}/"
 DOWNLOAD_IN_INIT = [
@@ -23,7 +23,7 @@ DOWNLOAD_IN_INIT = [
 
 
 class EmissionSpectrum:
-    def __init__(self, base_dir: Optional[Path | str] = None):
+    def __init__(self, base_dir: Optional[Path] = None):
         """
         Prepares the location to read data for generating emisson spectrum.
 
@@ -34,7 +34,7 @@ class EmissionSpectrum:
         """
 
         self.base_dir = DEFAULT_BASE_DIR if base_dir is None else base_dir
-        if type(base_dir) == str:
+        if type(self.base_dir) == str:
             self.base_dir = Path(base_dir)
 
         if not self.base_dir.exists():
