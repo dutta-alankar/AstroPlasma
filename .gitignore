@@ -134,17 +134,14 @@ dmypy.json
 .a
 
 # repo specific
-cloudy-data/emission/
-cloudy-data/ionization/
+astro_plasma/data/emission/
+astro_plasma/data/ionization/
 auto/
 data/
-!astro_plasma/data
+
 cloudy.exe
 .h5
 .log
-cloudy-data/emission/*.h5
-cloudy-data/ionization/*.h5
-cloudy-data/key.pem
 
 # VSCode related
 .vscode
