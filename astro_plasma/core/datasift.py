@@ -14,6 +14,7 @@ import h5py
 
 _warn = False
 
+
 class DataSift:
     def __init__(self, data):
         """
@@ -31,7 +32,7 @@ class DataSift:
 
         self.batch_size = np.prod(np.array(data["header/batch_dim"]))
         self.total_size = np.prod(np.array(data["header/total_size"]))
-        
+
     def _findBatches(self, nH, temperature, metallicity, redshift):
         """
         Find the batches needed from the data files.
@@ -161,7 +162,7 @@ class DataSift:
         fetch(urls=urls, base_dir=self.base_dir)
 
         return batch_ids
-    
+
     def _interpolate(
         self,
         nH,
@@ -171,7 +172,7 @@ class DataSift:
         mode,
         interp_data: str,
         interp_value: str,
-        scaling_func: Callable = lambda x: x,     
+        scaling_func: Callable = lambda x: x,
     ):
         """
         Interpolate emission spectrum from pre-computed Cloudy table.
@@ -200,7 +201,7 @@ class DataSift:
             either CIE (collisional) or PIE (photo).
             The default is 'PIE'.
         scaling_func : callable function, optional
-            function space in which intrepolation is 
+            function space in which intrepolation is
             carried out.
             The default is linear. log10 is another popular choice.
 
@@ -208,7 +209,7 @@ class DataSift:
         -------
         None.
         """
-        
+
         if mode != "PIE" and mode != "CIE":
             print("Problem! Invalid mode: %s." % mode)
             return None
@@ -287,17 +288,17 @@ class DataSift:
                 if id_data[0] == batch_id:
                     hdf = id_data[1]
                     local_pos = counter % self.batch_size - 1
-                    if ("local_pos" not in interp_data):
-                        if _warn: 
-                            print(f"Problem in interpolating data! local_pos absent!")
+                    if "local_pos" not in interp_data:
+                        if _warn:
+                            print("Problem in interpolating data! local_pos absent!")
                             print(f"local_pos={local_pos}")
                         sys.exit(1)
-                    value = eval(interp_value) 
+                    value = eval(interp_value)
                     value += eval(interp_data) / weight
 
             inv_weight += 1 / weight
-        
-        value = eval(interp_value) 
+
+        value = eval(interp_value)
         value = value / inv_weight
 
         for id_data in data:
