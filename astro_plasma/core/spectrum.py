@@ -102,8 +102,8 @@ class EmissionSpectrum(DataSift):
             metallicity,
             redshift,
             mode,
-            f'np.array(hdf["output/emission/{mode}/total"])[local_pos, :]',
-            "self.spectrum[:, 1]",
+            f"output/emission/{mode}/total",
+            self.spectrum[:, 1],
             scaling_func,
         )
         return self.spectrum

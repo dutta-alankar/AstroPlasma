@@ -103,8 +103,9 @@ class Ionization(DataSift):
             metallicity,
             redshift,
             mode,
-            f'np.array(hdf["output/fracIon/{mode}"])[local_pos, :]',
-            "self.fracIon",
+            f"output/fracIon/{mode}",
+            self.fracIon,
+            lambda x: x,
         )
         return self.fracIon
 
