@@ -138,6 +138,7 @@ astro_plasma/data/emission/
 astro_plasma/data/ionization/
 auto/
 data/
+tests/ionization-test.png
 
 cloudy.exe
 .h5
