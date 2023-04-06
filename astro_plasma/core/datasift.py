@@ -104,10 +104,8 @@ class DataSift:
         """
         i_vals, j_vals, k_vals, m_vals = None, None, None, None
         if np.sum(nH == self.nH_data) == 1:
-            i_vals = [
-                np.where(nH == self.nH_data)[0][0],
-                np.where(nH == self.nH_data)[0][0],
-            ]
+            eq = np.where(nH == self.nH_data)[0][0]
+            i_vals = [eq - 1, eq, eq + 1]
         else:
             i_vals = [
                 np.sum(nH > self.nH_data) - 1,
@@ -115,10 +113,8 @@ class DataSift:
             ]
 
         if np.sum(temperature == self.T_data) == 1:
-            j_vals = [
-                np.where(temperature == self.T_data)[0][0],
-                np.where(temperature == self.T_data)[0][0],
-            ]
+            eq = np.where(temperature == self.T_data)[0][0]
+            j_vals = [eq - 1, eq, eq + 1]
         else:
             j_vals = [
                 np.sum(temperature > self.T_data) - 1,
@@ -126,10 +122,8 @@ class DataSift:
             ]
 
         if np.sum(metallicity == self.Z_data) == 1:
-            k_vals = [
-                np.where(metallicity == self.Z_data)[0][0],
-                np.where(metallicity == self.Z_data)[0][0],
-            ]
+            eq = np.where(metallicity == self.Z_data)[0][0]
+            k_vals = [eq - 1, eq, eq + 1]
         else:
             k_vals = [
                 np.sum(metallicity > self.Z_data) - 1,
@@ -137,10 +131,8 @@ class DataSift:
             ]
 
         if np.sum(redshift == self.red_data) == 1:
-            m_vals = [
-                np.where(redshift == self.red_data)[0][0],
-                np.where(redshift == self.red_data)[0][0],
-            ]
+            eq = np.where(redshift == self.red_data)[0][0]
+            m_vals = [eq - 1, eq, eq + 1]
         else:
             m_vals = [
                 np.sum(redshift > self.red_data) - 1,
@@ -183,8 +175,9 @@ class DataSift:
         redshift,
         mode,
         interp_data: str,
-        interp_value: np.array,
+        interp_value_shape: np.array,
         scaling_func: Callable = lambda x: x,
+        cut=(None, None),
     ):
         """
         Interpolate emission spectrum from pre-computed Cloudy table.
@@ -216,6 +209,7 @@ class DataSift:
             function space in which intrepolation is
             carried out.
             The default is linear. log10 is another popular choice.
+        cut : upper and lower bound on  data
 
         Returns
         -------
@@ -232,23 +226,31 @@ class DataSift:
         k_vals = self.k_vals
         m_vals = self.m_vals
 
-        inv_weight = 0.0
-
         data = []
         for batch_id in batch_ids:
             file = self.base_dir / self.file_name_template.format(batch_id)
             hdf = h5py.File(file, "r")
             data.append({"batch_id": batch_id, "file": hdf})
 
+        """
+        The trick is to take the floor value for interpolation only if it is the
+        most frequent value in all the nearest neighbor. If not, then simply ignore
+        the contribution of the floor value in interpolation.
+        """
+        epsilon = 1e-15
+        _all_values = []
+        _all_weights = []
         for i, j, k, m in product(i_vals, j_vals, k_vals, m_vals):
             i, j, k, m = self._transform_edges(i, j, k, m)
             # nearest neighbour interpolation
-            epsilon = 1e-6
             d_i = np.abs(scaling_func(self.nH_data[i]) - scaling_func(nH))
             d_j = np.abs(scaling_func(self.T_data[j]) - scaling_func(temperature))
             d_k = np.abs(scaling_func(self.Z_data[k]) - scaling_func(metallicity))
             d_m = np.abs(scaling_func(self.red_data[m]) - scaling_func(redshift))
-            weight = np.sqrt(d_i**2 + d_j**2 + d_k**2 + d_m**2 + epsilon)
+            distL2 = np.sqrt(d_i**2 + d_j**2 + d_k**2 + d_m**2)
+            if distL2 <= 0.0:
+                distL2 = epsilon
+            _all_weights.append(1 / distL2)
 
             batch_id = self._identify_batch(i, j, k, m)
 
@@ -257,12 +259,29 @@ class DataSift:
                     hdf = id_data["file"]
                     local_pos = self._get_counter(i, j, k, m) % self.batch_size - 1
 
-                    value = np.array(hdf[interp_data])[local_pos, :]
-                    interp_value += value / weight
+            value = np.array(hdf[interp_data])[local_pos, :]
 
-            inv_weight += 1 / weight
+            if cut[0] is not None:
+                value = np.piecewise(value, [value <= cut[0]], [cut[0], lambda x: x])
+            if cut[1] is not None:
+                value = np.piecewise(value, [value >= cut[1]], [cut[1], lambda x: x])
+            _all_values.append(value)
 
-        interp_value /= inv_weight
+        _all_values = np.array(_all_values)
+        _all_weights = np.array(_all_weights)
+        # Filter the outliers (deviation from mean across column is large)
+        _all_values[
+            (
+                np.abs(_all_values - np.mean(_all_values, axis=0))
+                > 2.0 * np.std(_all_values, axis=0)
+            )
+        ] = 0.0
+
+        # _median_value = np.median(_all_values, axis=0)
+        # thres = np.abs(interp_value-_median_value)/np.abs(interp_value+epsilon)
+        interp_value = np.array([_all_weights]) @ _all_values / np.sum(_all_weights)
+        interp_value = interp_value[0]
 
         for id_data in data:
             id_data["file"].close()
+        return interp_value

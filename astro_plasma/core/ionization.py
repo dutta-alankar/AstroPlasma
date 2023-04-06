@@ -96,18 +96,19 @@ class Ionization(DataSift):
 
         # element = 1: H, 2: He, 3: Li, ... 30: Zn
         # ion = 1 : neutral, 2: +, 3: ++ .... (element+1): (++++... element times)
-        self.fracIon = np.zeros((ion_count,), dtype=np.float64)
-        super()._interpolate(
+        # self.fracIon = np.zeros((ion_count,), dtype=np.float64)
+        fracIon = super()._interpolate(
             nH,
             temperature,
             metallicity,
             redshift,
             mode,
             f"output/fracIon/{mode}",
-            self.fracIon,
+            (ion_count,),
             lambda x: x,
+            (None, None),
         )
-        return self.fracIon
+        return fracIon
 
     def interpolate_ion_frac(
         self,
@@ -177,13 +178,12 @@ class Ionization(DataSift):
         # Select only the ions for the requested element
         slice_start = int((element - 1) * (element + 2) / 2)
         slice_stop = int(element * (element + 3) / 2)
-
-        self.fracIon = self._interpolate_ion_frac_all(
+        fracIon = self._interpolate_ion_frac_all(
             nH, temperature, metallicity, redshift, mode
         )[slice_start:slice_stop]
 
         # Array starts from 0 but ion from 1
-        return self.fracIon[ion - 1]  # This is in log10
+        return fracIon[ion - 1]  # This is in log10
 
     def interpolate_num_dens(
         self,
@@ -236,7 +236,7 @@ class Ionization(DataSift):
             )  # Till Zinc
         # element = 1: H, 2: He, 3: Li, ... 30: Zn
         # ion = 1 : neutral, 2: +, 3: ++ .... (element+1): (++++... element times)
-        self.fracIon = 10.0 ** self._interpolate_ion_frac_all(
+        fracIon = 10.0 ** self._interpolate_ion_frac_all(
             nH, temperature, metallicity, redshift, mode
         )
 
@@ -250,7 +250,7 @@ class Ionization(DataSift):
                             (ion + 1)
                             * (Xp(metallicity) / X_solar)
                             * abn[element]
-                            * self.fracIon[ion_count]
+                            * fracIon[ion_count]
                             * nH
                         )
                     elif element + 1 == 2:  # He
@@ -258,7 +258,7 @@ class Ionization(DataSift):
                             (ion + 1)
                             * (Yp(metallicity) / Y_solar)
                             * abn[element]
-                            * self.fracIon[ion_count]
+                            * fracIon[ion_count]
                             * nH
                         )
                     else:
@@ -266,7 +266,7 @@ class Ionization(DataSift):
                             (ion + 1)
                             * (Zp(metallicity) / Z_solar)
                             * abn[element]
-                            * self.fracIon[ion_count]
+                            * fracIon[ion_count]
                             * nH
                         )
                     ion_count += 1
@@ -283,7 +283,7 @@ class Ionization(DataSift):
                             * (Xp(metallicity) / X_solar)
                             * nH
                             * abn[element]
-                            * self.fracIon[ion_count]
+                            * fracIon[ion_count]
                         )
                     elif element + 1 == 2:  # He
                         ne += (
@@ -291,7 +291,7 @@ class Ionization(DataSift):
                             * (Yp(metallicity) / Y_solar)
                             * nH
                             * abn[element]
-                            * self.fracIon[ion_count]
+                            * fracIon[ion_count]
                         )
                     else:
                         ne += (
@@ -314,14 +314,14 @@ class Ionization(DataSift):
                             (Xp(metallicity) / X_solar)
                             * nH
                             * abn[element]
-                            * self.fracIon[ion_count]
+                            * fracIon[ion_count]
                         )
                     elif element + 1 == 2:  # He
                         nion += (
                             (Yp(metallicity) / Y_solar)
                             * nH
                             * abn[element]
-                            * self.fracIon[ion_count]
+                            * fracIon[ion_count]
                         )
                     else:
                         nion += (
@@ -329,7 +329,7 @@ class Ionization(DataSift):
                             * (Zp(metallicity) / Z_solar)
                             * nH
                             * abn[element]
-                            * self.fracIon[ion_count]
+                            * fracIon[ion_count]
                         )
                     ion_count += 1
             return nion

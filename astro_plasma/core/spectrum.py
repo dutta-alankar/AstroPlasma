@@ -96,14 +96,15 @@ class EmissionSpectrum(DataSift):
         self.spectrum = np.zeros((self.energy.shape[0], 2))
         self.spectrum[:, 0] = self.energy
 
-        super()._interpolate(
+        self.spectrum[:, 1] = super()._interpolate(
             nH,
             temperature,
             metallicity,
             redshift,
             mode,
             f"output/emission/{mode}/total",
-            self.spectrum[:, 1],
+            (self.spectrum.shape[0],),
             scaling_func,
+            (None, None),  # threshold cuts
         )
         return self.spectrum
