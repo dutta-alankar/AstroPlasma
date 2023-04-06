@@ -175,7 +175,7 @@ class DataSift:
         redshift,
         mode,
         interp_data: str,
-        interp_value_shape: np.array,
+        interp_value_shape: tuple,
         scaling_func: Callable = lambda x: x,
         cut=(None, None),
     ):
