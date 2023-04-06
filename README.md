@@ -8,8 +8,13 @@ A Cloudy database with functions to quickly interpolate physical state of astrop
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/charliermarsh/ruff/main/assets/badge/v1.json)](https://github.com/charliermarsh/ruff)
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/39578361/230400627-bf897098-c182-4de4-ae79-add645215ad4.png">
+  <img alt="" src="https://user-images.githubusercontent.com/39578361/230400616-3b6d7f1a-6520-4a39-b695-c9d99bf214a8.png">
+</picture>
 
 ## Install
+
 
 > **Note** Use the pypoetry tool to install directly from the server
 
