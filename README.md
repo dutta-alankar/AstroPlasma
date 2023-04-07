@@ -1,6 +1,6 @@
 ![image](https://user-images.githubusercontent.com/39578361/210923881-79133580-b2b7-4e4c-8e0d-dc0b4dd4a691.png)
 
-A Cloudy database with functions to quickly interpolate physical state of astrophysical plasma without detailed Plasma modelling.
+A *Cloudy* database with functions to quickly interpolate physical state of astrophysical plasma without detailed Plasma modelling. Running Cloudy models on the fly, escpecially when there are lot of models to run with different parameters can become extremely expensive. `AstroPlasma` aims to provide a workaround by using a library of pre-computed cloudy models to generate most of the common plasma properties for a large range of parameter space by interpolation. Owing to a simple and easy to use interface, `AstroPlasma` also provides an abstraction layer enabling the user to get the plasma properties without worrying much about the details of plasma modelling. We find this extremely useful while building models and predicting observables like column densities in different kinds of astrophysical systems.
 
 [![GitHub](https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white)](https://github.com/dutta-alankar/AstroPlasma)
 
@@ -17,7 +17,8 @@ A Cloudy database with functions to quickly interpolate physical state of astrop
 </picture>
 
 ## Install
-This is just a one-time process
+This is just a one-time process.
+
 1. Get the AstroPlasma code:
 ```
 git clone https://github.com/dutta-alankar/AstroPlasma.git
@@ -26,7 +27,7 @@ git clone https://github.com/dutta-alankar/AstroPlasma.git
 ```
 cd AstroPlasma
 ```
-3. use a virtualenv and install astro_plasma:
+3. Use a virtual envinronment (named `venv` here) and install AstroPlasma:
 ```
 python -m venv venv
 source venv/bin/activate
@@ -36,18 +37,18 @@ python -m pip install --editable .
 ```
 python -m pip install -r requirements.txt
 ```
-At any point later, in order to use AstroPlasma, activate the new virtualenv:
+At any point later, in order to use AstroPlasma, just activate this virtual environment:
 ```
 source venv/bin/activate
 ```
 # User Guide
 
-## This is a notebook that demonstrate the basic usage of `AstroPlasma`
-A `jupyter-notebook` of the User guide can be found in the `tests` directory.
+## This is a notebook that demonstrates the basic usage of `AstroPlasma`
+>  **Info**: A `jupyter-notebook` of this User guide can be found in the `tests` directory.
 
 ### Ionization modeling
 
-This is how one would use astro_plasma for calculating ionization state of a plasma. This would be useful in any modeling that depends on calculating ionization of the plasma. Determining temperautre from density, calculating the free electron density in the plasma are few such examples where `AstroPlasma` can find application.
+This is how one would use astro_plasma for calculating ionization state of any typical astrophysical plasma. This would be useful in any modeling that depends on calculating the ionization of the plasma. Determining temperautre from density, calculating the free electron density in the plasma are few such examples where `AstroPlasma` can find application.
 
 
 ```python
