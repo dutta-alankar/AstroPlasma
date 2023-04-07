@@ -3,6 +3,7 @@
 A Cloudy database with functions to quickly interpolate physical state of astrophysical plasma without detailed Plasma modelling.
 
 [![GitHub](https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white)](https://github.com/dutta-alankar/AstroPlasma)
+
 [![PyPI](https://img.shields.io/badge/requires-Python%20≥%203.10-blue?logo=python&logoColor=white)](https://www.python.org/downloads/release/python-3100/)
 
 <!--- Tests and style --->
