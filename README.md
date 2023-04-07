@@ -54,7 +54,7 @@ This is how one would use astro_plasma for calculating ionization state of a pla
 from astro_plasma import Ionization
 ```
 
-#### Let us calculate ionization fraction of $\bf{OVI\ (O^{5+}})$ 
+#### Let us calculate ionization fraction of $\bf{OVI\ (O^{5+}})$
 
 In `AstroPlasma` elements are labelled by their atomic number.
 - Atomic number of the desired element is passed to the `element` argument in several functions of `AstroPlasma`. For example, Oxygen corresponds to `element=8`.
@@ -77,7 +77,7 @@ redshift = 0.001 # Cosmological redshift
 mode = "CIE"
 ```
 
-**Note**: The mode passed in the above code refers to the equilibrium state of the plasma. Right now, `AstroPlasma` only supports two equilibrium conditions, namely, *collisional ionization equilibrium* (`CIE` in code) and *photo-ionization equilibrium* (`PIE` in code). 
+**Note**: The mode passed in the above code refers to the equilibrium state of the plasma. Right now, `AstroPlasma` only supports two equilibrium conditions, namely, *collisional ionization equilibrium* (`CIE` in code) and *photo-ionization equilibrium* (`PIE` in code).
 
 For *photo-ionization equilibrium*, the photo-ionizing backgrounds that are used in the calculation of the *Cloudy* interpolation tables are *Haardt-Madau (2012)* extra-galactic UV/X-ray diffuse background and *Cosmic Microwave Background (CMB)* at any given redshift.
 
@@ -101,8 +101,8 @@ print(f"f_OVI = {fOVI:.3e}")
     f_OVI = 9.463e-02
 
 
-**Note**: 
-- Ionization fraction returned by `AstroPlasma` is in **log10** scale. 
+**Note**:
+- Ionization fraction returned by `AstroPlasma` is in **log10** scale.
 - As of now, we **do not** support vectorization of these functions and indivdual values must be passed and **not** arrays. This can lead to errors or un-defined behavior.
 
 One can also caluculate other plasma quantities as follows
