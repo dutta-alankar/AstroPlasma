@@ -244,8 +244,12 @@ class DataSift:
             i, j, k, m = self._transform_edges(i, j, k, m)
             # nearest neighbour interpolation
             d_i = np.abs(scaling_func(self.nH_data[i]) - scaling_func(float(nH)))
-            d_j = np.abs(scaling_func(self.T_data[j]) - scaling_func(float(temperature)))
-            d_k = np.abs(scaling_func(self.Z_data[k]) - scaling_func(float(metallicity)))
+            d_j = np.abs(
+                scaling_func(self.T_data[j]) - scaling_func(float(temperature))
+            )
+            d_k = np.abs(
+                scaling_func(self.Z_data[k]) - scaling_func(float(metallicity))
+            )
             d_m = np.abs(scaling_func(self.red_data[m]) - scaling_func(float(redshift)))
             distL2 = np.sqrt(d_i**2 + d_j**2 + d_k**2 + d_m**2)
             if distL2 <= 0.0:
@@ -279,7 +283,7 @@ class DataSift:
 
         # _median_value = np.median(_all_values, axis=0)
         interp_value = _all_weights.T @ _all_values / np.sum(_all_weights)
-        # if (len(interp_value.shape)==2): 
+        # if (len(interp_value.shape)==2):
         #     interp_value = interp_value[0]
 
         for id_data in data:

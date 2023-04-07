@@ -96,7 +96,7 @@ class Ionization(DataSift):
 
         # element = 1: H, 2: He, 3: Li, ... 30: Zn
         # ion = 1 : neutral, 2: +, 3: ++ .... (element+1): (++++... element times)
-        
+
         fracIon = super()._interpolate(
             nH,
             temperature,
