@@ -96,7 +96,7 @@ class Ionization(DataSift):
 
         # element = 1: H, 2: He, 3: Li, ... 30: Zn
         # ion = 1 : neutral, 2: +, 3: ++ .... (element+1): (++++... element times)
-        # self.fracIon = np.zeros((ion_count,), dtype=np.float64)
+        
         fracIon = super()._interpolate(
             nH,
             temperature,
@@ -299,7 +299,7 @@ class Ionization(DataSift):
                             * (Zp(metallicity) / Z_solar)
                             * nH
                             * abn[element]
-                            * self.fracIon[ion_count]
+                            * fracIon[ion_count]
                         )
                     ion_count += 1
             return ne

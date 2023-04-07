@@ -110,6 +110,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+venv/*
 
 # Spyder project settings
 .spyderproject
@@ -138,7 +139,7 @@ astro_plasma/data/emission/
 astro_plasma/data/ionization/
 auto/
 data/
-tests/ionization-test.png
+tests/*.png
 
 cloudy.exe
 .h5
