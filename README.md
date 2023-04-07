@@ -1,6 +1,8 @@
 ![image](https://user-images.githubusercontent.com/39578361/210923881-79133580-b2b7-4e4c-8e0d-dc0b4dd4a691.png)
 
-A *Cloudy* database with functions to quickly interpolate physical state of astrophysical plasma without detailed Plasma modelling. Running Cloudy models on the fly, escpecially when there are lot of models to run with different parameters can become extremely expensive. `AstroPlasma` aims to provide a workaround by using a library of pre-computed cloudy models to generate most of the common plasma properties for a large range of parameter space by interpolation. Owing to a simple and easy to use interface, `AstroPlasma` also provides an abstraction layer enabling the user to get the plasma properties without worrying much about the details of plasma modelling. We find this extremely useful while building models and predicting observables like column densities in different kinds of astrophysical systems.
+#### A *Cloudy* database with functions to quickly interpolate physical state of astrophysical plasma without detailed Plasma modelling. ####
+
+Running Cloudy models on the fly, escpecially when there are lot of models to run with different parameters can become extremely expensive. `AstroPlasma` aims to provide a workaround by using a library of pre-computed cloudy models to generate most of the common plasma properties for a large range of parameter space by interpolation. Owing to a simple and easy to use interface, `AstroPlasma` also provides an abstraction layer enabling the user to get the plasma properties without worrying much about the details of plasma modelling. We find this extremely useful while building models and predicting observables like column densities in different kinds of astrophysical systems.
 
 [![GitHub](https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white)](https://github.com/dutta-alankar/AstroPlasma)
 
