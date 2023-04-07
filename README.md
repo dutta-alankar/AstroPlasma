@@ -230,7 +230,7 @@ plt.xlim(xmin = 1.0e-10, xmax=3.2)
 plt.show()
 ```
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/39578361/230584070-2531cb88-2843-4b79-9742-e95eb8ec8009.png">
+  <source media="(prefers-color-scheme: dark)" srcset="https://user-images.githubusercontent.com/39578361/230588683-814f6f71-c74c-4ea1-8c9d-fac36e4cf449.png">
   <img alt="" src="https://user-images.githubusercontent.com/39578361/230584140-22f3b235-e117-4247-8483-afd6e2280d0c.png">
 </picture>
 
