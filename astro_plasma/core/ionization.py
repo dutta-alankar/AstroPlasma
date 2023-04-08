@@ -193,14 +193,16 @@ class Ionization(DataSift):
             The value is in log10.
 
         """
-        if type(element) != AtmElement:
+        if not(type(element) == AtmElement or type(element) == int):
             elm_match = re.match(r"^([A-Z][a-z]?)([IVX]+)$", element)
             if elm_match:
-                element, ion_symbol = elm_match.groups()
-                ion = roman_to_int(ion_symbol)
-            element = AtmElement.parse(element)
-
-        elm_atm_no = element.to_atm_no()
+                _element, _ion_symbol = elm_match.groups()
+                ion = roman_to_int(_ion_symbol)
+            elm_atm_no = AtmElement.parse(_element).to_atm_no()
+        elif type(element) == int:
+            elm_atm_no = element
+        elif type(element) == AtmElement:
+            elm_atm_no = element.to_atm_no()
 
         # element = 1: H, 2: He, 3: Li, ... 30: Zn
         # ion = 1 : neutral, 2: +, 3: ++ .... (element+1): (++++... element times)
