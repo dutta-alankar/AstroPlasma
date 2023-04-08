@@ -19,6 +19,7 @@ from tqdm import tqdm
 from enum import Enum
 
 LOCAL_DATA_PATH = Path(__file__).parent.parent / "data"
+ROMAN_DICT = {"I": 1, "V": 5, "X": 10}
 
 # load env file to os.environ and can be access from os.getenv()
 load_dotenv()
@@ -74,6 +75,19 @@ class AtmElement(Enum):
 
     def to_atm_no(self):
         return self.value[1]
+
+
+def roman_to_int(s):
+    result = 0
+    prev_val = 0
+    for c in s[::-1]:
+        val = ROMAN_DICT[c]
+        if val < prev_val:
+            result -= val
+        else:
+            result += val
+        prev_val = val
+    return result
 
 
 def fetch(urls: List[Tuple[str, Path]], base_dir: Path):

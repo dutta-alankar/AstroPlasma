@@ -4,6 +4,7 @@
 """
 
 # Built-in imports
+import re
 from pathlib import Path
 from typing import Optional, Union, Set
 
@@ -14,7 +15,7 @@ import numpy as np
 # Local package imports
 from .constants import mH, mp, X_solar, Y_solar, Z_solar, Xp, Yp, Zp
 from .datasift import DataSift
-from .utils import fetch, LOCAL_DATA_PATH, AtmElement
+from .utils import fetch, roman_to_int, LOCAL_DATA_PATH, AtmElement
 
 DEFAULT_BASE_DIR = LOCAL_DATA_PATH / "ionization"
 FILE_NAME_TEMPLATE = "ionization.b_{:06d}.h5"
@@ -193,6 +194,10 @@ class Ionization(DataSift):
 
         """
         if type(element) != AtmElement:
+            elm_match = re.match(r"^([A-Z][a-z]?)([IVX]+)$", element)
+            if elm_match:
+                element, ion_symbol = elm_match.groups()
+                ion = roman_to_int(ion_symbol)
             element = AtmElement.parse(element)
 
         elm_atm_no = element.to_atm_no()
