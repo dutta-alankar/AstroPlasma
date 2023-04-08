@@ -143,8 +143,8 @@ class Ionization(DataSift):
         temperature: Union[int, float] = 2.7e6,
         metallicity: Union[int, float] = 0.5,
         redshift: Union[int, float] = 0.2,
-        element: Union[str, int, AtmElement] = AtmElement.Helium,
-        ion: int = 1,
+        element: Union[int, AtmElement, str] = AtmElement.Helium,
+        ion: Union[int, None] = 1,
         mode: str = "PIE",
     ) -> float:
         """
