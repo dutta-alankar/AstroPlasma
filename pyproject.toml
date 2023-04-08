@@ -22,8 +22,8 @@ scipy = "1.9.3"
 
 
 [tool.poetry.group.dev.dependencies]
-ruff = "^0.0.258"
 black = "^23.1.0"
+ruff = "^0.0.261"
 
 [build-system]
 requires = ["poetry-core"]
