@@ -199,10 +199,12 @@ class Ionization(DataSift):
 
         # element = 1: H, 2: He, 3: Li, ... 30: Zn
         # ion = 1 : neutral, 2: +, 3: ++ .... (element+1): (++++... element times)
-        if ion < 0 or ion > element + 1:
-            raise ValueError(f"Problem! Invalid ion {ion} for element {element}.")
-        if element < 0 or element > 30:
-            raise ValueError(f"Problem! Invalid ion {ion} for element {element}.")
+        if ion < 0 or ion > elm_atm_no + 1:
+            print("Problem! Invalid ion %d for element %d." % (ion, elm_atm_no))
+            return None
+        if elm_atm_no < 0 or elm_atm_no > 30:
+            print("Problem! Invalid element %d." % elm_atm_no)
+            return None
 
         # Select only the ions for the requested element
         slice_start = int((elm_atm_no - 1) * (elm_atm_no + 2) / 2)
