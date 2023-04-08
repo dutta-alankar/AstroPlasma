@@ -1,6 +1,6 @@
 ![image](https://user-images.githubusercontent.com/39578361/210923881-79133580-b2b7-4e4c-8e0d-dc0b4dd4a691.png)
 
-#### A *Cloudy* database with functions to quickly interpolate physical state of astrophysical plasma without detailed Plasma modelling. ####
+> A *Cloudy* database with functions to quickly interpolate physical state of astrophysical plasma without detailed Plasma modelling
 
 Running Cloudy models on the fly, escpecially when there are lot of models to run with different parameters can become extremely expensive. `AstroPlasma` aims to provide a workaround by using a library of pre-computed cloudy models to generate most of the common plasma properties for a large range of parameter space by interpolation. Owing to a simple and easy to use interface, `AstroPlasma` also provides an abstraction layer enabling the user to get the plasma properties without worrying much about the details of plasma modelling. We find this extremely useful while building models and predicting observables like column densities in different kinds of astrophysical systems.
 
@@ -61,6 +61,7 @@ This is how one would use astro_plasma for calculating ionization state of any t
 ```python
 # Import AstroPlasma Ionization module
 from astro_plasma import Ionization
+from astro_plasma.core.utils import AtmElement
 ```
 
 #### Let us calculate ionization fraction of $\bf{OVI\ (O^{5+}})$
@@ -113,6 +114,22 @@ print(f"f_OVI = {fOVI:.3e}")
 **Note**:
 - Ionization fraction returned by `AstroPlasma` is in **log10** scale.
 - As of now, we **do not** support vectorization of these functions and indivdual values must be passed and **not** arrays. This can lead to errors or un-defined behavior.
+- You can provide element and ions in 4 ways
+  ```python
+  # Using atomic number and ion count (int version of roman)
+  fIon(element=8, ion=6) # OVI
+
+  # Using symbol of the element
+  fIon(element='O', ion=6) # OVI
+
+  # Using AtmElement for element
+  fIon(element=AtmElement.Oxygen, ion=6)  # OVI
+
+  # Using element and ion in one string
+  # In this case explicit value of ion will be ignored
+  fIon(element='OVI')
+  ```
+  > **Note** We do encourage using last two methods to avoid any confusion to the reader.
 
 One can also caluculate other plasma quantities as follows
 
@@ -245,62 +262,6 @@ plt.show()
 </picture>
 
 > **Note** Use the pypoetry tool to install directly from the server
-
-<!-- ## Setup
-
-1. Clone the repository
-
-   ```sh
-   git clone git@github.com:dutta-alankar/AstroPlasma.git
-   cd AstroPlasma
-   ```
-
-2. Create and source a virtual environment (recommonded, but optional)
-
-   ```sh
-   virtualenv .venv
-   source .venv/bin/activate
-   ```
-
-3. Upgrade pip and install dependencies
-
-   ```sh
-   pip install -U pip
-   ```
-   For the user branch use:
-   ```
-   pip install -r requirements/requirements.txt
-   ```
-   For the developer branch use:
-   ```
-   pip install -r requirements/requirements-dev.txt
-   ```
-
-   > **Note** If you are maintaining or into development of this repository, please consider using [poetry](https://python-poetry.org/).
-
-4. Configure the environment file in the `.env` if you intent to change the behaviour. Check [Environment Variable Config](#environment-variable-config) for more information.
-
-5. Configure the web server in the `server/` directory and continue the setup instruction as described in the `server/README.md` starting from 3<sup>rd</sup> step.
-
-   > **Note** The `.env` file mentioned in the `server/README.md` file must be created in the `server/.env` file
-
-6. In a separate terminal session, run the webserver. Check out **Getting Started** section in the `server/README.md`
-
-## Getting Started
-
-Once you have performed the steps from the [Setup](#setup), you are good to go.
-
-![](https://i.imgur.com/uaQktlP.png)
-
-> **Note** This is the example usage intended for a quick demo. Do not use it from the python shell, rather import `ionization.py` and `spectrum.py` files in your application.
-
-## Environment Variable Config
-
-|    Variable Name    | Description |
-| :-----------------: | :---------- |
-|     CHUNK_SIZE      | (_Optional_) Amount of bytes of the file content to be downloaded and saved at a time. It should be adjusted based on the network bandwidth. Default is `4096` (aka 4 kB) |
-| WEB_SERVER_BASE_URL | (_Optional_) Base url of the downloader webserver (running from `server/` directory). It should only be set when that server is deployed on some remote web server or the default port is changed. Default is `http://localhost:8000` |
-| PARALLEL_DOWNLOAD_JOBS | (_Optional_) Number of file download jobs to run parallely. Default is `3` |  -->
 
 Note: We haven't made the server online yet. As a temporary measure, please download and use the data hosted [here](https://indianinstituteofscience-my.sharepoint.com/:f:/g/personal/alankardutta_iisc_ac_in/EhdL9SYY45FOq7zjrWGD0NQBcy3pn6oTP2B9pGhxPwLnkQ?e=E956ug):
 
