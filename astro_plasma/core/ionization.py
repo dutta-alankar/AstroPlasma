@@ -194,11 +194,13 @@ class Ionization(DataSift):
 
         """
         if not(type(element) == AtmElement or type(element) == int):
-            elm_match = re.match(r"^([A-Z][a-z]?)([IVX]+)$", element)
+            elm_match = re.match(r"^([A-Z][a-z]?)([IVX]+)$", str(element).upper())
             if elm_match:
                 _element, _ion_symbol = elm_match.groups()
                 ion = roman_to_int(_ion_symbol)
-            elm_atm_no = AtmElement.parse(_element).to_atm_no()
+            else:
+                raise ValueError(f"Invalid/Unsupported value of element: {element}.")
+            elm_atm_no = AtmElement.parse(str(_element)).to_atm_no()
         elif type(element) == int:
             elm_atm_no = element
         elif type(element) == AtmElement:
