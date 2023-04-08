@@ -61,7 +61,7 @@ This is how one would use astro_plasma for calculating ionization state of any t
 ```python
 # Import AstroPlasma Ionization module
 from astro_plasma import Ionization
-from astro_plasma.core.utils import AtmElement
+from astro_plasma.core.utils import AtmElement # for element naming using symbols (optional)
 ```
 
 #### Let us calculate ionization fraction of $\bf{OVI\ (O^{5+}})$
