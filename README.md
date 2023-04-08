@@ -227,7 +227,6 @@ print(f"Mean ion mass = {mu_i:.2f} mp")
 ```python
 # Import AstroPlasma EmissionSpectrum module
 from astro_plasma import EmissionSpectrum
-from astro_plasma.core.utils import AtmElement
 ```
 
 
