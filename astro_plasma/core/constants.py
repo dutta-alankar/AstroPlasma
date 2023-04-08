@@ -6,6 +6,7 @@ Created on Fri Aug 26 14:19:12 2022
 """
 
 import numpy as np
+from typing import Union, List
 
 ## useful constants
 yr = 365 * 24 * 60**2
@@ -32,13 +33,25 @@ Y_solar = 0.2703
 Z_solar = 0.0143
 
 
-def Xp(metallicity):
+def Xp(
+    metallicity: Union[float, int, List[Union[int, float]], np.ndarray]
+) -> Union[float, np.ndarray]:
+    if isinstance(metallicity, list):
+        metallicity = np.array(metallicity)
     return X_solar * (1 - metallicity * Z_solar) / (X_solar + Y_solar)
 
 
-def Yp(metallicity):
+def Yp(
+    metallicity: Union[float, int, List[Union[int, float]], np.ndarray]
+) -> Union[float, np.ndarray]:
+    if isinstance(metallicity, list):
+        metallicity = np.array(metallicity)
     return Y_solar * (1 - metallicity * Z_solar) / (X_solar + Y_solar)
 
 
-def Zp(metallicity):
+def Zp(
+    metallicity: Union[float, int, List[Union[int, float]], np.ndarray]
+) -> Union[float, np.ndarray]:
+    if isinstance(metallicity, list):
+        metallicity = np.array(metallicity)
     return metallicity * Z_solar

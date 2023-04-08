@@ -15,6 +15,15 @@ repos:
   - id: check-executables-have-shebangs
   - id: check-toml
 
+- repo: https://github.com/pre-commit/mirrors-mypy
+  rev: v0.910
+  hooks:
+  - id: mypy
+    pass_filenames: false
+    entry: mypy
+    args: [--ignore-missing-imports, --no-strict-optional, --no-implicit-optional, --explicit-package-bases, --namespace-packages, ./astro_plasma]
+    additional_dependencies: [types-requests >= 2.28.0]
+
 - repo: https://github.com/psf/black
   rev: 23.3.0
   hooks:

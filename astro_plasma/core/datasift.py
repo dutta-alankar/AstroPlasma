@@ -7,15 +7,18 @@ Created on Tue Apr  4 21:30:23 2023
 
 import numpy as np
 from itertools import product
-from .utils import fetch
-from typing import Callable
+from pathlib import Path
+from typing import Callable, Optional, Union, Tuple, List, Set
 import h5py
 
 _warn = False
 
 
 class DataSift:
-    def __init__(self, data):
+    def __init__(
+        self: "DataSift",
+        data: h5py.File,
+    ) -> None:
         """
         Prepares the location to read data for interpolation.
 
@@ -32,11 +35,11 @@ class DataSift:
         self.batch_size = np.prod(np.array(data["header/batch_dim"]))
         self.total_size = np.prod(np.array(data["header/total_size"]))
 
-    def _identify_batch(self, i, j, k, m):
+    def _identify_batch(self: "DataSift", i: int, j: int, k: int, m: int) -> int:
         batch_id = self._get_counter(i, j, k, m) // self.batch_size
         return batch_id
 
-    def _get_counter(self, i, j, k, m):
+    def _get_counter(self: "DataSift", i: int, j: int, k: int, m: int) -> int:
         counter = (
             (m) * self.Z_data.shape[0] * self.T_data.shape[0] * self.nH_data.shape[0]
             + (k) * self.T_data.shape[0] * self.nH_data.shape[0]
@@ -45,7 +48,9 @@ class DataSift:
         )
         return counter
 
-    def _transform_edges(self, i, j, k, m):
+    def _transform_edges(
+        self: "DataSift", i: int, j: int, k: int, m: int
+    ) -> Tuple[int, int, int, int]:
         # Detect the edge cases
         if i == self.nH_data.shape[0]:
             if _warn:
@@ -81,7 +86,13 @@ class DataSift:
             m = m + 1
         return (i, j, k, m)
 
-    def _find_all_batches(self, nH, temperature, metallicity, redshift):
+    def _find_all_batches(
+        self: "DataSift",
+        nH: Union[int, float],
+        temperature: Union[int, float],
+        metallicity: Union[int, float],
+        redshift: Union[int, float],
+    ) -> Set[int]:
         """
         Find the batches needed from the data files.
 
@@ -154,31 +165,30 @@ class DataSift:
         # print("Batches involved: ", batch_ids)
         # later use this logic to fetch batches from cloud if not present
 
-        urls = []
-        for batch_id in batch_ids:
-            urls.append(
-                (
-                    self.base_url_template.format(batch_id),
-                    self.file_name_template.format(batch_id),
-                )
-            )
-
-        fetch(urls=urls, base_dir=self.base_dir)
+        self._fetch_data(batch_ids)
 
         return batch_ids
 
+    def _fetch_data(self: "DataSift", batch_ids: Set[int]) -> None:
+        pass
+
+    def _get_file_path(self: "DataSift", batch_id: int) -> Path:
+        pass
+
     def _interpolate(
-        self,
-        nH,
-        temperature,
-        metallicity,
-        redshift,
-        mode,
+        self: "DataSift",
+        nH: Union[int, float],
+        temperature: Union[int, float],
+        metallicity: Union[int, float],
+        redshift: Union[int, float],
+        mode: str,
         interp_data: str,
-        interp_value_shape: tuple,
+        interp_value_shape: Union[Tuple[int], List[int]],
         scaling_func: Callable = lambda x: x,
-        cut=(None, None),
-    ):
+        cut: Tuple[
+            Optional[Union[None, float, int]], Optional[Union[None, float, int]]
+        ] = (None, None),
+    ) -> np.ndarray:
         """
         Interpolate emission spectrum from pre-computed Cloudy table.
 
@@ -210,10 +220,12 @@ class DataSift:
             carried out.
             The default is linear. log10 is another popular choice.
         cut : upper and lower bound on  data
+            The default is (None, None)
 
         Returns
         -------
-        None.
+        interp_value : np.ndarray
+            The interpolated result.
         """
 
         if mode != "PIE" and mode != "CIE":
@@ -228,7 +240,7 @@ class DataSift:
 
         data = []
         for batch_id in batch_ids:
-            file = self.base_dir / self.file_name_template.format(batch_id)
+            file = self._get_file_path(batch_id)
             hdf = h5py.File(file, "r")
             data.append({"batch_id": batch_id, "file": hdf})
 
@@ -271,18 +283,18 @@ class DataSift:
                 value = np.piecewise(value, [value >= cut[1]], [cut[1], lambda x: x])
             _all_values.append(value)
 
-        _all_values = np.array(_all_values)
-        _all_weights = np.array(_all_weights)
+        all_values = np.array(_all_values)
+        all_weights = np.array(_all_weights)
         # Filter the outliers (deviation from mean across column is large)
-        _all_values[
+        all_values[
             (
-                np.abs(_all_values - np.mean(_all_values, axis=0))
-                > 2.0 * np.std(_all_values, axis=0)
+                np.abs(all_values - np.mean(all_values, axis=0))
+                > 2.0 * np.std(all_values, axis=0)
             )
         ] = 0.0
 
         # _median_value = np.median(_all_values, axis=0)
-        interp_value = _all_weights.T @ _all_values / np.sum(_all_weights)
+        interp_value = all_weights.T @ all_values / np.sum(all_weights)
         # if (len(interp_value.shape)==2):
         #     interp_value = interp_value[0]
 

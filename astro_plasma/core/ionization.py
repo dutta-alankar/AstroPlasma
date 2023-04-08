@@ -9,7 +9,7 @@ import numpy as np
 import h5py
 from .constants import mH, mp, X_solar, Y_solar, Z_solar, Xp, Yp, Zp
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union, Set
 from .utils import fetch, LOCAL_DATA_PATH
 from .datasift import DataSift
 
@@ -17,12 +17,15 @@ DEFAULT_BASE_DIR = LOCAL_DATA_PATH / "ionization"
 FILE_NAME_TEMPLATE = "ionization.b_{:06d}.h5"
 BASE_URL_TEMPLATE = "ionization/download/{:d}/"
 DOWNLOAD_IN_INIT = [
-    (BASE_URL_TEMPLATE.format(0), FILE_NAME_TEMPLATE.format(0)),
+    (BASE_URL_TEMPLATE.format(0), Path(FILE_NAME_TEMPLATE.format(0))),
 ]
 
 
 class Ionization(DataSift):
-    def __init__(self, base_dir: Optional[Path] = None):
+    def __init__(
+        self: "Ionization",
+        base_dir: Optional[Path] = None,
+    ) -> None:
         """
         Prepares the location to read data for generating ionization calculations.
 
@@ -33,9 +36,9 @@ class Ionization(DataSift):
         """
         self.base_url_template = BASE_URL_TEMPLATE
         self.file_name_template = FILE_NAME_TEMPLATE
-        self.base_dir = DEFAULT_BASE_DIR if base_dir is None else base_dir
-
-        if type(self.base_dir) == str:
+        if base_dir is None:
+            self.base_dir = DEFAULT_BASE_DIR
+        else:
             self.base_dir = Path(base_dir)
 
         if not self.base_dir.exists():
@@ -46,9 +49,29 @@ class Ionization(DataSift):
         super().__init__(data)
         data.close()
 
+    def _fetch_data(self: "Ionization", batch_ids: Set[int]) -> None:
+        urls = []
+        for batch_id in batch_ids:
+            urls.append(
+                (
+                    self.base_url_template.format(batch_id),
+                    Path(self.file_name_template.format(batch_id)),
+                )
+            )
+
+        fetch(urls=urls, base_dir=self.base_dir)
+
+    def _get_file_path(self: "Ionization", batch_id: int) -> Path:
+        return self.base_dir / self.file_name_template.format(batch_id)
+
     def _interpolate_ion_frac_all(
-        self, nH=1.2e-4, temperature=2.7e6, metallicity=0.5, redshift=0.2, mode="PIE"
-    ):
+        self: "Ionization",
+        nH: Union[int, float] = 1.2e-4,
+        temperature: Union[int, float] = 2.7e6,
+        metallicity: Union[int, float] = 0.5,
+        redshift: Union[int, float] = 0.2,
+        mode: str = "PIE",
+    ) -> np.ndarray:
         """
         Interpolates the ionization fraction of the plasma
         from pre-computed Cloudy models of ion networks.
@@ -111,15 +134,15 @@ class Ionization(DataSift):
         return fracIon
 
     def interpolate_ion_frac(
-        self,
-        nH=1.2e-4,
-        temperature=2.7e6,
-        metallicity=0.5,
-        redshift=0.2,
-        element=2,
-        ion=1,
-        mode="PIE",
-    ):
+        self: "Ionization",
+        nH: Union[int, float] = 1.2e-4,
+        temperature: Union[int, float] = 2.7e6,
+        metallicity: Union[int, float] = 0.5,
+        redshift: Union[int, float] = 0.2,
+        element: int = 2,
+        ion: int = 1,
+        mode: str = "PIE",
+    ) -> float:
         """
         Interpolates the ionization fraction of the plasma
         from pre-computed Cloudy models of ion networks.
@@ -169,11 +192,9 @@ class Ionization(DataSift):
         # element = 1: H, 2: He, 3: Li, ... 30: Zn
         # ion = 1 : neutral, 2: +, 3: ++ .... (element+1): (++++... element times)
         if ion < 0 or ion > element + 1:
-            print("Problem! Invalid ion %d for element %d." % (ion, element))
-            return None
+            raise ValueError(f"Problem! Invalid ion {ion} for element {element}.")
         if element < 0 or element > 30:
-            print("Problem! Invalid element %d." % element)
-            return None
+            raise ValueError(f"Problem! Invalid ion {ion} for element {element}.")
 
         # Select only the ions for the requested element
         slice_start = int((element - 1) * (element + 2) / 2)
@@ -186,14 +207,14 @@ class Ionization(DataSift):
         return fracIon[ion - 1]  # This is in log10
 
     def interpolate_num_dens(
-        self,
-        nH=1.2e-4,
-        temperature=2.7e6,
-        metallicity=0.5,
-        redshift=0.2,
-        mode="PIE",
-        part_type="electron",
-    ):
+        self: "Ionization",
+        nH: Union[int, float] = 1.2e-4,
+        temperature: Union[int, float] = 2.7e6,
+        metallicity: Union[int, float] = 0.5,
+        redshift: Union[int, float] = 0.2,
+        mode: str = "PIE",
+        part_type: str = "electron",
+    ) -> float:
         """
         Interpolates the number density of different species
         or the total number density of the plasma
@@ -335,18 +356,17 @@ class Ionization(DataSift):
             return nion
 
         else:
-            print(f"Invalid part_type: {part_type}")
-        return None
+            raise ValueError(f"Invalid part_type: {part_type}")
 
     def interpolate_mu(
-        self,
-        nH=1.2e-4,
-        temperature=2.7e6,
-        metallicity=0.5,
-        redshift=0.2,
-        mode="PIE",
-        part_type="all",
-    ):
+        self: "Ionization",
+        nH: Union[int, float] = 1.2e-4,
+        temperature: Union[int, float] = 2.7e6,
+        metallicity: Union[int, float] = 0.5,
+        redshift: Union[int, float] = 0.2,
+        mode: str = "PIE",
+        part_type: str = "all",
+    ) -> float:
         """
         Interpolates the mean particle mass of the plasma
         from pre-computed Cloudy models of ion networks.
@@ -389,4 +409,4 @@ class Ionization(DataSift):
         ndens = self.interpolate_num_dens(
             nH, temperature, metallicity, redshift, mode, part_type
         )
-        return (nH / ndens) * (mH / mp) / Xp(metallicity)
+        return (nH / ndens) * (mH / mp) / float(Xp(metallicity))
