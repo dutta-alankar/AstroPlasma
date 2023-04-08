@@ -93,7 +93,7 @@ For *photo-ionization equilibrium*, the photo-ionizing backgrounds that are used
 
 ```python
 # Lets get the ionization of OVI
-element = 8
+element = AtmElement.Oxygen
 ion = 6
 fOVI = fIon(nH = nH,
             temperature = temperature,
@@ -210,6 +210,7 @@ print(f"Mean ion mass = {mu_i:.2f} mp")
 ```python
 # Import AstroPlasma EmissionSpectrum module
 from astro_plasma import EmissionSpectrum
+from astro_plasma.core.utils import AtmElement
 ```
 
 
