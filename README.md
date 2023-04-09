@@ -36,8 +36,13 @@ source venv/bin/activate
 python -m pip install --editable .
 ```
 4. Install the dependencies:
+For user,
 ```
-python -m pip install -r requirements.txt
+python -m pip install -r requirements/requirements.txt
+```
+For developer,
+```
+python -m pip install -r requirements/requirements-dev.txt
 ```
 At any point later, in order to use AstroPlasma, just activate this virtual environment:
 ```
