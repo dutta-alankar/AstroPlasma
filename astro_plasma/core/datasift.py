@@ -188,9 +188,10 @@ class DataSift(ABC):
         interp_data: str,
         interp_value_shape: Union[Tuple[int], List[int]],
         scaling_func: Callable = lambda x: x,
-        cut: Tuple[
-            Optional[Union[None, float, int]], Optional[Union[None, float, int]]
-        ] = (None, None),
+        cut: Tuple[Optional[Union[float, int]], Optional[Union[float, int]]] = (
+            None,
+            None,
+        ),
     ) -> np.ndarray:
         """
         Interpolate emission spectrum from pre-computed Cloudy table.
