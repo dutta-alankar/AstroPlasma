@@ -24,7 +24,6 @@ ruff = "^0.0.261"
 [tool.poetry.group.test.dependencies]
 matplotlib = "^3.7.1"
 
-
 [tool.poetry.group.cloudy_run.dependencies]
 mpi4py = "^3.1.4"
 
@@ -35,7 +34,9 @@ build-backend = "poetry.core.masonry.api"
 [tool.ruff]
 select = ["E", "F", "Q"]
 line-length = 160
-per-file-ignores = { "__init__.py"  = ["F401"] }
+
+[tool.ruff.per-file-ignores]
+"__init__.py"  = ["F401"]
 
 [tool.autopep8]
 max_line_length = 160
