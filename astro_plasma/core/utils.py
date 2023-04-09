@@ -63,7 +63,7 @@ class AtmElement(Enum):
     Zinc = ("Zn", 30)
 
     @staticmethod
-    def parse(predicate: Union[str, int]):
+    def parse(predicate: Union[str, int]) -> "AtmElement":
         idx = int(type(predicate) == int)
         error_label = "atomic number" if idx == 1 else "symbol"
 
@@ -73,7 +73,7 @@ class AtmElement(Enum):
 
         raise ValueError(f"Invalid {error_label} {predicate}.")
 
-    def to_atm_no(self):
+    def to_atm_no(self) -> int:
         return self.value[1]
 
 
