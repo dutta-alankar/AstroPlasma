@@ -193,27 +193,21 @@ class Ionization(DataSift):
             The value is in log10.
 
         """
-        if not (type(element) == AtmElement or type(element) == int):
-            elm_match = re.match(r"^([A-Z][a-z]?)([IVX]+)$", str(element).upper())
+        if type(element) != AtmElement:
+            elm_match = re.match(r"^([A-Z][a-z]?)([IVX]+)$", element)
             if elm_match:
-                _element, _ion_symbol = elm_match.groups()
-                ion = roman_to_int(_ion_symbol)
-            else:
-                raise ValueError(f"Invalid/Unsupported value of element: {element}.")
-            elm_atm_no = AtmElement.parse(str(_element)).to_atm_no()
-        elif type(element) == int:
-            elm_atm_no = element
-        elif type(element) == AtmElement:
-            elm_atm_no = element.to_atm_no()
+                element, ion_symbol = elm_match.groups()
+                ion = roman_to_int(ion_symbol)
+            element = AtmElement.parse(element)
+
+        elm_atm_no = element.to_atm_no()
 
         # element = 1: H, 2: He, 3: Li, ... 30: Zn
         # ion = 1 : neutral, 2: +, 3: ++ .... (element+1): (++++... element times)
         if ion < 0 or ion > elm_atm_no + 1:
-            print("Problem! Invalid ion %d for element %d." % (ion, elm_atm_no))
-            return None
+            raise ValueError(f"Problem! Invalid ion {ion} for element {elm_atm_no}.")
         if elm_atm_no < 0 or elm_atm_no > 30:
-            print("Problem! Invalid element %d." % elm_atm_no)
-            return None
+            raise ValueError(f"Problem! Invalid element {elm_atm_no}.")
 
         # Select only the ions for the requested element
         slice_start = int((elm_atm_no - 1) * (elm_atm_no + 2) / 2)
