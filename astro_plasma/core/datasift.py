@@ -49,9 +49,7 @@ class DataSift(ABC):
         )
         return counter
 
-    def _transform_edges(
-        self: "DataSift", i: int, j: int, k: int, m: int
-    ) -> Tuple[int, int, int, int]:
+    def _transform_edges(self: "DataSift", i: int, j: int, k: int, m: int) -> Tuple[int, int, int, int]:
         # Detect the edge cases
         if i == self.nH_data.shape[0]:
             if _warn:
@@ -260,12 +258,8 @@ class DataSift(ABC):
             i, j, k, m = self._transform_edges(i, j, k, m)
             # nearest neighbour interpolation
             d_i = np.abs(scaling_func(self.nH_data[i]) - scaling_func(float(nH)))
-            d_j = np.abs(
-                scaling_func(self.T_data[j]) - scaling_func(float(temperature))
-            )
-            d_k = np.abs(
-                scaling_func(self.Z_data[k]) - scaling_func(float(metallicity))
-            )
+            d_j = np.abs(scaling_func(self.T_data[j]) - scaling_func(float(temperature)))
+            d_k = np.abs(scaling_func(self.Z_data[k]) - scaling_func(float(metallicity)))
             d_m = np.abs(scaling_func(self.red_data[m]) - scaling_func(float(redshift)))
             distL2 = np.sqrt(d_i**2 + d_j**2 + d_k**2 + d_m**2)
             if distL2 <= 0.0:
@@ -290,12 +284,7 @@ class DataSift(ABC):
         all_values = np.array(_all_values)
         all_weights = np.array(_all_weights)
         # Filter the outliers (deviation from mean across column is large)
-        all_values[
-            (
-                np.abs(all_values - np.mean(all_values, axis=0))
-                > 2.0 * np.std(all_values, axis=0)
-            )
-        ] = 0.0
+        all_values[(np.abs(all_values - np.mean(all_values, axis=0)) > 2.0 * np.std(all_values, axis=0))] = 0.0
 
         # _median_value = np.median(_all_values, axis=0)
         interp_value = all_weights.T @ all_values / np.sum(all_weights)

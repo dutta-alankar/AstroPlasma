@@ -57,9 +57,7 @@ def fetch(urls: List[Tuple[str, Path]], base_dir: Path):
             progress.close()
             response.close()
 
-    with ThreadPoolExecutor(
-        max_workers=PARALLEL_JOBS, thread_name_prefix="cloudy_dnldr"
-    ) as pool:
+    with ThreadPoolExecutor(max_workers=PARALLEL_JOBS, thread_name_prefix="cloudy_dnldr") as pool:
         # iterative download and show progress bar using tqdm
         for url, save_path in downlodable_urls:
             url = urljoin(base=BASE_URL, url=url)

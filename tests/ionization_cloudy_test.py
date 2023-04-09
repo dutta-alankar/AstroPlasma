@@ -73,9 +73,7 @@ p = plt.loglog(
     label=r"$f_{OV}$",
     alpha=0.6,
 )
-fOV = interpolate.interp1d(
-    frac[:, 0], frac[:, ion]
-)  # temperature and ion fraction in log10
+fOV = interpolate.interp1d(frac[:, 0], frac[:, ion])  # temperature and ion fraction in log10
 plt.loglog(
     Temp,
     10.0 ** fOV(np.log10(Temp)),
@@ -105,9 +103,7 @@ p = plt.loglog(
     label=r"$f_{OVI}$",
     alpha=0.6,
 )
-fOVI = interpolate.interp1d(
-    frac[:, 0], frac[:, ion]
-)  # temperature and ion fraction in log10
+fOVI = interpolate.interp1d(frac[:, 0], frac[:, ion])  # temperature and ion fraction in log10
 plt.loglog(
     Temp,
     10.0 ** fOVI(np.log10(Temp)),
@@ -136,9 +132,7 @@ p = plt.loglog(
     label=r"$f_{OVII}$",
     alpha=0.6,
 )
-fOVII = interpolate.interp1d(
-    frac[:, 0], frac[:, ion]
-)  # temperature and ion fraction in log10
+fOVII = interpolate.interp1d(frac[:, 0], frac[:, ion])  # temperature and ion fraction in log10
 p = plt.loglog(
     Temp,
     10.0 ** fOVII(np.log10(Temp)),
@@ -167,9 +161,7 @@ p = plt.loglog(
     label=r"$f_{OVIII}$",
     alpha=0.6,
 )
-fOVIII = interpolate.interp1d(
-    frac[:, 0], frac[:, ion]
-)  # temperature and ion fraction in log10
+fOVIII = interpolate.interp1d(frac[:, 0], frac[:, ion])  # temperature and ion fraction in log10
 plt.loglog(
     Temp,
     10.0 ** fOVIII(np.log10(Temp)),
