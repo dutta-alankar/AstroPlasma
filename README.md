@@ -260,7 +260,14 @@ plt.show()
 
    ```sh
    pip install -U pip
-   pip install -r requirements.txt
+   ```
+   For the user branch use:
+   ```
+   pip install -r requirements/requirements.txt
+   ```
+   For the developer branch use:
+   ```
+   pip install -r requirements/requirements-dev.txt
    ```
 
    > **Note** If you are maintaining or into development of this repository, please consider using [poetry](https://python-poetry.org/).
