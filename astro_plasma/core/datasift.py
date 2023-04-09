@@ -5,6 +5,7 @@ Created on Tue Apr  4 21:30:23 2023
 @author: alankar
 """
 
+from abc import ABC, abstractmethod
 import numpy as np
 from itertools import product
 from pathlib import Path
@@ -14,7 +15,7 @@ import h5py
 _warn = False
 
 
-class DataSift:
+class DataSift(ABC):
     def __init__(
         self: "DataSift",
         data: h5py.File,
@@ -169,9 +170,11 @@ class DataSift:
 
         return batch_ids
 
+    @abstractmethod
     def _fetch_data(self: "DataSift", batch_ids: Set[int]) -> None:
         pass
 
+    @abstractmethod
     def _get_file_path(self: "DataSift", batch_id: int) -> Path:
         pass
 
