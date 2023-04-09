@@ -28,21 +28,11 @@ run_cloudy = True
 
 def ionFrac(nH=1e-4, temperature=1e6, metallicity=1.0, redshift=0.0, indx=99999):
     command = (
-        "./ionization_CIE "
-        + f"{nH:.2e} "
-        + f"{temperature:.2e} "
-        + f"{metallicity:.2e} "
-        + f"{redshift:.2f} {indx} "
-        + f"> ./auto/auto_CIE_{indx:09}.out"
+        "./ionization_CIE " + f"{nH:.2e} " + f"{temperature:.2e} " + f"{metallicity:.2e} " + f"{redshift:.2f} {indx} " + f"> ./auto/auto_CIE_{indx:09}.out"
     )
     os.system(command)
     command = (
-        "./ionization_PIE "
-        + f"{nH:.2e} "
-        + f"{temperature:.2e} "
-        + f"{metallicity:.2e} "
-        + f"{redshift:.2f} {indx} "
-        + f"> ./auto/auto_PIE_{indx:09}.out"
+        "./ionization_PIE " + f"{nH:.2e} " + f"{temperature:.2e} " + f"{metallicity:.2e} " + f"{redshift:.2f} {indx} " + f"> ./auto/auto_PIE_{indx:09}.out"
     )
     os.system(command)
     os.system(f"rm -rf ./auto/auto_CIE_{indx:09}.out")
@@ -59,9 +49,7 @@ temperature = np.logspace(3.8, 8, total_size[1])
 metallicity = np.logspace(-1, 1, total_size[2])
 redshift = np.linspace(0, 2, total_size[3])
 
-batches = int(np.prod(total_size) // np.prod(batch_dim)) + (
-    0 if (np.prod(total_size) % np.prod(batch_dim)) == 0 else 1
-)
+batches = int(np.prod(total_size) // np.prod(batch_dim)) + (0 if (np.prod(total_size) % np.prod(batch_dim)) == 0 else 1)
 
 values = list(product(redshift, metallicity, temperature, nH))  # itertools are lazy
 offsets = np.hstack(
@@ -121,12 +109,7 @@ if run_cloudy:
             np.where(metallicity == this_val[-3])[0][0],
             np.where(redshift == this_val[-4])[0][0],
         )
-        counter = (
-            (m) * metallicity.shape[0] * temperature.shape[0] * nH.shape[0]
-            + (k) * temperature.shape[0] * nH.shape[0]
-            + (j) * nH.shape[0]
-            + (i)
-        )
+        counter = (m) * metallicity.shape[0] * temperature.shape[0] * nH.shape[0] + (k) * temperature.shape[0] * nH.shape[0] + (j) * nH.shape[0] + (i)
         # if (resume and (counter<=start)):
         #     if rank==0: progbar.progress(min(indx+size, len(values)), len(values))
         #     continue
@@ -162,23 +145,12 @@ if rank <= batches - 1 and make_batch:
                 np.where(metallicity == this_val[-3])[0][0],
                 np.where(redshift == this_val[-4])[0][0],
             )
-            counter = (
-                (m) * metallicity.shape[0] * temperature.shape[0] * nH.shape[0]
-                + (k) * temperature.shape[0] * nH.shape[0]
-                + (j) * nH.shape[0]
-                + (i)
-            )
-            in_this_batch = (
-                counter >= offsets[batch_id] and counter < offsets[batch_id + 1]
-            )
+            counter = (m) * metallicity.shape[0] * temperature.shape[0] * nH.shape[0] + (k) * temperature.shape[0] * nH.shape[0] + (j) * nH.shape[0] + (i)
+            in_this_batch = counter >= offsets[batch_id] and counter < offsets[batch_id + 1]
             if not (in_this_batch):
                 continue
-            fracCIE[count, :] = np.loadtxt(
-                "./auto/ionization_CIE_%09d.txt" % counter, dtype=np.float32
-            )
-            fracPIE[count, :] = np.loadtxt(
-                "./auto/ionization_PIE_%09d.txt" % counter, dtype=np.float32
-            )
+            fracCIE[count, :] = np.loadtxt("./auto/ionization_CIE_%09d.txt" % counter, dtype=np.float32)
+            fracPIE[count, :] = np.loadtxt("./auto/ionization_PIE_%09d.txt" % counter, dtype=np.float32)
             count += 1
 
         # np.save('ionization.npy', data, allow_pickle=True)

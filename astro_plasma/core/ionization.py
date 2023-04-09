@@ -203,9 +203,7 @@ class Ionization(DataSift):
         # Select only the ions for the requested element
         slice_start = int((element - 1) * (element + 2) / 2)
         slice_stop = int(element * (element + 3) / 2)
-        fracIon = self._interpolate_ion_frac_all(
-            nH, temperature, metallicity, redshift, mode
-        )[slice_start:slice_stop]
+        fracIon = self._interpolate_ion_frac_all(nH, temperature, metallicity, redshift, mode)[slice_start:slice_stop]
 
         # Array starts from 0 but ion from 1
         return fracIon[ion - 1]  # This is in log10
@@ -256,14 +254,10 @@ class Ionization(DataSift):
         """
         abn_file = LOCAL_DATA_PATH / "solar_GASS10.abn"
         with abn_file.open() as file:
-            abn = np.array(
-                [float(element.split()[-1]) for element in file.readlines()[2:32]]
-            )  # Till Zinc
+            abn = np.array([float(element.split()[-1]) for element in file.readlines()[2:32]])  # Till Zinc
         # element = 1: H, 2: He, 3: Li, ... 30: Zn
         # ion = 1 : neutral, 2: +, 3: ++ .... (element+1): (++++... element times)
-        fracIon = 10.0 ** self._interpolate_ion_frac_all(
-            nH, temperature, metallicity, redshift, mode
-        )
+        fracIon = 10.0 ** self._interpolate_ion_frac_all(nH, temperature, metallicity, redshift, mode)
 
         if part_type == "all":
             ndens = 0
@@ -271,29 +265,11 @@ class Ionization(DataSift):
             for element in range(30):
                 for ion in range(element + 2):
                     if element + 1 == 1:  # H
-                        ndens += (
-                            (ion + 1)
-                            * (Xp(metallicity) / X_solar)
-                            * abn[element]
-                            * fracIon[ion_count]
-                            * nH
-                        )
+                        ndens += (ion + 1) * (Xp(metallicity) / X_solar) * abn[element] * fracIon[ion_count] * nH
                     elif element + 1 == 2:  # He
-                        ndens += (
-                            (ion + 1)
-                            * (Yp(metallicity) / Y_solar)
-                            * abn[element]
-                            * fracIon[ion_count]
-                            * nH
-                        )
+                        ndens += (ion + 1) * (Yp(metallicity) / Y_solar) * abn[element] * fracIon[ion_count] * nH
                     else:
-                        ndens += (
-                            (ion + 1)
-                            * (Zp(metallicity) / Z_solar)
-                            * abn[element]
-                            * fracIon[ion_count]
-                            * nH
-                        )
+                        ndens += (ion + 1) * (Zp(metallicity) / Z_solar) * abn[element] * fracIon[ion_count] * nH
                     ion_count += 1
             return ndens
 
@@ -303,29 +279,11 @@ class Ionization(DataSift):
             for element in range(30):
                 for ion in range(element + 2):
                     if element + 1 == 1:  # H
-                        ne += (
-                            ion
-                            * (Xp(metallicity) / X_solar)
-                            * nH
-                            * abn[element]
-                            * fracIon[ion_count]
-                        )
+                        ne += ion * (Xp(metallicity) / X_solar) * nH * abn[element] * fracIon[ion_count]
                     elif element + 1 == 2:  # He
-                        ne += (
-                            ion
-                            * (Yp(metallicity) / Y_solar)
-                            * nH
-                            * abn[element]
-                            * fracIon[ion_count]
-                        )
+                        ne += ion * (Yp(metallicity) / Y_solar) * nH * abn[element] * fracIon[ion_count]
                     else:
-                        ne += (
-                            ion
-                            * (Zp(metallicity) / Z_solar)
-                            * nH
-                            * abn[element]
-                            * fracIon[ion_count]
-                        )
+                        ne += ion * (Zp(metallicity) / Z_solar) * nH * abn[element] * fracIon[ion_count]
                     ion_count += 1
             return ne
 
@@ -335,27 +293,11 @@ class Ionization(DataSift):
             for element in range(30):
                 for ion in range(1, element + 2):
                     if element + 1 == 1:  # H
-                        nion += (
-                            (Xp(metallicity) / X_solar)
-                            * nH
-                            * abn[element]
-                            * fracIon[ion_count]
-                        )
+                        nion += (Xp(metallicity) / X_solar) * nH * abn[element] * fracIon[ion_count]
                     elif element + 1 == 2:  # He
-                        nion += (
-                            (Yp(metallicity) / Y_solar)
-                            * nH
-                            * abn[element]
-                            * fracIon[ion_count]
-                        )
+                        nion += (Yp(metallicity) / Y_solar) * nH * abn[element] * fracIon[ion_count]
                     else:
-                        nion += (
-                            ion
-                            * (Zp(metallicity) / Z_solar)
-                            * nH
-                            * abn[element]
-                            * fracIon[ion_count]
-                        )
+                        nion += ion * (Zp(metallicity) / Z_solar) * nH * abn[element] * fracIon[ion_count]
                     ion_count += 1
             return nion
 
@@ -410,7 +352,5 @@ class Ionization(DataSift):
             mean particle mass of the plasma.
 
         """
-        ndens = self.interpolate_num_dens(
-            nH, temperature, metallicity, redshift, mode, part_type
-        )
+        ndens = self.interpolate_num_dens(nH, temperature, metallicity, redshift, mode, part_type)
         return (nH / ndens) * (mH / mp) / float(Xp(metallicity))

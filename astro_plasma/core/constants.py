@@ -33,25 +33,19 @@ Y_solar = 0.2703
 Z_solar = 0.0143
 
 
-def Xp(
-    metallicity: Union[float, int, List[Union[int, float]], np.ndarray]
-) -> Union[float, np.ndarray]:
+def Xp(metallicity: Union[float, int, List[Union[int, float]], np.ndarray]) -> Union[float, np.ndarray]:
     if isinstance(metallicity, list):
         metallicity = np.array(metallicity)
     return X_solar * (1 - metallicity * Z_solar) / (X_solar + Y_solar)
 
 
-def Yp(
-    metallicity: Union[float, int, List[Union[int, float]], np.ndarray]
-) -> Union[float, np.ndarray]:
+def Yp(metallicity: Union[float, int, List[Union[int, float]], np.ndarray]) -> Union[float, np.ndarray]:
     if isinstance(metallicity, list):
         metallicity = np.array(metallicity)
     return Y_solar * (1 - metallicity * Z_solar) / (X_solar + Y_solar)
 
 
-def Zp(
-    metallicity: Union[float, int, List[Union[int, float]], np.ndarray]
-) -> Union[float, np.ndarray]:
+def Zp(metallicity: Union[float, int, List[Union[int, float]], np.ndarray]) -> Union[float, np.ndarray]:
     if isinstance(metallicity, list):
         metallicity = np.array(metallicity)
     return metallicity * Z_solar
