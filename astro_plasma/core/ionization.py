@@ -1,17 +1,21 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Nov 30 12:06:18 2022
+"""Created on Wed Nov 30 12:06:18 2022.
 
 @author: alankar
 """
 
-import numpy as np
-import h5py
-from .constants import mH, mp, X_solar, Y_solar, Z_solar, Xp, Yp, Zp
+# Built-in imports
 from pathlib import Path
 from typing import Optional, Union, Set
-from .utils import fetch, LOCAL_DATA_PATH
+
+# Third party imports
+import h5py
+import numpy as np
+
+# Local package imports
+from .constants import mH, mp, X_solar, Y_solar, Z_solar, Xp, Yp, Zp
 from .datasift import DataSift
+from .utils import LOCAL_DATA_PATH, fetch
+
 
 DEFAULT_BASE_DIR = LOCAL_DATA_PATH / "ionization"
 FILE_NAME_TEMPLATE = "ionization.b_{:06d}.h5"
@@ -25,7 +29,7 @@ class Ionization(DataSift):
     def __init__(
         self: "Ionization",
         base_dir: Optional[Path] = None,
-    ) -> None:
+    ):
         """
         Prepares the location to read data for generating ionization calculations.
 
@@ -42,7 +46,7 @@ class Ionization(DataSift):
             self.base_dir = Path(base_dir)
 
         if not self.base_dir.exists():
-            self.base_dir.mkdir(mode=0o755, parents=True, exist_ok=True)
+            self.base_dir.mkdir(mode=0o755, parents=True)
 
         fetch(urls=DOWNLOAD_IN_INIT, base_dir=self.base_dir)
         data = h5py.File(self.base_dir / DOWNLOAD_IN_INIT[0][1], "r")

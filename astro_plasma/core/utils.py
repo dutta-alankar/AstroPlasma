@@ -5,14 +5,16 @@ Created on Mon Jan  9 20:28:15 2023
 @author: alankar
 """
 
-from dotenv import load_dotenv
-
-from concurrent.futures import ThreadPoolExecutor
-import requests
+# Built-in imports
 import os
-from urllib.parse import urljoin
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import List, Tuple
+from urllib.parse import urljoin
+
+# Third party imports
+import requests
+from dotenv import load_dotenv
 from tqdm import tqdm
 
 LOCAL_DATA_PATH = Path(__file__).parent.parent / "data"

@@ -5,12 +5,18 @@ Created on Thu Dec  1 18:23:40 2022
 @author: alankar
 """
 
-import numpy as np
-import h5py
+# Built-in imports
 from pathlib import Path
-from .utils import fetch, LOCAL_DATA_PATH
-from typing import Optional, Callable, Union, Set
+from typing import Union, Optional, Callable, Set
+
+# Third party imports
+import h5py
+import numpy as np
+
+# Local package imports
+
 from .datasift import DataSift
+from .utils import LOCAL_DATA_PATH, fetch
 
 DEFAULT_BASE_DIR = LOCAL_DATA_PATH / "emission"
 FILE_NAME_TEMPLATE = "emission.b_{:06d}.h5"
@@ -44,6 +50,12 @@ class EmissionSpectrum(DataSift):
             self.base_dir.mkdir(mode=0o755, parents=True)
 
         fetch(urls=DOWNLOAD_IN_INIT, base_dir=self.base_dir)
+        with h5py.File(self.base_dir / DOWNLOAD_IN_INIT[0][1], "r") as file:
+            self.nH_data = np.array(file["params/nH"])
+            self.T_data = np.array(file["params/temperature"])
+            self.Z_data = np.array(file["params/metallicity"])
+            self.red_data = np.array(file["params/redshift"])
+            self.energy = np.array(file["output/energy"])
 
         data = h5py.File(self.base_dir / DOWNLOAD_IN_INIT[0][1], "r")
         super().__init__(data)
