@@ -4,6 +4,7 @@
 """
 
 # Built-in imports
+import re
 from pathlib import Path
 from typing import Optional, Union, Set
 
@@ -14,8 +15,7 @@ import numpy as np
 # Local package imports
 from .constants import mH, mp, X_solar, Y_solar, Z_solar, Xp, Yp, Zp
 from .datasift import DataSift
-from .utils import LOCAL_DATA_PATH, fetch
-
+from .utils import fetch, roman_to_int, LOCAL_DATA_PATH, AtmElement
 
 DEFAULT_BASE_DIR = LOCAL_DATA_PATH / "ionization"
 FILE_NAME_TEMPLATE = "ionization.b_{:06d}.h5"
@@ -143,8 +143,8 @@ class Ionization(DataSift):
         temperature: Union[int, float] = 2.7e6,
         metallicity: Union[int, float] = 0.5,
         redshift: Union[int, float] = 0.2,
-        element: int = 2,
-        ion: int = 1,
+        element: Union[int, AtmElement, str] = AtmElement.Helium,
+        ion: Union[int, None] = 1,
         mode: str = "PIE",
     ) -> float:
         """
@@ -193,16 +193,28 @@ class Ionization(DataSift):
             The value is in log10.
 
         """
+
+        if not isinstance(element, AtmElement):
+            # this means ionized element (like OVII)
+            ielem: re.Match = re.match(r"^([A-Z][a-z]?)([IVX]+)$", str(element))
+            if ielem:
+                element = AtmElement.parse(ielem.group(1))
+                ion = roman_to_int(ielem.group(2))
+            else:
+                element = AtmElement.parse(element)
+
+        elm_atm_no = element.to_atm_no()
+
         # element = 1: H, 2: He, 3: Li, ... 30: Zn
         # ion = 1 : neutral, 2: +, 3: ++ .... (element+1): (++++... element times)
-        if ion < 0 or ion > element + 1:
-            raise ValueError(f"Problem! Invalid ion {ion} for element {element}.")
-        if element < 0 or element > 30:
-            raise ValueError(f"Problem! Invalid ion {ion} for element {element}.")
+        if ion < 0 or ion > elm_atm_no + 1:
+            raise ValueError(f"Problem! Invalid ion {ion} for element {elm_atm_no}.")
+        if elm_atm_no < 0 or elm_atm_no > 30:
+            raise ValueError(f"Problem! Invalid element {elm_atm_no}.")
 
         # Select only the ions for the requested element
-        slice_start = int((element - 1) * (element + 2) / 2)
-        slice_stop = int(element * (element + 3) / 2)
+        slice_start = int((elm_atm_no - 1) * (elm_atm_no + 2) / 2)
+        slice_stop = int(elm_atm_no * (elm_atm_no + 3) / 2)
         fracIon = self._interpolate_ion_frac_all(nH, temperature, metallicity, redshift, mode)[slice_start:slice_stop]
 
         # Array starts from 0 but ion from 1

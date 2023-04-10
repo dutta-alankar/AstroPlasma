@@ -49,9 +49,9 @@ repos:
   - id: poetry-lock
     args: [--no-update, --check]
   - id: poetry-export
-    args: [--without-hashes, --without, dev, --format, requirements.txt, --output, requirements/requirements.txt]
+    args: [--without-hashes, --output, requirements/requirements.txt]
     name: poetry-export-requirements
 
   - id: poetry-export
-    args: [--without-hashes, --with, dev, --format, requirements.txt, --output, requirements/requirements-dev.txt]
+    args: [--without-hashes, --only, dev, --output, requirements/requirements-dev.txt]
     name: poetry-export-dev-requirements
