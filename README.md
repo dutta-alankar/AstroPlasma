@@ -73,7 +73,7 @@ In `AstroPlasma` elements are labelled by their atomic number.
 
 
 ```python
-fIon = Ionization().interpolate_ion_frac
+fIon = Ionization.interpolate_ion_frac
 ```
 
 Now we are going to define typical physical values that characterizes an astrophysical plasma.
@@ -137,7 +137,7 @@ One can also caluculate other plasma quantities as follows
 
 
 ```python
-num_dens = Ionization().interpolate_num_dens
+num_dens = Ionization.interpolate_num_dens
 
 ne = num_dens(nH = nH,
               temperature = temperature,
@@ -156,7 +156,7 @@ In order to get **total particle number density**, use `part_type = "all"` and t
 
 
 ```python
-num_dens = Ionization().interpolate_num_dens
+num_dens = Ionization.interpolate_num_dens
 
 n = num_dens(nH = nH,
               temperature = temperature,
@@ -186,7 +186,7 @@ $$\rho = n \mu m_p = n_e \mu_e m_p = n_i \mu_i m_p = n_H m_H X^{-1}$$
 
 
 ```python
-mean_mass = Ionization().interpolate_mu
+mean_mass = Ionization.interpolate_mu
 
 mu = mean_mass(nH = nH,
                temperature = temperature,
@@ -231,7 +231,7 @@ from astro_plasma import EmissionSpectrum
 
 
 ```python
-gen_spectrum = EmissionSpectrum().interpolate_spectrum
+gen_spectrum = EmissionSpectrum.interpolate_spectrum
 
 # Generate spectrum
 spectrum = gen_spectrum(nH = nH,
@@ -260,7 +260,10 @@ plt.show()
   <img alt="" src="https://user-images.githubusercontent.com/39578361/230584140-22f3b235-e117-4247-8483-afd6e2280d0c.png">
 </picture>
 
-> **Note** Use the pypoetry tool to install directly from the server
+> *Note*: `AstroPlasma` assumes by default that the data is located at `<module_location>/data/<ionization/emission>`.
+The user can change this to something else by using `Ionization.base_dir = "<new_ionization_data_location_dir>"` or `EmissionSpectrum.base_dir = "<new_emission_data_location_dir>"`, where these new directories must contain the valid `hdf5` data files.
+
+> **Note** One can also use the `pypoetry` tool to install and create an `in-place` virtual environment for this repo.
 
 Note: We haven't made the server online yet. As a temporary measure, please download and use the data hosted [here](https://indianinstituteofscience-my.sharepoint.com/:f:/g/personal/alankardutta_iisc_ac_in/EhdL9SYY45FOq7zjrWGD0NQBcy3pn6oTP2B9pGhxPwLnkQ?e=E956ug):
 

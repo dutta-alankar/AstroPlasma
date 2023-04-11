@@ -16,6 +16,7 @@ import numpy as np
 from .constants import mH, mp, X_solar, Y_solar, Z_solar, Xp, Yp, Zp
 from .datasift import DataSift
 from .utils import fetch, roman_to_int, LOCAL_DATA_PATH, AtmElement
+from .data_dir import set_base_dir
 
 DEFAULT_BASE_DIR = LOCAL_DATA_PATH / "ionization"
 FILE_NAME_TEMPLATE = "ionization.b_{:06d}.h5"
@@ -40,16 +41,21 @@ class Ionization(DataSift):
         """
         self.base_url_template = BASE_URL_TEMPLATE
         self.file_name_template = FILE_NAME_TEMPLATE
-        if base_dir is None:
-            self.base_dir = DEFAULT_BASE_DIR
-        else:
-            self.base_dir = Path(base_dir)
+        self.base_dir = base_dir
 
-        if not self.base_dir.exists():
-            self.base_dir.mkdir(mode=0o755, parents=True)
+    @property
+    def base_dir(self):
+        return self._base_dir
 
-        fetch(urls=DOWNLOAD_IN_INIT, base_dir=self.base_dir)
-        data = h5py.File(self.base_dir / DOWNLOAD_IN_INIT[0][1], "r")
+    @base_dir.setter
+    def base_dir(
+        self,
+        base_dir: Optional[Path] = None,
+    ):
+        self._base_dir = set_base_dir(DEFAULT_BASE_DIR, base_dir)
+
+        fetch(urls=DOWNLOAD_IN_INIT, base_dir=self._base_dir)
+        data = h5py.File(self._base_dir / DOWNLOAD_IN_INIT[0][1], "r")
         super().__init__(data)
         data.close()
 
