@@ -51,7 +51,6 @@ repos:
   - id: poetry-export
     args: [--without-hashes, --output, requirements/requirements.txt]
     name: poetry-export-requirements
-
   - id: poetry-export
     args: [--without-hashes, --only, dev, --output, requirements/requirements-dev.txt]
     name: poetry-export-dev-requirements
