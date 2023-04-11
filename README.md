@@ -129,7 +129,7 @@ print(f"f_OVI = {fOVI:.3e}")
   # In this case explicit value of ion will be ignored
   fIon(element='OVI')
   ```
-  > **Note** We do encourage using last two methods to avoid any confusion to the reader.
+   > **Note** *We recommend using the last two methods as we think it is the most convenient to use and read.*
 
 One can also caluculate other plasma quantities as follows
 
