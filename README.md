@@ -48,6 +48,8 @@ At any point later, in order to use AstroPlasma, just activate this virtual envi
 ```
 source venv/bin/activate
 ```
+5. Download the data provided in the link at the end and place it inside the `data` directory in the repo. ALternatively, one can use custom data location as well. Please see the relevant *Note* provided near the end of this README.
+
 # User Guide
 
 ## This is a notebook that demonstrates the basic usage of `AstroPlasma`
