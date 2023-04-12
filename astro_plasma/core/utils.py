@@ -7,9 +7,10 @@ Created on Mon Jan  9 20:28:15 2023
 
 # Built-in imports
 import os
+import re
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import List, Tuple, Union
+from typing import List, Tuple, Union, Optional
 from urllib.parse import urljoin
 
 # Third party imports
@@ -88,6 +89,21 @@ def roman_to_int(s):
             result += val
         prev_val = val
     return result
+
+
+def parse_atomic_ion_no(
+    element: Union[int, AtmElement, str],
+    ion: Optional[int] = None,
+) -> Tuple[int, int]:
+    if not isinstance(element, AtmElement):
+        ielem: re.Match = re.match(r"^([A-Z][a-z]?)([IVX]+)$", str(element))
+        if ielem:
+            element = AtmElement.parse(ielem.group(1))
+            ion = roman_to_int(ielem.group(2))
+        else:
+            element = AtmElement.parse(element)
+    elem_atm_no = element.to_atm_no()
+    return (elem_atm_no, ion)
 
 
 def fetch(urls: List[Tuple[str, Path]], base_dir: Path):
