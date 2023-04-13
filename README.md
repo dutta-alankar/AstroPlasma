@@ -13,6 +13,7 @@ Running Cloudy models on the fly, escpecially when there are lot of models to ru
 <!--- Tests and style --->
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/charliermarsh/ruff/main/assets/badge/v1.json)](https://github.com/charliermarsh/ruff)
+[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/dutta-alankar/AstroPlasma/main.svg)](https://results.pre-commit.ci/latest/github/dutta-alankar/AstroPlasma/main)
 
 [![MIT license](https://img.shields.io/badge/License-MIT-blue.svg)](https://lbesson.mit-license.org/)
 
