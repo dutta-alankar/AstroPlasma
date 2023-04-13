@@ -1,6 +1,6 @@
 ![image](https://user-images.githubusercontent.com/39578361/210923881-79133580-b2b7-4e4c-8e0d-dc0b4dd4a691.png)
 
-<img src="https://user-images.githubusercontent.com/39578361/231562510-64469727-9527-4955-b0ce-17a6699ce762.gif"  width="25%" height="15%">
+<img src="https://user-images.githubusercontent.com/39578361/231562510-64469727-9527-4955-b0ce-17a6699ce762.gif"  width="25%" height="20%">
 
 > A *Cloudy* database with functions to quickly interpolate physical state of astrophysical plasma without detailed Plasma modelling
 
