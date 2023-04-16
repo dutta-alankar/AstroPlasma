@@ -10,16 +10,16 @@ Running Cloudy models on the fly, escpecially when there are lot of models to ru
 
 [![PyPI](https://img.shields.io/badge/requires-Python%20≥%203.8-blue?logo=python&logoColor=white)](https://www.python.org/downloads/release/python-3811/)
 
-![GitHub repo size](https://img.shields.io/github/repo-size/dutta-alankar/AstroPlasma) | 
-![GitHub repo file count](https://img.shields.io/github/directory-file-count/dutta-alankar/AstroPlasma) | 
+![GitHub repo size](https://img.shields.io/github/repo-size/dutta-alankar/AstroPlasma) |
+![GitHub repo file count](https://img.shields.io/github/directory-file-count/dutta-alankar/AstroPlasma) |
 ![Lines of code](https://img.shields.io/tokei/lines/github.com/dutta-alankar/AstroPlasma)
 
 ![GitHub last commit (branch)](https://img.shields.io/github/last-commit/tbhaxor/CloudyPlasmaServer/main) |
 ![GitHub commit activity](https://img.shields.io/github/commit-activity/m/tbhaxor/CloudyPlasmaServer)
 
 <!--- Tests and style --->
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) | 
-[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/charliermarsh/ruff/main/assets/badge/v1.json)](https://github.com/charliermarsh/ruff) | 
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) |
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/charliermarsh/ruff/main/assets/badge/v1.json)](https://github.com/charliermarsh/ruff) |
 [![poetry-badge](https://img.shields.io/badge/packaging-poetry-cyan.svg)](https://python-poetry.org/)
 
 [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/dutta-alankar/AstroPlasma/main.svg)](https://results.pre-commit.ci/latest/github/dutta-alankar/AstroPlasma/main)
