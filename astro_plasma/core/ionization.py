@@ -223,7 +223,9 @@ class Ionization(DataSift):
         metallicity: Union[int, float] = 0.5,
         redshift: Union[int, float] = 0.2,
         mode: str = "PIE",
-        part_type: str = "electron",
+        part_type: Optional[str] = None,
+        element: Optional[Union[int, AtmElement, str]] = None,
+        ion: Optional[int] = None,
     ) -> float:
         """
         Interpolates the number density of different species
@@ -253,6 +255,13 @@ class Ionization(DataSift):
             The type of the particle requested.
             Currently available options: all, electron, ion
             The default is 'electron'.
+        element : int, optional
+            Atomic number of the element. The default is 2.
+        ion : int, optional
+            Ionization species of the element.
+            Must between 1 and element+1.
+            The default is 1.
+            1:neutral, 2:+, 3:++, ...
 
         Returns
         -------
@@ -267,7 +276,7 @@ class Ionization(DataSift):
         # ion = 1 : neutral, 2: +, 3: ++ .... (element+1): (++++... element times)
         fracIon = 10.0 ** self._interpolate_ion_frac_all(nH, temperature, metallicity, redshift, mode)
 
-        if part_type == "all":
+        if part_type == "all" and element is None:
             ndens = 0
             ion_count = 0
             for element in range(30):
@@ -281,7 +290,7 @@ class Ionization(DataSift):
                     ion_count += 1
             return ndens
 
-        elif part_type == "electron":
+        elif part_type == "electron" and element is None:
             ne = 0
             ion_count = 0
             for element in range(30):
@@ -295,7 +304,7 @@ class Ionization(DataSift):
                     ion_count += 1
             return ne
 
-        elif part_type == "ion":
+        elif part_type == "ion" and element is None:
             nion = 0
             ion_count = 0
             for element in range(30):
@@ -309,8 +318,16 @@ class Ionization(DataSift):
                     ion_count += 1
             return nion
 
+        elif element is None and part_type is None:
+            raise ValueError(f"Invalid part_type: {part_type} and invalid element: {element}.")
+        elif element is not None and part_type is not None:
+            raise ValueError(f"Both part_type: {part_type} and element: {element} cannot be specified simultaneously.")
         else:
-            raise ValueError(f"Invalid part_type: {part_type}")
+            fIon = 10.0 ** self.interpolate_ion_frac(nH, temperature, metallicity, redshift, element, ion, mode)
+            _element, _ion = parse_atomic_ion_no(element, ion)
+            abundance = abn[_element - 1]
+            nIon = abundance * (Zp(metallicity) / Z_solar) * fIon * nH
+            return nIon
 
     def interpolate_mu(
         self: "Ionization",
