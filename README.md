@@ -14,8 +14,8 @@ Running Cloudy models on the fly, escpecially when there are lot of models to ru
 ![GitHub repo file count](https://img.shields.io/github/directory-file-count/dutta-alankar/AstroPlasma) |
 ![Lines of code](https://img.shields.io/tokei/lines/github.com/dutta-alankar/AstroPlasma)
 
-![GitHub last commit (branch)](https://img.shields.io/github/last-commit/tbhaxor/CloudyPlasmaServer/main) |
-![GitHub commit activity](https://img.shields.io/github/commit-activity/m/tbhaxor/CloudyPlasmaServer)
+![GitHub last commit (branch)](https://img.shields.io/github/last-commit/dutta-alankar/AstroPlasma/main) |
+![GitHub commit activity](https://img.shields.io/github/commit-activity/m/dutta-alankar/AstroPlasma)
 
 <!--- Tests and style --->
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) |
