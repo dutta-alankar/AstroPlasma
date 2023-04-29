@@ -286,6 +286,18 @@ The user can change this to something else by using `Ionization.base_dir = "<new
 https://indianinstituteofscience-my.sharepoint.com/:f:/g/personal/alankardutta_iisc_ac_in/EhdL9SYY45FOq7zjrWGD0NQBcy3pn6oTP2B9pGhxPwLnkQ?e=E956ug
 ```
 
+#### Downloading files on demand
+
+We made it easy for you in the code to download only the required files on-the-go using our built in service (Cloudy Interpolator web application).
+
+To activate this feature, you should create `.env` file in the project root directory and provide following information.
+
+```sh
+WEB_SERVER_BASE_URL=http://web-server-url-here
+```
+
+To get this information, you can contact @dutta-alankar or @tbhaxor.
+
 ## Note to contributors
 
 If you wish to contribute, fork this repo and open pull requests to the `dev` branch of this repo. Once everything gets tested and is found working, the new code will be merged with the `master` branch.
