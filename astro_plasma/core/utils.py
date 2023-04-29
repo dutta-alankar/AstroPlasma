@@ -107,20 +107,13 @@ def parse_atomic_ion_no(
 
 
 def fetch(urls: List[Tuple[str, Path]], base_dir: Path):
-    if not base_dir.exists():
-        base_dir.mkdir(mode=0o766, parents=True)
-
-    # extract urls and file paths iff it not exists
-    downlodable_urls = []
-    for url, file_name in urls:
-        save_path = base_dir / file_name
-        if not save_path.exists():
-            downlodable_urls.append((url, save_path))
+    base_dir.mkdir(mode=0o766, parents=True, exist_ok=True)
 
     # unit job of downloading and saving file
-    def download_job(url, save_path):
+    def download_job(url: str, save_path: Path):
         response = requests.get(url, stream=True)
         file_size = int(response.headers.get("content-length", 0))
+
         progress = tqdm(
             desc=save_path.name,
             total=file_size,
@@ -129,6 +122,10 @@ def fetch(urls: List[Tuple[str, Path]], base_dir: Path):
             unit="iB",
             leave=False,
         )
+
+        if save_path.exists() and save_path.stat().st_size == file_size:
+            progress.update(file_size)
+            return
 
         with open(save_path, "wb") as file:
             for data in response.iter_content(chunk_size=CHUNK_SIZE):
@@ -139,6 +136,6 @@ def fetch(urls: List[Tuple[str, Path]], base_dir: Path):
 
     with ThreadPoolExecutor(max_workers=PARALLEL_JOBS, thread_name_prefix="cloudy_dnldr") as pool:
         # iterative download and show progress bar using tqdm
-        for url, save_path in downlodable_urls:
-            url = urljoin(base=BASE_URL, url=url)
-            pool.submit(download_job, url, save_path)
+        for url_path, file_name in urls:
+            url = urljoin(BASE_URL, url_path)
+            pool.submit(download_job, url, base_dir / file_name)
