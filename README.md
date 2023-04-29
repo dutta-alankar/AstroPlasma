@@ -286,7 +286,7 @@ The user can change this to something else by using `Ionization.base_dir = "<new
 https://indianinstituteofscience-my.sharepoint.com/:f:/g/personal/alankardutta_iisc_ac_in/EhdL9SYY45FOq7zjrWGD0NQBcy3pn6oTP2B9pGhxPwLnkQ?e=E956ug
 ```
 
-#### Downloading files on demand
+### Downloading files on demand
 
 We made it easy for you in the code to download only the required files on-the-go using our built in service (Cloudy Interpolator web application).
 
