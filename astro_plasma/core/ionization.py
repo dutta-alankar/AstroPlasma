@@ -323,8 +323,8 @@ class Ionization(DataSift):
         elif element is not None and part_type is not None:
             raise ValueError(f"Both part_type: {part_type} and element: {element} cannot be specified simultaneously.")
         else:
-            fIon = 10.0 ** self.interpolate_ion_frac(nH, temperature, metallicity, redshift, element, ion, mode)
             _element, _ion = parse_atomic_ion_no(element, ion)
+            fIon = 10.0 ** self.interpolate_ion_frac(nH, temperature, metallicity, redshift, _element, _ion, mode)
             abundance = abn[_element - 1]
             nIon = abundance * (Zp(metallicity) / Z_solar) * fIon * nH
             return nIon
