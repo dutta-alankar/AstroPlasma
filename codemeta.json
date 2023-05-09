@@ -1,0 +1,64 @@
+{
+    "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
+    "@type": "SoftwareSourceCode",
+    "license": "https://spdx.org/licenses/MIT",
+    "codeRepository": "git+https://github.com/dutta-alankar/AstroPlasma",
+    "dateCreated": "2023-01-05",
+    "issueTracker": "https://github.com/dutta-alankar/AstroPlasma/issues",
+    "name": "AstroPlasma",
+    "description": "Running Cloudy models on the fly, especially when there are lot of models to run with different parameters can become extremely expensive. `AstroPlasma` aims to provide a workaround by using a library of pre-computed cloudy models to generate most of the common plasma properties for a large range of parameter space by interpolation. Owing to a simple and easy to use interface, `AstroPlasma` also provides an abstraction layer enabling the user to get the plasma properties without worrying much about the details of plasma modelling. We find this extremely useful while building models and predicting observables like column densities in different kinds of astrophysical systems.",
+    "applicationCategory": "Astronomy",
+    "funding": "DST/SJF/PSA- 03/2016-17",
+    "developmentStatus": "active",
+    "funder": {
+        "@type": "Organization",
+        "name": "Indian Institute of Science, National Supercomputing Misssion India, MoE (PMRF) India"
+    },
+    "keywords": [
+        "Plasma modeling",
+        "Cloudy",
+        "Spectral synthesis"
+    ],
+    "programmingLanguage": [
+        "Python 3",
+        "C++"
+    ],
+    "relatedLink": [
+        "https://github.com/dutta-alankar/MultiphaseGalacticHaloModel"
+    ],
+    "author": [
+        {
+            "@type": "Person",
+            "@id": "http://orcid.org/0000-0002-9287-4033",
+            "givenName": "Alankar",
+            "familyName": "Dutta",
+            "email": "alankardutta@iisc.ac.in",
+            "affiliation": {
+                "@type": "Organization",
+                "name": "Department of Physics, Indian Institute of Science, Bangalore, India"
+            }
+        },
+        {
+            "@type": "Person",
+            "givenName": "Gurkirat",
+            "familyName": "Singh",
+            "email": "tbhaxor@proton.me",
+            "affiliation": {
+                "@type": "Organization",
+                "name": "Department of Physics, Indian Institute of Science, Bangalore, India"
+            }
+        }
+    ],
+    "contributor": [
+        {
+            "@type": "Person",
+            "givenName": "Ritali",
+            "familyName": "Ghosh",
+            "email": "ritalighosh@iisc.ac.in",
+            "affiliation": {
+                "@type": "Organization",
+                "name": "Department of Physics, Indian Institute of Science, Bangalore, India"
+            }
+        }
+    ]
+}
