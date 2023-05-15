@@ -27,7 +27,7 @@ load_dotenv()
 
 # download chunk size, # bytes to download at a time
 CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", "4096"))
-BASE_URL = os.getenv("WEB_SERVER_BASE_URL", "http://localhost:8000")
+BASE_URL = os.getenv("ASTROPLASMA_SERVER", "http://localhost:8000")
 PARALLEL_JOBS = int(os.getenv("PARALLEL_DOWNLOAD_JOBS", "3"))
 
 
@@ -111,6 +111,7 @@ def fetch(urls: List[Tuple[str, Path]], base_dir: Path):
 
     # unit job of downloading and saving file
     def download_job(url: str, save_path: Path):
+        print(url)
         response = requests.get(url, stream=True)
         file_size = int(response.headers.get("content-length", 0))
 
