@@ -288,6 +288,34 @@ The user can change this to something else by using `Ionization.base_dir = "<new
 https://indianinstituteofscience-my.sharepoint.com/:f:/g/personal/alankardutta_iisc_ac_in/EhdL9SYY45FOq7zjrWGD0NQBcy3pn6oTP2B9pGhxPwLnkQ?e=E956ug
 ```
 
+### Downloading files on demand
+
+We made it easy for you in the code to download only the required files on-the-go using our built in service (Cloudy Interpolator web application).
+
+To activate this feature, you should create `.env` file in the project root directory and provide following information.
+
+```sh
+ASTROPLASMA_SERVER=http://web-server-url-here
+```
+
+Alternatively, you can export the environment variable
+
+```sh
+# bash / sh
+export ASTROPLASMA_SERVER=http://web-server-url-here
+
+# csh
+setenv ASTROPLASMA_SERVER http://web-server-url-here
+```
+
+All the environemnt variables you can configure (either in env file or via export)
+
+|Environment Variable|Description|
+|:----:|:----:|
+|ASTROPLASMA_SERVER|Base url of the web-server to enable file downloading. To get this information, you can open issue [here](https://github.com/dutta-alankar/AstroPlasma/issues/new?title=[REQUEST]%20Access%20to%20the%20pre-computed%20dataset&body=Hi,%20I%20want%20to%20access%20the%20webserver%20to%20download%20the%20dataset%0A%0AName:%20John%20Doe%0AEmail:%20john.doe@example.com)|
+|PARALLEL_DOWNLOAD_JOBS|Parallel jobs spawned to download the files. The default value is 3. You can increase or decrease based on download bandwidth of your network connection.|
+|CHUNK_SIZE|Download chunk size of the dataset files. Default is `4096`. If your download is aborted because on unstable network, try decreasing this value.|
+
 ## Note to contributors
 
 If you wish to contribute, fork this repo and open pull requests to the `dev` branch of this repo. Once everything gets tested and is found working, the new code will be merged with the `master` branch.
