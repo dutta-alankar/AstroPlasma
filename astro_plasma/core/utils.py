@@ -111,7 +111,6 @@ def fetch(urls: List[Tuple[str, Path]], base_dir: Path):
 
     # unit job of downloading and saving file
     def download_job(url: str, save_path: Path):
-        print(url)
         response = requests.get(url, stream=True)
         file_size = int(response.headers.get("content-length", 0))
 
