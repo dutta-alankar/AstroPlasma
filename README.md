@@ -169,7 +169,11 @@ print(f"Free electron density = {ne:.3e} cm^-3")
     Free electron density = 1.410e-04 cm^-3
 
 
-In order to get **total particle number density**, use `part_type = "all"` and to get **total ion density**, use `part_type = "ion"`
+In order to get
+- **total particle number density**, use `part_type = "all"`
+- **total ion number density**, use `part_type = "ion"`
+- **total neutral particle number density**, use `part_type = "neutral"`
+- **any particular ion number density**, use `element = <element_name>"` (similar to `fIon`)
 
 
 ```python
@@ -189,13 +193,32 @@ ni = num_dens(nH = nH,
               mode = mode,
               part_type = "ion",
               )
+nn = num_dens(nH = nH,
+              temperature = temperature,
+               metallicity = metallicity,
+               redshift = redshift,
+               mode = mode,
+               part_type = "neutral",
+               )
+
+nHI = num_dens(nH = nH,
+               temperature = temperature,
+               metallicity = metallicity,
+               redshift = redshift,
+               mode = mode,
+               element = "HI",
+               )
+
 print(f"Total particle density = {n:.3e} cm^-3")
 print(f"Total ion density = {ni:.3e} cm^-3")
+print(f"Total neutral particle density = {nn:.3e} cm^-3")
+print(f"Total HI particle density = {nHI:.3e} cm^-3")
 ```
 
     Total particle density = 2.714e-04 cm^-3
-    Total ion density = 1.072e-05 cm^-3
-
+    Total ion density = 1.308e-04 cm^-3
+    Total neutral particle density = 1.113e-10 cm^-3
+    Total HI particle density = 1.099e-10 cm^-3
 
 Although it is straightforward to obtain mean particle mass, we provide functions to so for the convenience of the user. We use the following relation for calculating these quantities.
 
@@ -233,7 +256,7 @@ print(f"Mean ion mass = {mu_i:.2f} mp")
 
     Mean particle mass = 0.62 mp
     Mean free electron mass = 1.19 mp
-    Mean ion mass = 15.65 mp
+    Mean ion mass = 1.28 mp
 
 
 ### Emission spectrum

@@ -304,10 +304,26 @@ class Ionization(DataSift):
                     ion_count += 1
             return ne
 
+        elif part_type == "neutral" and element is None:
+            n_neutral = 0
+            ion_count = 0
+            for element in range(30):
+                for ion in range(element + 2):
+                    if ion == 0:
+                        if element + 1 == 1:  # H
+                            n_neutral += (Xp(metallicity) / X_solar) * nH * abn[element] * fracIon[ion_count]
+                        elif element + 1 == 2:  # He
+                            n_neutral += (Yp(metallicity) / Y_solar) * nH * abn[element] * fracIon[ion_count]
+                        else:
+                            n_neutral += (Zp(metallicity) / Z_solar) * nH * abn[element] * fracIon[ion_count]
+                    ion_count += 1
+            return n_neutral
+
         elif part_type == "ion" and element is None:
             nion = 0
             ion_count = 0
             for element in range(30):
+                ion_count += 1  # neglects the neutral species
                 for ion in range(1, element + 2):
                     if element + 1 == 1:  # H
                         nion += (Xp(metallicity) / X_solar) * nH * abn[element] * fracIon[ion_count]
