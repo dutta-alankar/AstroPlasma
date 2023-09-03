@@ -253,7 +253,7 @@ class Ionization(DataSift):
             The default is 'PIE'.
         part_type : str, optional
             The type of the particle requested.
-            Currently available options: all, electron, ion
+            Currently available options: all, electron, ion, neutral
             The default is 'electron'.
         element : int, optional
             Atomic number of the element. The default is 2.
@@ -384,7 +384,7 @@ class Ionization(DataSift):
             The default is 'PIE'.
         part_type : str, optional
             The type of the particle requested.
-            Currently available options: all, electron, ion
+            Currently available options: all, electron, ion, neutral
             The default is 'all'.
 
         Returns
