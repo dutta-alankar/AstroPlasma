@@ -41,13 +41,13 @@ def ionFrac(nH=1e-4, temperature=1e6, metallicity=1.0, redshift=0.0, indx=99999)
 
 
 make_batch = True
-total_size = [25, 25, 15, 5]
-batch_dim = [8, 8, 4, 2]
+total_size = [128, 64, 16, 8]
+batch_dim = [32, 32, 8, 4]
 
 nH = np.logspace(-6, 0, total_size[0])
-temperature = np.logspace(3.8, 8, total_size[1])
-metallicity = np.logspace(-1, 1, total_size[2])
-redshift = np.linspace(0, 2, total_size[3])
+temperature = np.logspace(3.8, 7.5, total_size[1])
+metallicity = np.logspace(-2, np.log10(2), total_size[2])
+redshift = np.linspace(0, 1.2, total_size[3])
 
 batches = int(np.prod(total_size) // np.prod(batch_dim)) + (0 if (np.prod(total_size) % np.prod(batch_dim)) == 0 else 1)
 

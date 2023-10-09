@@ -346,3 +346,24 @@ If you wish to contribute, fork this repo and open pull requests to the `dev` br
 For a successful merge, the code must atleast pass all the pre-existing tests. It is recommended to run `pre-commit` locally before pushing your changes to the repo for a proposed PR. To do so just run `pre-commit run --all-files`.
 
 > **Note** It is recommended to install the git pre-commit hook using `pre-commit install` to check all the staged files.
+
+> ** Instrutions on generating `Cloudy` database **
+All the codes required to generate the `Cloudy` database is in `cloudy-codes` directory. This part of the code is not as clean and user-friendly as the rest of `AstroPlasma` because it is not needed for an average user. Although I plan to improve this as well in near future. I have tested this using `Cloudy 17` ([link here to know more on `Cloudy`](https://pa.as.uky.edu/gary/cloudy-project))
+- export `CLOUDY_DATA_PATH` to the `data` directory of `Cloudy` (for example, `c17.03/data`)
+- I have tested my building the library using Makefiles in `source/sys_gcc_shared` directory of `Cloudy`. Run `make` from inside this directory. If `make` succeeds then `cloudy.exe` and a shared library `libcloudy.so` will get compiled.
+- `AstroPlasma` has three directories inside `cloudy-codes`
+  - `ionFrac` : Generates the ionization database.
+  - `emmSpec` : Generates the emission spectra database (TODO: Work required to make compiled executable enabling faster calculation to generate the database).
+  - `coolingFunction` : Generates cooling function for optically thin radiative cooling in equilibrium. This is an *extra* feature not directly used in `AstroPlasma`
+- Generating *ionization* data
+  - Copy `libcloudy.so` to `AstroPlasma/cloudy-codes/ionFrac/src`
+  - From inside `AstroPlasma/cloudy-codes/ionFrac/src` directory, execute `bash ./compile-script.sh`. This will compile and generate the executables that creates the ionization data.
+  - export `AstroPlasma/cloudy-codes/ionFrac/src` to `LD_LIBRARY_PATH`
+  - Inside the `AstroPlasma/cloudy-codes/ionFrac/generateIonFraction-parallel.py` script, change the parameters (`total_size`, `batch_dim`, `nH`, `temperature`, `metallicity`, `redshift`) to desired resolution and range.
+  - Now one can run this script in parallel using `mpiexec -n <nproc> python generateIonFraction-parallel.py`. I have tested this using `Python 3.11.6` with `mpi4py`, `numpy`, `h5py` and `colorama` packages installed.
+  **Note for cluster usres**: A sample slurm command that can be copied and executed from the terminal of a cluster is also provided in `slurm-python-job`. However, this neededs tweaking according the specifics of the cluster. Since, this job runs interactively, it is advisable to use something like gnu `screen` ot `tmux` to run this in a detached terminal as using these tools, interruptions in the connection to the cluster won't the kill the job. Also, the user need to make sure that the binaries compiled should be compiled for the compute nodes and not the login nodes if they are of different configuration.
+  - Upon successful run, several ascii files with `ionization` in their name will get generated in a directory called `auto` that is created in `AstroPlasma/cloudy-codes/ionFrac/src`. The final `hdf5` files for the database is created in the `data` directory in`AstroPlasma/cloudy-codes/ionFrac/src`. This directory should be copied to `AstroPlasma/astro_plasma/data/` and renamed as `ionization`.
+- Generating *emission* data
+  - The steps are similar as above. But in this case both `libcloudy.so` and `cloudy.exe` files need to be copied to `AstroPlasma/cloudy-codes/emmSpec/` from `source/sys_gcc_shared` directory of `Cloudy`.
+
+Good luck generating the database! I understand that this can be dauntig and non-intutitve for a first time user. If you encounter any issues, please feel free to contact me for help!
