@@ -347,7 +347,7 @@ For a successful merge, the code must atleast pass all the pre-existing tests. I
 
 > **Note** It is recommended to install the git pre-commit hook using `pre-commit install` to check all the staged files.
 
-> ** Instrutions on generating `Cloudy` database **
+### Instrutions on generating `Cloudy` database
 All the codes required to generate the `Cloudy` database is in `cloudy-codes` directory. This part of the code is not as clean and user-friendly as the rest of `AstroPlasma` because it is not needed for an average user. Although I plan to improve this as well in near future. I have tested this using `Cloudy 17` ([link here to know more on `Cloudy`](https://pa.as.uky.edu/gary/cloudy-project))
 - export `CLOUDY_DATA_PATH` to the `data` directory of `Cloudy` (for example, `c17.03/data`)
 - I have tested my building the library using Makefiles in `source/sys_gcc_shared` directory of `Cloudy`. Run `make` from inside this directory. If `make` succeeds then `cloudy.exe` and a shared library `libcloudy.so` will get compiled.
