@@ -134,11 +134,11 @@ int main( int argc, char *argv[] )
 			/* identify sources of heating and cooling */
 			cdRead( "punch heating \"hazy_coolingcurve.het\" last no hash no clobber "  );
 			cdRead( "punch cooling \"hazy_coolingcurve.col\" last no hash no clobber "  );
-			printf("Mark1\n");
+
 			/* actually call the code */
 			if( cdDrive() )
 				exit_status = ES_FAILURE;
-			printf("Mark2\n");
+
 			/* get cooling for last zone */
 			cooling = cdCooling_last();
 
@@ -146,7 +146,7 @@ int main( int argc, char *argv[] )
 			cooling = cooling / pow(10.,hden*hden);
 
 			fprintf(ioRES, "%12.6e\t%12.6e", pow(10,telog) , cooling ) ;
-			printf("%12.6e\t%12.6e", pow(10,telog) , cooling ) ;
+			/*printf("%12.6e\t%12.6e", pow(10,telog) , cooling ) ;*/
 			//fprintf(stderr,"%12.6e\t%12.6e", pow(10,telog) , cooling ) ;
 
 			if( exit_status == ES_FAILURE )
