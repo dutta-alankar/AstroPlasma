@@ -349,8 +349,11 @@ For a successful merge, the code must atleast pass all the pre-existing tests. I
 
 ### Instrutions on generating `Cloudy` database
 All the codes required to generate the `Cloudy` database is in `cloudy-codes` directory. This part of the code is not as clean and user-friendly as the rest of `AstroPlasma` because it is not needed for an average user. Although I plan to improve this as well in near future. I have tested this using `Cloudy 17` ([link here to know more on `Cloudy`](https://pa.as.uky.edu/gary/cloudy-project))
+#### Setting up and compiling `Cloudy`
 - export `CLOUDY_DATA_PATH` to the `data` directory of `Cloudy` (for example, `c17.03/data`)
 - I have tested my building the library using Makefiles in `source/sys_gcc_shared` directory of `Cloudy`. Run `make` from inside this directory. If `make` succeeds then `cloudy.exe` and a shared library `libcloudy.so` will get compiled.
+
+#### Using `Cloudy` with codes hosted in `AstroPlasma` repo
 - `AstroPlasma` has three directories inside `cloudy-codes`
   - `ionFrac` : Generates the ionization database.
   - `emmSpec` : Generates the emission spectra database (TODO: Work required to make compiled executable enabling faster calculation to generate the database).
@@ -365,5 +368,14 @@ All the codes required to generate the `Cloudy` database is in `cloudy-codes` di
   - Upon successful run, several ascii files with `ionization` in their name will get generated in a directory called `auto` that is created in `AstroPlasma/cloudy-codes/ionFrac/src`. The final `hdf5` files for the database is created in the `data` directory in`AstroPlasma/cloudy-codes/ionFrac/src`. This directory should be copied to `AstroPlasma/astro_plasma/data/` and renamed as `ionization`.
 - Generating *emission* data
   - The steps are similar as above. But in this case both `libcloudy.so` and `cloudy.exe` files need to be copied to `AstroPlasma/cloudy-codes/emmSpec/` from `source/sys_gcc_shared` directory of `Cloudy`.
+- Generating optically thin radiative *Cooling* table
+  - This is not used by `AstroPlasma` as of now but is a useful feature of `Cloudy` and hence included in the repo.
+  - Copy `libcloudy.so` to `AstroPlasma/cloudy-codes/coolingFunction/`
+  - From inside `AstroPlasma/cloudy-codes/coolingFunction/` directory, execute `bash ./compile-script.sh`. This will compile and generate the executables that can create the cooling tables.
+  - Currently there are two types of cooling tables available one with plasma in equilibrium background radiation (PIE) and one without any background radiation (CIE). If you are unsure which one to use, *I would recommend PIE*.
+  - export `AstroPlasma/cloudy-codes/coolingFunction` to `LD_LIBRARY_PATH`.
+  - To generate the cooling table run `./hazy_coolingcurve_<PIE/CIE> <metallicity> <dT (log_10)> <True/False (progressbar display)>`. For eample, `./hazy_coolingcurve_PIE 0.3 0.1 True` will create a cooling table for plasma with 0.3 solar metallicity. The temperature spacing in the table is set to 0.1 dex in this example. The table always starts from 10 K and runs till 10<sup>9</sup> K. `True` in command line arguments shows the progress bar as the code runs.
+  - The name of the cooling table created is `cooltable_<PIE/CIE>_Z=<metallicity>.dat`.
+  - Useful to note that the cooling loss rate from the tabulated Λ(T) in the file is n<sub>H</sub><sup>2</sup>Λ(T), where n<sub>H</sub>=ρX<sub>H</sub>/m<sub>H</sub>. Here ρ is density and n<sub>H</sub> is total Hydrogen number density of the plasma. Usually, X<sub>H</sub>=0.7154. The unit of Λ(T) in the table is erg cm<sup>3</sup> s<sup>-1</sup>.
 
-Good luck generating the database! I understand that this can be dauntig and non-intutitve for a first time user. If you encounter any issues, please feel free to contact me for help!
+Good luck generating the database! I understand that this can be daunting and non-intutitve for a beginner. If you encounter any issues, please don't hesitate to contact me for help!
