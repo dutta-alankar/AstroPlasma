@@ -8,6 +8,7 @@ Created on Mon Jan  9 20:28:15 2023
 # Built-in imports
 import os
 import re
+import hashlib
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import List, Tuple, Union, Optional
@@ -139,3 +140,23 @@ def fetch(urls: List[Tuple[str, Path]], base_dir: Path):
         for url_path, file_name in urls:
             url = urljoin(BASE_URL, url_path)
             pool.submit(download_job, url, base_dir / file_name)
+
+
+def blake2bsum(filename: Union[str, Path]) -> str:
+    chunk_size = 8192
+    with open(filename, "rb") as f:
+        file_hash = hashlib.blake2b()
+        while chunk := f.read(chunk_size):
+            file_hash.update(chunk)
+    return file_hash.hexdigest()
+
+
+def checksum(filename: Union[str, Path], reference_sum: str) -> bool:
+    chunk_size = 8192
+    sum_val = ""
+    with open(filename, "rb") as f:
+        file_hash = hashlib.blake2b()
+        while chunk := f.read(chunk_size):
+            file_hash.update(chunk)
+        sum_val = file_hash.hexdigest()
+    return sum_val == reference_sum

@@ -6,8 +6,9 @@ Created on Sat Nov 18 20:37:04 2023
 """
 
 # Built-in imports
+import os
 from pathlib import Path
-from typing import Union
+from typing import Union, Tuple
 
 # Third party imports
 import requests
@@ -15,7 +16,7 @@ from urllib.parse import urlparse
 import werkzeug
 
 # Local package imports
-from .utils import LOCAL_DATA_PATH, fetch
+from .utils import LOCAL_DATA_PATH, fetch, checksum, blake2bsum
 
 
 # Taken from: https://stackoverflow.com/questions/31804799/how-to-get-pdf-filename-with-python-requests
@@ -39,6 +40,27 @@ def check_files(link_list_url: str) -> None:
     links = [link.split("?")[0] + "?download=1" for link in links]
     for link in links:
         print(get_filename(link))
+
+
+def check_hashes_and_trim(links_and_names: list[Tuple[str, Path]], download_location: Path) -> list[Tuple[str, Path]]:
+    with open(download_location / "hashlist.txt", "r") as f:
+        hash_list = [line.split("\n")[0] for line in f.readlines()]
+    links_and_names_trimmed = []
+    for indx, (_, filename) in enumerate(links_and_names):
+        if not (os.path.isfile(filename) and checksum(filename, hash_list[indx])):
+            links_and_names_trimmed.append(links_and_names[indx])
+    return links_and_names_trimmed
+
+
+def generate_hashes(links_and_names: list[Tuple[str, Path]], download_location: Path) -> None:
+    hashlist = []
+    for indx, (_, filename) in enumerate(links_and_names):
+        for indx, (_, filename) in enumerate(links_and_names):
+            if os.path.isfile(filename):
+                hashlist.append(blake2bsum(filename))
+    with open(download_location / "hashlist.txt", "w") as f:
+        for hash_val in hashlist:
+            f.write(hash_val + "\n")
 
 
 def download_datafiles(link_list_url: str, download_location: Union[str, Path], initialize: bool = False) -> None:

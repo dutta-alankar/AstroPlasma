@@ -82,10 +82,10 @@ Alternatively, one can use `poetry` to install and setup `AstroPlasma`
   - For developer, `poetry install --with dev,test`
   - For  running `Cloudy` scripts, `poetry install --with cloudy_run`. Note that `Python.h` from the `python3.10-dev` package must be available for installing `mpi4py` dependency required by the `Cloudy` scripts.
 > Later at any time activate the virtual environment using `poetry shell` from inside the repo.
-> As a one-time process, install `AstroPlasma` in this virtual environment using `python -m pip install --editable .`. 
+> As a one-time process, install `AstroPlasma` in this virtual environment using `python -m pip install --editable .`.
 
 ### Download the database
-Once `AstroPlasma` and its dependencies are setup, the simplest way to get the entire database locally, is to run the following script in python with the virtual environment activated. Before running the following script, the environment variable `export PARALLEL_DOWNLOAD_JOBS=8` needs to be set. Here one can replace `8` with any number which sets how many files in the database will be downloaded from the web simultaneously. 
+Once `AstroPlasma` and its dependencies are setup, the simplest way to get the entire database locally, is to run the following script in python with the virtual environment activated. Before running the following script, the environment variable `export PARALLEL_DOWNLOAD_JOBS=8` needs to be set. Here one can replace `8` with any number which sets how many files in the database will be downloaded from the web simultaneously.
 ```python
 from astro_plasma import download_all
 download_all()
