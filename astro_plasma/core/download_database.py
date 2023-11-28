@@ -54,10 +54,9 @@ def check_hashes_and_trim(links_and_names: list[Tuple[str, Path]], download_loca
 
 def generate_hashes(links_and_names: list[Tuple[str, Path]], download_location: Path) -> None:
     hashlist = []
-    for indx, (_, filename) in enumerate(links_and_names):
-        for indx, (_, filename) in enumerate(links_and_names):
-            if os.path.isfile(filename):
-                hashlist.append(blake2bsum(filename))
+    for _, filename in links_and_names:
+        if os.path.isfile(filename):
+            hashlist.append(blake2bsum(filename))
     with open(download_location / "hashlist.txt", "w") as f:
         for hash_val in hashlist:
             f.write(hash_val + "\n")
