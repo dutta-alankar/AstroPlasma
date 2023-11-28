@@ -10,7 +10,7 @@ packages = [{include = "astro_plasma"}]
 
 # Main install requirements
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.10"
 requests = "^2.28.1"
 numpy = "^1.24.1"
 h5py = "^3.7.0"
@@ -21,6 +21,9 @@ tqdm = "^4.65.0"
 
 
 # Packaged required for development
+[tool.poetry.group.dev]
+optional = true
+
 [tool.poetry.group.dev.dependencies]
 black = "^23.1.0"
 ruff = "^0.0.261"
@@ -28,8 +31,14 @@ mypy = "^1.2.0"
 types-requests = "^2.28.11.17"
 pre-commit = "^3.3.1"
 
+[tool.poetry.group.test]
+optional = true
+
 [tool.poetry.group.test.dependencies]
 matplotlib = "^3.7.1"
+
+[tool.poetry.group.cloudy_run]
+optional = true
 
 [tool.poetry.group.cloudy_run.dependencies]
 mpi4py = "^3.1.4"
