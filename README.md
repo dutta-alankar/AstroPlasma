@@ -34,46 +34,72 @@ Running Cloudy models on the fly, especially when there are lot of models to run
 </picture>
 
 ## Install
-This is just a one-time process.
+This is just a one-time process. `AstroPlasma` has been tested with `Python 3.10`
 
-1. Get the AstroPlasma code:
+### Get the AstroPlasma code:
 ```
 git clone https://github.com/dutta-alankar/AstroPlasma.git
 ```
-2. Change to the code directory
+
+### Setting up dependencies
+Change to the code directory
 ```
 cd AstroPlasma
 ```
-3. Use a virtual envinronment (named `venv` here) and install AstroPlasma:
+
+#### Prepare Python virtual environment
+The instructions here can be follwoed to setup a virtual envinronment (named `.venv` here) and install AstroPlasma and its dependencies:
 ```
-python -m venv venv
-source venv/bin/activate
+python -m venv .venv
+source .venv/bin/activate
 python -m pip install --editable .
 ```
-4. Install the dependencies:
+#### Install the dependencies:
 For user,
-```
+```bash
 python -m pip install -r requirements/requirements.txt
 ```
 For developer,
-```
+```bash
 python -m pip install -r requirements/requirements-dev.txt
 ```
+For running `Cloudy` scripts,
+```bash
+python -m pip install -r requirements/requirements-all.txt
+```
+> **Note**:  `Python.h` from the `python3.10-dev` package must be available for installing `mpi4py` dependency required by the `Cloudy` scripts.
+
 At any point later, in order to use AstroPlasma, just activate this virtual environment:
 ```
 source venv/bin/activate
 ```
-5. Download the data provided in the link at the end and place it inside the `data` directory in the repo. ALternatively, one can use custom data location as well. Please see the relevant *Note* provided near the end of this README.
+
+#### Alternative setup using `poetry`
+Alternatively, one can use `poetry` to install and setup `AstroPlasma`
+> Install `poetry` following the installation instruction ![here](https://python-poetry.org/docs/#installing-with-the-official-installer).
+> Do the following depending on requirements:
+  - For user, `poetry install`
+  - For developer, `poetry install --with dev,test`
+  - For  running `Cloudy` scripts, `poetry install --with cloudy_run`. Note that `Python.h` from the `python3.10-dev` package must be available for installing `mpi4py` dependency required by the `Cloudy` scripts.
+> Later at any time activate the virtual environment using `poetry shell` from inside the repo.
+> As a one-time process, install `AstroPlasma` in this virtual environment using `python -m pip install --editable .`. 
+
+### Download the database
+Once `AstroPlasma` and its dependencies are setup, the simplest way to get the entire database locally, is to run the following script in python with the virtual environment activated. Before running the following script, the environment variable `export PARALLEL_DOWNLOAD_JOBS=8` needs to be set. Here one can replace `8` with any number which sets how many files in the database will be downloaded from the web simultaneously. 
+```python
+from astro_plasma import download_all
+download_all()
+```
+Alternatively, one can use a custom data location as well. Please see the relevant *Note* provided near the end of this README.
 
 # User Guide
 
-## This is a notebook that demonstrates the basic usage of `AstroPlasma`
->  **Info**: A `jupyter-notebook` of this User guide can be found in the `tests` directory.
+## The following are code snippets that demonstrate the basic usage of `AstroPlasma`
+> **Info**: A `jupyter-notebook` of this User Guide can be found in the `tests` directory.
 
 ### Ionization modeling
 
 This is how one would use astro_plasma for calculating ionization state of any typical astrophysical plasma. This would be useful in any modeling that depends on calculating the ionization of the plasma. Determining temperautre from density, calculating the free electron density in the plasma are few such examples where `AstroPlasma` can find application.
-
 
 ```python
 # Import AstroPlasma Ionization module
@@ -173,7 +199,7 @@ In order to get
 - **total particle number density**, use `part_type = "all"`
 - **total ion number density**, use `part_type = "ion"`
 - **total neutral particle number density**, use `part_type = "neutral"`
-- **any particular ion number density**, use `element = <element_name>"` (similar to `fIon`)
+- **any particular ion number density**, use `element = "<element_name>"` (similar to `fIon`)
 
 
 ```python
