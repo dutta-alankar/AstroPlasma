@@ -1,6 +1,6 @@
 from .core.ionization import Ionization as ion
 from .core.spectrum import EmissionSpectrum as emm
-from .core.download_database import download_emission_data, download_ionization_data, download_all, initialize_data
+from .core.download_database import download_emission_data, download_ionization_data, download_all, initialize_data, hash_all
 
 try:
     Ionization = ion()

@@ -152,11 +152,9 @@ def blake2bsum(filename: Union[str, Path]) -> str:
 
 
 def checksum(filename: Union[str, Path], reference_sum: str) -> bool:
-    chunk_size = 8192
-    sum_val = ""
-    with open(filename, "rb") as f:
-        file_hash = hashlib.blake2b()
-        while chunk := f.read(chunk_size):
-            file_hash.update(chunk)
-        sum_val = file_hash.hexdigest()
+    sum_val = blake2bsum(filename)
     return sum_val == reference_sum
+
+
+def prepare_onedrive_link(link: str) -> str:
+    return link.split("?")[0] + "?download=1"
