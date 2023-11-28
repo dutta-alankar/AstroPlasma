@@ -142,7 +142,7 @@ def fetch(urls: List[Tuple[str, Path]], base_dir: Path):
             pool.submit(download_job, url, base_dir / file_name)
 
 
-# code taken from https://stackoverflow.com/questions/16874598/how-do-i-calculate-the-md5-checksum-of-a-file-in-python
+# Taken from: https://stackoverflow.com/questions/16874598/how-do-i-calculate-the-md5-checksum-of-a-file-in-python
 def blake2bsum(filename: Union[str, Path]) -> str:
     chunk_size = 8192
     with open(filename, "rb") as f:
