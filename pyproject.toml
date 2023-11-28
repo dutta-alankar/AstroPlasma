@@ -18,7 +18,7 @@ urllib3 = "^1.26.15"
 python-dotenv = "1.0.0"
 scipy = "1.9.3"
 tqdm = "^4.65.0"
-
+werkzeug = "^3.0.1"
 
 # Packaged required for development
 [tool.poetry.group.dev]
