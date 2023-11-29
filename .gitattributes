@@ -1,1 +1,3 @@
-cloudy-codes/* linguist-vendored
+./cloudy-codes/* linguist-vendored
+./misc/* linguist-vendored
+./tests/* linguist-vendored
