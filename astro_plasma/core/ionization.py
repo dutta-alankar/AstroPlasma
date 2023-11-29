@@ -1,17 +1,21 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Nov 30 12:06:18 2022
+"""Created on Wed Nov 30 12:06:18 2022.
 
 @author: alankar
 """
 
-import numpy as np
-import h5py
-from .constants import mH, mp, X_solar, Y_solar, Z_solar, Xp, Yp, Zp
+# Built-in imports
 from pathlib import Path
 from typing import Optional, Union, Set
-from .utils import fetch, LOCAL_DATA_PATH
+
+# Third party imports
+import h5py
+import numpy as np
+
+# Local package imports
+from .constants import mH, mp, X_solar, Y_solar, Z_solar, Xp, Yp, Zp
 from .datasift import DataSift
+from .utils import fetch, LOCAL_DATA_PATH, AtmElement, parse_atomic_ion_no
+from .data_dir import set_base_dir
 
 DEFAULT_BASE_DIR = LOCAL_DATA_PATH / "ionization"
 FILE_NAME_TEMPLATE = "ionization.b_{:06d}.h5"
@@ -25,7 +29,7 @@ class Ionization(DataSift):
     def __init__(
         self: "Ionization",
         base_dir: Optional[Path] = None,
-    ) -> None:
+    ):
         """
         Prepares the location to read data for generating ionization calculations.
 
@@ -36,16 +40,21 @@ class Ionization(DataSift):
         """
         self.base_url_template = BASE_URL_TEMPLATE
         self.file_name_template = FILE_NAME_TEMPLATE
-        if base_dir is None:
-            self.base_dir = DEFAULT_BASE_DIR
-        else:
-            self.base_dir = Path(base_dir)
+        self.base_dir = base_dir
 
-        if not self.base_dir.exists():
-            self.base_dir.mkdir(mode=0o755, parents=True, exist_ok=True)
+    @property
+    def base_dir(self):
+        return self._base_dir
 
-        fetch(urls=DOWNLOAD_IN_INIT, base_dir=self.base_dir)
-        data = h5py.File(self.base_dir / DOWNLOAD_IN_INIT[0][1], "r")
+    @base_dir.setter
+    def base_dir(
+        self,
+        base_dir: Optional[Path] = None,
+    ):
+        self._base_dir = set_base_dir(DEFAULT_BASE_DIR, base_dir)
+
+        fetch(urls=DOWNLOAD_IN_INIT, base_dir=self._base_dir)
+        data = h5py.File(self._base_dir / DOWNLOAD_IN_INIT[0][1], "r")
         super().__init__(data)
         data.close()
 
@@ -139,8 +148,8 @@ class Ionization(DataSift):
         temperature: Union[int, float] = 2.7e6,
         metallicity: Union[int, float] = 0.5,
         redshift: Union[int, float] = 0.2,
-        element: int = 2,
-        ion: int = 1,
+        element: Union[int, AtmElement, str] = AtmElement.Helium,
+        ion: Union[int, None] = 1,
         mode: str = "PIE",
     ) -> float:
         """
@@ -189,19 +198,20 @@ class Ionization(DataSift):
             The value is in log10.
 
         """
+
+        element, ion = parse_atomic_ion_no(element, ion)
+
         # element = 1: H, 2: He, 3: Li, ... 30: Zn
         # ion = 1 : neutral, 2: +, 3: ++ .... (element+1): (++++... element times)
         if ion < 0 or ion > element + 1:
             raise ValueError(f"Problem! Invalid ion {ion} for element {element}.")
         if element < 0 or element > 30:
-            raise ValueError(f"Problem! Invalid ion {ion} for element {element}.")
+            raise ValueError(f"Problem! Invalid element {element}.")
 
         # Select only the ions for the requested element
         slice_start = int((element - 1) * (element + 2) / 2)
         slice_stop = int(element * (element + 3) / 2)
-        fracIon = self._interpolate_ion_frac_all(
-            nH, temperature, metallicity, redshift, mode
-        )[slice_start:slice_stop]
+        fracIon = self._interpolate_ion_frac_all(nH, temperature, metallicity, redshift, mode)[slice_start:slice_stop]
 
         # Array starts from 0 but ion from 1
         return fracIon[ion - 1]  # This is in log10
@@ -213,7 +223,9 @@ class Ionization(DataSift):
         metallicity: Union[int, float] = 0.5,
         redshift: Union[int, float] = 0.2,
         mode: str = "PIE",
-        part_type: str = "electron",
+        part_type: Optional[str] = None,
+        element: Optional[Union[int, AtmElement, str]] = None,
+        ion: Optional[int] = None,
     ) -> float:
         """
         Interpolates the number density of different species
@@ -241,8 +253,15 @@ class Ionization(DataSift):
             The default is 'PIE'.
         part_type : str, optional
             The type of the particle requested.
-            Currently available options: all, electron, ion
+            Currently available options: all, electron, ion, neutral
             The default is 'electron'.
+        element : int, optional
+            Atomic number of the element. The default is 2.
+        ion : int, optional
+            Ionization species of the element.
+            Must between 1 and element+1.
+            The default is 1.
+            1:neutral, 2:+, 3:++, ...
 
         Returns
         -------
@@ -252,111 +271,79 @@ class Ionization(DataSift):
         """
         abn_file = LOCAL_DATA_PATH / "solar_GASS10.abn"
         with abn_file.open() as file:
-            abn = np.array(
-                [float(element.split()[-1]) for element in file.readlines()[2:32]]
-            )  # Till Zinc
+            abn = np.array([float(element.split()[-1]) for element in file.readlines()[2:32]])  # Till Zinc
         # element = 1: H, 2: He, 3: Li, ... 30: Zn
         # ion = 1 : neutral, 2: +, 3: ++ .... (element+1): (++++... element times)
-        fracIon = 10.0 ** self._interpolate_ion_frac_all(
-            nH, temperature, metallicity, redshift, mode
-        )
+        fracIon = 10.0 ** self._interpolate_ion_frac_all(nH, temperature, metallicity, redshift, mode)
 
-        if part_type == "all":
+        if part_type == "all" and element is None:
             ndens = 0
             ion_count = 0
             for element in range(30):
                 for ion in range(element + 2):
                     if element + 1 == 1:  # H
-                        ndens += (
-                            (ion + 1)
-                            * (Xp(metallicity) / X_solar)
-                            * abn[element]
-                            * fracIon[ion_count]
-                            * nH
-                        )
+                        ndens += (ion + 1) * (Xp(metallicity) / X_solar) * abn[element] * fracIon[ion_count] * nH
                     elif element + 1 == 2:  # He
-                        ndens += (
-                            (ion + 1)
-                            * (Yp(metallicity) / Y_solar)
-                            * abn[element]
-                            * fracIon[ion_count]
-                            * nH
-                        )
+                        ndens += (ion + 1) * (Yp(metallicity) / Y_solar) * abn[element] * fracIon[ion_count] * nH
                     else:
-                        ndens += (
-                            (ion + 1)
-                            * (Zp(metallicity) / Z_solar)
-                            * abn[element]
-                            * fracIon[ion_count]
-                            * nH
-                        )
+                        ndens += (ion + 1) * (Zp(metallicity) / Z_solar) * abn[element] * fracIon[ion_count] * nH
                     ion_count += 1
             return ndens
 
-        elif part_type == "electron":
+        elif part_type == "electron" and element is None:
             ne = 0
             ion_count = 0
             for element in range(30):
                 for ion in range(element + 2):
                     if element + 1 == 1:  # H
-                        ne += (
-                            ion
-                            * (Xp(metallicity) / X_solar)
-                            * nH
-                            * abn[element]
-                            * fracIon[ion_count]
-                        )
+                        ne += ion * (Xp(metallicity) / X_solar) * nH * abn[element] * fracIon[ion_count]
                     elif element + 1 == 2:  # He
-                        ne += (
-                            ion
-                            * (Yp(metallicity) / Y_solar)
-                            * nH
-                            * abn[element]
-                            * fracIon[ion_count]
-                        )
+                        ne += ion * (Yp(metallicity) / Y_solar) * nH * abn[element] * fracIon[ion_count]
                     else:
-                        ne += (
-                            ion
-                            * (Zp(metallicity) / Z_solar)
-                            * nH
-                            * abn[element]
-                            * fracIon[ion_count]
-                        )
+                        ne += ion * (Zp(metallicity) / Z_solar) * nH * abn[element] * fracIon[ion_count]
                     ion_count += 1
             return ne
 
-        elif part_type == "ion":
+        elif part_type == "neutral" and element is None:
+            n_neutral = 0
+            ion_count = 0
+            for element in range(30):
+                for ion in range(element + 2):
+                    if ion == 0:
+                        if element + 1 == 1:  # H
+                            n_neutral += (Xp(metallicity) / X_solar) * nH * abn[element] * fracIon[ion_count]
+                        elif element + 1 == 2:  # He
+                            n_neutral += (Yp(metallicity) / Y_solar) * nH * abn[element] * fracIon[ion_count]
+                        else:
+                            n_neutral += (Zp(metallicity) / Z_solar) * nH * abn[element] * fracIon[ion_count]
+                    ion_count += 1
+            return n_neutral
+
+        elif part_type == "ion" and element is None:
             nion = 0
             ion_count = 0
             for element in range(30):
+                ion_count += 1  # neglects the neutral species
                 for ion in range(1, element + 2):
                     if element + 1 == 1:  # H
-                        nion += (
-                            (Xp(metallicity) / X_solar)
-                            * nH
-                            * abn[element]
-                            * fracIon[ion_count]
-                        )
+                        nion += (Xp(metallicity) / X_solar) * nH * abn[element] * fracIon[ion_count]
                     elif element + 1 == 2:  # He
-                        nion += (
-                            (Yp(metallicity) / Y_solar)
-                            * nH
-                            * abn[element]
-                            * fracIon[ion_count]
-                        )
+                        nion += (Yp(metallicity) / Y_solar) * nH * abn[element] * fracIon[ion_count]
                     else:
-                        nion += (
-                            ion
-                            * (Zp(metallicity) / Z_solar)
-                            * nH
-                            * abn[element]
-                            * fracIon[ion_count]
-                        )
+                        nion += ion * (Zp(metallicity) / Z_solar) * nH * abn[element] * fracIon[ion_count]
                     ion_count += 1
             return nion
 
+        elif element is None and part_type is None:
+            raise ValueError(f"Invalid part_type: {part_type} and invalid element: {element}.")
+        elif element is not None and part_type is not None:
+            raise ValueError(f"Both part_type: {part_type} and element: {element} cannot be specified simultaneously.")
         else:
-            raise ValueError(f"Invalid part_type: {part_type}")
+            _element, _ion = parse_atomic_ion_no(element, ion)
+            fIon = 10.0 ** self.interpolate_ion_frac(nH, temperature, metallicity, redshift, _element, _ion, mode)
+            abundance = abn[_element - 1]
+            nIon = abundance * (Zp(metallicity) / Z_solar) * fIon * nH
+            return nIon
 
     def interpolate_mu(
         self: "Ionization",
@@ -397,7 +384,7 @@ class Ionization(DataSift):
             The default is 'PIE'.
         part_type : str, optional
             The type of the particle requested.
-            Currently available options: all, electron, ion
+            Currently available options: all, electron, ion, neutral
             The default is 'all'.
 
         Returns
@@ -406,7 +393,5 @@ class Ionization(DataSift):
             mean particle mass of the plasma.
 
         """
-        ndens = self.interpolate_num_dens(
-            nH, temperature, metallicity, redshift, mode, part_type
-        )
+        ndens = self.interpolate_num_dens(nH, temperature, metallicity, redshift, mode, part_type)
         return (nH / ndens) * (mH / mp) / float(Xp(metallicity))

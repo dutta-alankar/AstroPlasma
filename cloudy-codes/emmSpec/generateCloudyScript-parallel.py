@@ -31,9 +31,7 @@ if not (run_cloudy):
 flag = 0
 
 
-def emmisivity(
-    nH=1e-4, temperature=1e6, metallicity=1.0, redshift=0.0, indx=None, mode="PIE"
-):
+def emmisivity(nH=1e-4, temperature=1e6, metallicity=1.0, redshift=0.0, indx=None, mode="PIE"):
     plotIt = False
     global flag
 
@@ -49,11 +47,7 @@ def emmisivity(
     kpc = 1e3 * pc
 
     background = f"\ntable HM12 redshift {redshift:.2f}" if mode == "PIE" else ""
-    tmp_filename = (
-        "emission_%s_%09d.lin" % (mode, 1000000 + rank)
-        if indx is None
-        else "emission_%s_%09d.lin" % (mode, indx)
-    )
+    tmp_filename = "emission_%s_%09d.lin" % (mode, 1000000 + rank) if indx is None else "emission_%s_%09d.lin" % (mode, indx)
     stream = f"""
 # ----------- Auto generated from generateCloudyScript.py -----------------
 #Created on {time.ctime()}
@@ -110,11 +104,7 @@ save diffuse continuum "{tmp_filename}" units keV
     # if (indx!=None):
     #    if(indx>=60): print(f'Inside emm ar: {rank} {indx} {mode}', flush=True)
 
-    data = np.loadtxt(
-        "./auto/emission_%s_%09d.lin" % (mode, 1000000 + rank)
-        if indx is None
-        else "./auto/emission_%s_%09d.lin" % (mode, indx)
-    )
+    data = np.loadtxt("./auto/emission_%s_%09d.lin" % (mode, 1000000 + rank) if indx is None else "./auto/emission_%s_%09d.lin" % (mode, indx))
     if indx is None:
         os.system("rm -rf ./auto/emission_%s_%09d.lin" % (mode, 1000000 + rank))
         os.system("rm -rf ./auto/%s" % filename)
@@ -172,9 +162,7 @@ metallicity = np.logspace(-1, 1, total_size[2])
 redshift = np.linspace(0, 2, total_size[3])
 
 batch_dim = [8, 8, 4, 2]
-batches = int(np.prod(total_size) // np.prod(batch_dim)) + (
-    0 if (np.prod(total_size) % np.prod(batch_dim)) == 0 else 1
-)
+batches = int(np.prod(total_size) // np.prod(batch_dim)) + (0 if (np.prod(total_size) % np.prod(batch_dim)) == 0 else 1)
 
 values = list(product(redshift, metallicity, temperature, nH))  # itertools are lazy
 sample = emmisivity(indx=None)
@@ -248,12 +236,7 @@ if run_cloudy:
             np.where(metallicity == this_val[-3])[0][0],
             np.where(redshift == this_val[-4])[0][0],
         )
-        counter = (
-            (m) * metallicity.shape[0] * temperature.shape[0] * nH.shape[0]
-            + (k) * temperature.shape[0] * nH.shape[0]
-            + (j) * nH.shape[0]
-            + (i)
-        )
+        counter = (m) * metallicity.shape[0] * temperature.shape[0] * nH.shape[0] + (k) * temperature.shape[0] * nH.shape[0] + (j) * nH.shape[0] + (i)
 
         # if (counter>=len(values)):
         #     print(f'Rank {rank}: Problem: index {counter} overflow!', flush=True)
@@ -320,44 +303,29 @@ if rank <= batches - 1 and make_batch:
                 np.where(metallicity == this_val[-3])[0][0],
                 np.where(redshift == this_val[-4])[0][0],
             )
-            counter = (
-                (m) * metallicity.shape[0] * temperature.shape[0] * nH.shape[0]
-                + (k) * temperature.shape[0] * nH.shape[0]
-                + (j) * nH.shape[0]
-                + (i)
-            )
+            counter = (m) * metallicity.shape[0] * temperature.shape[0] * nH.shape[0] + (k) * temperature.shape[0] * nH.shape[0] + (j) * nH.shape[0] + (i)
             if counter >= len(values):
                 print(f"Rank {rank}: Problem: index {counter} overflow!", flush=True)
                 # comm.Disconnect()
                 # MPI.Finalize()
                 # sys.exit(1)
-            in_this_batch = (
-                counter >= offsets[batch_id] and counter < offsets[batch_id + 1]
-            )
+            in_this_batch = counter >= offsets[batch_id] and counter < offsets[batch_id + 1]
             if not (in_this_batch):
                 continue
-            spectrum_CIE = np.loadtxt(
-                "./auto/emission_CIE_%09d.lin" % counter, dtype=np.float32
-            )
+            spectrum_CIE = np.loadtxt("./auto/emission_CIE_%09d.lin" % counter, dtype=np.float32)
             while spectrum_CIE.ndim < 2:
                 try:
-                    spectrum_CIE = np.loadtxt(
-                        "./auto/emission_PIE_%09d.lin" % counter, dtype=np.float32
-                    )
+                    spectrum_CIE = np.loadtxt("./auto/emission_PIE_%09d.lin" % counter, dtype=np.float32)
                 except (OSError, ValueError):
                     print("Retry", flush=True)
                     time.sleep(2)
             tot_emm_CIE[count, :] = spectrum_CIE[:, -1][:till]
             cont_emm_CIE[count, :] = spectrum_CIE[:, 1][:till]
 
-            spectrum_PIE = np.loadtxt(
-                "./auto/emission_PIE_%09d.lin" % counter, dtype=np.float32
-            )
+            spectrum_PIE = np.loadtxt("./auto/emission_PIE_%09d.lin" % counter, dtype=np.float32)
             while spectrum_PIE.ndim < 2:
                 try:
-                    spectrum_PIE = np.loadtxt(
-                        "./auto/emission_PIE_%09d.lin" % counter, dtype=np.float32
-                    )
+                    spectrum_PIE = np.loadtxt("./auto/emission_PIE_%09d.lin" % counter, dtype=np.float32)
                 except (OSError, ValueError):
                     print("Retry", flush=True)
                     time.sleep(2)

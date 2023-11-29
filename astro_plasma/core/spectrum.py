@@ -5,12 +5,19 @@ Created on Thu Dec  1 18:23:40 2022
 @author: alankar
 """
 
-import numpy as np
-import h5py
+# Built-in imports
 from pathlib import Path
-from .utils import fetch, LOCAL_DATA_PATH
-from typing import Optional, Callable, Union, Set
+from typing import Union, Optional, Callable, Set
+
+# Third party imports
+import h5py
+import numpy as np
+
+# Local package imports
+
 from .datasift import DataSift
+from .utils import LOCAL_DATA_PATH, fetch
+from .data_dir import set_base_dir
 
 DEFAULT_BASE_DIR = LOCAL_DATA_PATH / "emission"
 FILE_NAME_TEMPLATE = "emission.b_{:06d}.h5"
@@ -35,19 +42,23 @@ class EmissionSpectrum(DataSift):
         """
         self.base_url_template = BASE_URL_TEMPLATE
         self.file_name_template = FILE_NAME_TEMPLATE
-        if base_dir is None:
-            self.base_dir = DEFAULT_BASE_DIR
-        else:
-            self.base_dir = Path(base_dir)
+        self.base_dir = base_dir
 
-        if not self.base_dir.exists():
-            self.base_dir.mkdir(mode=0o755, parents=True)
+    @property
+    def base_dir(self):
+        return self._base_dir
 
-        fetch(urls=DOWNLOAD_IN_INIT, base_dir=self.base_dir)
+    @base_dir.setter
+    def base_dir(
+        self,
+        base_dir: Optional[Path] = None,
+    ):
+        self._base_dir = set_base_dir(DEFAULT_BASE_DIR, base_dir)
 
-        data = h5py.File(self.base_dir / DOWNLOAD_IN_INIT[0][1], "r")
+        fetch(urls=DOWNLOAD_IN_INIT, base_dir=self._base_dir)
+        data = h5py.File(self._base_dir / DOWNLOAD_IN_INIT[0][1], "r")
         super().__init__(data)
-        self.energy = np.array(data["output/energy"])
+        self._energy = np.array(data["output/energy"])
         data.close()
 
     def _fetch_data(self: "EmissionSpectrum", batch_ids: Set[int]) -> None:
@@ -112,8 +123,8 @@ class EmissionSpectrum(DataSift):
 
         """
 
-        self.spectrum = np.zeros((self.energy.shape[0], 2))
-        self.spectrum[:, 0] = self.energy
+        self.spectrum = np.zeros((self._energy.shape[0], 2))
+        self.spectrum[:, 0] = self._energy
 
         self.spectrum[:, 1] = super()._interpolate(
             nH,
