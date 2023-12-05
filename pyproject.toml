@@ -19,8 +19,10 @@ python-dotenv = "1.0.0"
 scipy = "1.9.3"
 tqdm = "^4.65.0"
 werkzeug = "^3.0.1"
+pytest = "^7.4.3"
+poetry-plugin-export = "^1.6.0"
 
-# Packaged required for development
+# Packages required for development
 [tool.poetry.group.dev]
 optional = true
 

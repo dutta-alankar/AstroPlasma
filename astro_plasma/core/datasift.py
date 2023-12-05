@@ -48,6 +48,70 @@ class DataSift(ABC):
             + (i)
         )
         return counter
+        
+    def _determine_multiple_input(
+        self: "DataSift",
+        nH: Union[int, float, List, np.ndarray],
+        temperature: Union[int, float, List, np.ndarray],
+        metallicity: Union[int, float, List, np.ndarray],
+        redshift: Union[int, float, List, np.ndarray],
+    ) -> bool:
+        """
+        Determine if multiple datapoints are requested.
+
+        Parameters
+        ----------
+        nH : float
+            Hydrogen number density (all hydrogen both neutral and ionized.
+        temperature : float, array, list
+            Plasma temperature.
+        metallicity : float, array, list
+            Plasma metallicity with respect to solar.
+        redshift : float, array, list
+            Cosmological redshift of the universe.
+
+        Returns
+        -------
+        condition : bool
+            True if multiple data is requested
+
+        """
+        condition = isinstance(nH, list) or isinstance(nH, np.ndarray)
+        condition = condition and (isinstance(temperature, list) or isinstance(temperature, np.ndarray))
+        condition = condition and (isinstance(metallicity, list) or isinstance(metallicity, np.ndarray))
+        condition = condition and (isinstance(redshift, list) or isinstance(redshift, np.ndarray))
+
+        return condition
+        
+    def _prepare_multiple_input(
+        self: "DataSift",
+        nH: Union[int, float, List, np.ndarray],
+        temperature: Union[int, float, List, np.ndarray],
+        metallicity: Union[int, float, List, np.ndarray],
+        redshift: Union[int, float, List, np.ndarray],
+    ) -> bool:
+        """
+        Determine if multiple datapoints are requested.
+
+        Parameters
+        ----------
+        nH : float
+            Hydrogen number density (all hydrogen both neutral and ionized.
+        temperature : float, array, list
+            Plasma temperature.
+        metallicity : float, array, list
+            Plasma metallicity with respect to solar.
+        redshift : float, array, list
+            Cosmological redshift of the universe.
+
+        Returns
+        -------
+        input_tuple : bool
+            processed data for multiple
+
+        """
+        pass
+        
 
     def _transform_edges(self: "DataSift", i: int, j: int, k: int, m: int) -> Tuple[int, int, int, int]:
         # Detect the edge cases
@@ -97,13 +161,13 @@ class DataSift(ABC):
 
         Parameters
         ----------
-        nH : float, optional
+        nH : float
             Hydrogen number density (all hydrogen both neutral and ionized.
-        temperature : float, optional
+        temperature : float
             Plasma temperature.
-        metallicity : float, optional
+        metallicity : float
             Plasma metallicity with respect to solar.
-        redshift : float, optional
+        redshift : float
             Cosmological redshift of the universe.
 
         Returns
@@ -192,7 +256,7 @@ class DataSift(ABC):
         ),
     ) -> np.ndarray:
         """
-        Interpolate emission spectrum from pre-computed Cloudy table.
+        Interpolate from pre-computed Cloudy table.
 
         Parameters
         ----------
