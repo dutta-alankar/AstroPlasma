@@ -23,9 +23,6 @@ jobs:
               python -m pip install --upgrade pip
               pip install -r requirements/requirements-dev.txt
     - name: Test AstroPlasma
-      env:
-        PYTHONPATH: ${{ steps.current_directory.outputs.stdout }}
       run:  |
-              echo $PYTHONPATH
-              ls $PYTHONPATH
+              export PYTHONPATH=${{ steps.current_directory.outputs.stdout }}
               pytest
