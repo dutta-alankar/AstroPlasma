@@ -25,4 +25,6 @@ jobs:
     - name: Test AstroPlasma
       env:
         PYTHONPATH: ${{ steps.current_directory.outputs.stdout }}
-      run:  pytest
+      run:  |
+              echo $PYTHONPATH
+              pytest
