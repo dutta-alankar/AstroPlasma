@@ -95,7 +95,7 @@ Alternatively, one can use a custom data location as well. Please see the releva
 # User Guide
 
 ## The following are code snippets that demonstrate the basic usage of `AstroPlasma`
-> **Info**: A `jupyter-notebook` of this User Guide can be found in the `tests` directory.
+> **Info**: A `jupyter-notebook` of this User Guide can be found in the `example-scripts` directory.
 
 ### Ionization modeling
 
