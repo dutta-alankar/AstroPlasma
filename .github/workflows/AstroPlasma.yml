@@ -27,4 +27,5 @@ jobs:
         PYTHONPATH: ${{ steps.current_directory.outputs.stdout }}
       run:  |
               echo $PYTHONPATH
+              ls $PYTHONPATH
               pytest
