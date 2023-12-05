@@ -48,7 +48,7 @@ class DataSift(ABC):
             + (i)
         )
         return counter
-        
+
     def _determine_multiple_input(
         self: "DataSift",
         nH: Union[int, float, List, np.ndarray],
@@ -82,7 +82,7 @@ class DataSift(ABC):
         condition = condition and (isinstance(redshift, list) or isinstance(redshift, np.ndarray))
 
         return condition
-        
+
     def _prepare_multiple_input(
         self: "DataSift",
         nH: Union[int, float, List, np.ndarray],
@@ -111,7 +111,6 @@ class DataSift(ABC):
 
         """
         pass
-        
 
     def _transform_edges(self: "DataSift", i: int, j: int, k: int, m: int) -> Tuple[int, int, int, int]:
         # Detect the edge cases
