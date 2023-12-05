@@ -108,6 +108,7 @@ def parse_atomic_ion_no(
 
 
 def fetch(urls: List[Tuple[str, Path]], base_dir: Path):
+    #([(link, filename)], save_location)
     base_dir.mkdir(mode=0o766, parents=True, exist_ok=True)
 
     # unit job of downloading and saving file
