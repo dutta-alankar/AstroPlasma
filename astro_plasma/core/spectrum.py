@@ -18,6 +18,7 @@ import numpy as np
 from .datasift import DataSift
 from .utils import LOCAL_DATA_PATH, fetch
 from .data_dir import set_base_dir
+from .download_database import download_emission_data
 
 DEFAULT_BASE_DIR = LOCAL_DATA_PATH / "emission"
 FILE_NAME_TEMPLATE = "emission.b_{:06d}.h5"
@@ -43,6 +44,7 @@ class EmissionSpectrum(DataSift):
         self.base_url_template = BASE_URL_TEMPLATE
         self.file_name_template = FILE_NAME_TEMPLATE
         self.base_dir = base_dir
+        self._check_and_download = download_emission_data
 
     @property
     def base_dir(self):

@@ -16,6 +16,7 @@ from .constants import mH, mp, X_solar, Y_solar, Z_solar, Xp, Yp, Zp
 from .datasift import DataSift
 from .utils import fetch, LOCAL_DATA_PATH, AtmElement, parse_atomic_ion_no
 from .data_dir import set_base_dir
+from .download_database import download_ionization_data
 
 DEFAULT_BASE_DIR = LOCAL_DATA_PATH / "ionization"
 FILE_NAME_TEMPLATE = "ionization.b_{:06d}.h5"
@@ -41,6 +42,7 @@ class Ionization(DataSift):
         self.base_url_template = BASE_URL_TEMPLATE
         self.file_name_template = FILE_NAME_TEMPLATE
         self.base_dir = base_dir
+        self._check_and_download = download_ionization_data
 
     @property
     def base_dir(self):
