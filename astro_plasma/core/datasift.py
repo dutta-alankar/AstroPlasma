@@ -9,16 +9,22 @@ from abc import ABC, abstractmethod
 import numpy as np
 from itertools import product
 from pathlib import Path
-from typing import Callable, Optional, Union, Tuple, List, Set
+from typing import Protocol, Callable, Optional, Union, Tuple, List, Set
 import h5py
 import sys
 
 _warn = False
 
 
+class inherited_from_DataSift(Protocol):
+    # This must be compulsorily implemented by any class inheriting from DataSift
+    _check_and_download: Callable
+
+
 class DataSift(ABC):
     def __init__(
         self: "DataSift",
+        child_obj: "inherited_from_DataSift",
         data: h5py.File,
     ) -> None:
         """
@@ -36,7 +42,7 @@ class DataSift(ABC):
 
         self.batch_size = np.prod(np.array(data["header/batch_dim"]))
         self.total_size = np.prod(np.array(data["header/total_size"]))
-        self._check_and_download: Optional[Callable] = None  # mandatory to be implemented by inheriting classes
+        self._check_and_download = child_obj._check_and_download
 
     def _identify_batch(self: "DataSift", i: int, j: int, k: int, m: int) -> int:
         batch_id = self._get_counter(i, j, k, m) // self.batch_size
@@ -450,9 +456,8 @@ class DataSift(ABC):
                     _argument.append(argument_collection[arg_pos][0])
                 else:
                     _argument.append(argument_collection[arg_pos][indx])
-                if not (_dummy) and _array_argument[arg_pos]:
-                    _reference = np.zeros_like(argument_collection[arg_pos]).reshape(_input_shape)
-            i_vals, j_vals, k_vals, m_vals = self._identify_pos_in_each_dim(*_argument)
+            nH_this, temperature_this, metallicity_this, redshift_this = _argument
+            i_vals, j_vals, k_vals, m_vals = self._identify_pos_in_each_dim(nH_this, temperature_this, metallicity_this, redshift_this)
 
             """
             The trick is to take the floor value for interpolation only if it is the

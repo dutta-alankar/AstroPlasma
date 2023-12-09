@@ -39,10 +39,10 @@ class Ionization(DataSift):
         None.
 
         """
+        self._check_and_download = download_ionization_data
         self.base_url_template = BASE_URL_TEMPLATE
         self.file_name_template = FILE_NAME_TEMPLATE
         self.base_dir = base_dir
-        self._check_and_download = download_ionization_data
 
     @property
     def base_dir(self):
@@ -57,22 +57,8 @@ class Ionization(DataSift):
 
         fetch(urls=DOWNLOAD_IN_INIT, base_dir=self._base_dir)
         data = h5py.File(self._base_dir / DOWNLOAD_IN_INIT[0][1], "r")
-        super().__init__(data)
+        super().__init__(self, data)
         data.close()
-
-    """
-    def _fetch_data(self: "Ionization", batch_ids: Set[int]) -> None:
-        urls = []
-        for batch_id in batch_ids:
-            urls.append(
-                (
-                    self.base_url_template.format(batch_id),
-                    Path(self.file_name_template.format(batch_id)),
-                )
-            )
-
-        fetch(urls=urls, base_dir=self.base_dir)
-    """
 
     def _get_file_path(self: "Ionization", batch_id: int) -> Path:
         return self.base_dir / self.file_name_template.format(batch_id)
