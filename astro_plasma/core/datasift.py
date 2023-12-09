@@ -36,6 +36,7 @@ class DataSift(ABC):
 
         self.batch_size = np.prod(np.array(data["header/batch_dim"]))
         self.total_size = np.prod(np.array(data["header/total_size"]))
+        self._check_and_download: Optional[Callable] = None  # mandatory to be implemented by inheriting classes
 
     def _identify_batch(self: "DataSift", i: int, j: int, k: int, m: int) -> int:
         batch_id = self._get_counter(i, j, k, m) // self.batch_size
@@ -83,14 +84,14 @@ class DataSift(ABC):
         condition = condition and (isinstance(redshift, list) or isinstance(redshift, np.ndarray))
 
         return condition
-        
+
     def _process_arguments_flags(
         self: "DataSift",
         nH: Union[int, float, List, np.ndarray],
         temperature: Union[int, float, List, np.ndarray],
         metallicity: Union[int, float, List, np.ndarray],
         redshift: Union[int, float, List, np.ndarray],
-    ) -> Tuple[List[bool]]:
+    ) -> Tuple[List[bool], List[bool]]:
         """
         Determine if multiple datapoints are requested.
 
@@ -112,24 +113,24 @@ class DataSift(ABC):
 
         """
         _argument_type = ["nH", "temperature", "metallicity", "redshift"]
-        _array_argument = [True, True, True, True] # array to flag which arguments are arrays
+        _array_argument = [True, True, True, True]  # array to flag which arguments are arrays
         _array_argument[0] = isinstance(nH, list) or isinstance(nH, np.ndarray)
-        _array_argument[1] = isinstance(temperature, list) or isinstance(temperature, np.ndarray) 
+        _array_argument[1] = isinstance(temperature, list) or isinstance(temperature, np.ndarray)
         _array_argument[2] = isinstance(metallicity, list) or isinstance(metallicity, np.ndarray)
         _array_argument[3] = isinstance(redshift, list) or isinstance(redshift, np.ndarray)
-        
-        _dummy_array = [False, False, False, False] # array to flag which arguments are length 1 array
+
+        _dummy_array = [False, False, False, False]  # array to flag which arguments are length 1 array
         if _array_argument[0]:
-            _dummy_array[0] = len(nH)==1
+            _dummy_array[0] = np.array(nH).shape[0] == 1
         if _array_argument[1]:
-            _dummy_array[1] = len(temperature)==1
+            _dummy_array[1] = np.array(temperature).shape[0] == 1
         if _array_argument[2]:
-            _dummy_array[2] = len(metallicity)==1
+            _dummy_array[2] = np.array(metallicity).shape[0] == 1
         if _array_argument[3]:
-            _dummy_array[3] = len(redshift)==1
-            
+            _dummy_array[3] = np.array(redshift).shape[0] == 1
+
         return (_array_argument, _dummy_array)
-        
+
     def _prepare_arguments(
         self: "DataSift",
         nH: Union[int, float, List, np.ndarray],
@@ -138,7 +139,7 @@ class DataSift(ABC):
         redshift: Union[int, float, List, np.ndarray],
         _array_argument: List[bool],
         _dummy_array: List[bool],
-    ) -> Tuple[Tuple[int], List[np.ndarray]]:
+    ) -> Tuple[Optional[Tuple[int]], List[np.ndarray]]:
         """
         Determine if multiple datapoints are requested.
 
@@ -158,22 +159,28 @@ class DataSift(ABC):
         input data tuple : tuple
             prepared input data.
 
-        """    
-        _input_shape: Optional[Tuple] = None
-        argument_collection = [nH, temperature, metallicity, redshift]
+        """
+        _input_shape: Optional[Tuple[int]] = None
+        argument_collection = [np.array(nH), np.array(temperature), np.array(metallicity), np.array(redshift)]
         for indx, _if_this_is_arr in enumerate(_array_argument):
-            if not(_if_this_is_arr):
-                argument_collection[indx] = np.array([argument_collection[indx],])
+            if not (_if_this_is_arr):
+                argument_collection[indx] = np.array(
+                    [
+                        argument_collection[indx],
+                    ]
+                )
             else:
-               argument_collection[indx] = np.array(argument_collection[indx])
-               if _input_shape is None:
-                   _input_shape = argument_collection[indx].shape
-               else:
-                   if (_input_shape != argument_collection[indx].shape):
-                       raise ValueError(f"Check needed from user: Invalid input arguments which are not in compliance with each other! Code Aborted!")
+                argument_collection[indx] = np.array(argument_collection[indx])
+                if _input_shape is None:
+                    _input_shape = argument_collection[indx].shape
+                else:
+                    if _input_shape != argument_collection[indx].shape:
+                        raise ValueError("Check needed from user: Invalid input arguments which are not in compliance with each other! Code Aborted!")
             argument_collection[indx] = argument_collection[indx].flatten()
         if np.sum(_dummy_array) == 4 or np.sum(_array_argument) == 0:
-            _input_shape = (1,) # default only one datapoint is requested
+            _input_shape = (1,)  # default only one datapoint is requested
+        if _input_shape is None:
+            raise ValueError("Check needed from user: Invalid input arguments which are not in compliance with each other! Code Aborted!")
         return (_input_shape, argument_collection)
 
     def _find_all_batches(
@@ -203,26 +210,25 @@ class DataSift(ABC):
             Set of all the unique batch ids from the entire requested data.
 
         """
-        _array_argument, _dummy_array = self._process_arguments_flags(nH, temperature, metallicity, redshift)
-        _input_shape, argument_collection = self._prepare_arguments(nH, temperature, metallicity, redshift, _array_argument, _dummy_array)
-        
+
+        _array_argument, _dummy_array = self._array_argument, self._dummy_array
+        _input_shape, argument_collection = self._input_shape, self.argument_collection
+
         if np.sum(_dummy_array) == 4 or np.sum(_array_argument) == 0:
             _argument = [argument[0] for argument in argument_collection]
             return self._find_all_batches_single(*_argument)
-        
-        _all_batches_all_data = set()
+
+        _all_batches_all_data: Set[int] = set()
         for indx in range(np.product(_input_shape)):
             _argument = []
             for arg_pos, _dummy in enumerate(_dummy_array):
-                if _dummy or not(_array_argument[arg_pos]):
+                if _dummy or not (_array_argument[arg_pos]):
                     _argument.append(argument_collection[arg_pos][0])
                 else:
                     _argument.append(argument_collection[arg_pos][indx])
-            # print("Debug: ", _argument)
             _all_batches_all_data = _all_batches_all_data.union(self._find_all_batches_single(*_argument))
         if _all_batches_all_data == set():
-            raise ValueError(f"Problem identifying batches! Code Aborted!")
-        # print("Debug: ", _all_batches_all_data)
+            raise ValueError("Problem identifying batches! Code Aborted!")
         return _all_batches_all_data
 
     def _transform_edges(self: "DataSift", i: int, j: int, k: int, m: int) -> Tuple[int, int, int, int]:
@@ -261,6 +267,53 @@ class DataSift(ABC):
             m = m + 1
         return (i, j, k, m)
 
+    def _identify_pos_in_each_dim(
+        self: "DataSift",
+        nH: Union[int, float],
+        temperature: Union[int, float],
+        metallicity: Union[int, float],
+        redshift: Union[int, float],
+    ) -> Tuple[List[int], List[int], List[int], List[int]]:
+        # positions in each data just around the requested value for any variable
+        i_vals, j_vals, k_vals, m_vals = None, None, None, None
+        if np.sum(nH == self.nH_data) == 1:
+            eq = int(np.where(nH == self.nH_data)[0][0])
+            i_vals = [eq - 1, eq, eq + 1]
+        else:
+            i_vals = [
+                np.sum(nH > self.nH_data) - 1,
+                np.sum(nH > self.nH_data),
+            ]
+
+        if np.sum(temperature == self.T_data) == 1:
+            eq = int(np.where(temperature == self.T_data)[0][0])
+            j_vals = [eq - 1, eq, eq + 1]
+        else:
+            j_vals = [
+                np.sum(temperature > self.T_data) - 1,
+                np.sum(temperature > self.T_data),
+            ]
+
+        if np.sum(metallicity == self.Z_data) == 1:
+            eq = int(np.where(metallicity == self.Z_data)[0][0])
+            k_vals = [eq - 1, eq, eq + 1]
+        else:
+            k_vals = [
+                np.sum(metallicity > self.Z_data) - 1,
+                np.sum(metallicity > self.Z_data),
+            ]
+
+        if np.sum(redshift == self.red_data) == 1:
+            eq = int(np.where(redshift == self.red_data)[0][0])
+            m_vals = [eq - 1, eq, eq + 1]
+        else:
+            m_vals = [
+                np.sum(redshift > self.red_data) - 1,
+                np.sum(redshift > self.red_data),
+            ]
+
+        return (i_vals, j_vals, k_vals, m_vals)
+
     def _find_all_batches_single(
         self: "DataSift",
         nH: Union[int, float],
@@ -288,47 +341,7 @@ class DataSift(ABC):
             Set of all the unique batch ids.
 
         """
-        i_vals, j_vals, k_vals, m_vals = None, None, None, None
-        if np.sum(nH == self.nH_data) == 1:
-            eq = np.where(nH == self.nH_data)[0][0]
-            i_vals = [eq - 1, eq, eq + 1]
-        else:
-            i_vals = [
-                np.sum(nH > self.nH_data) - 1,
-                np.sum(nH > self.nH_data),
-            ]
-
-        if np.sum(temperature == self.T_data) == 1:
-            eq = np.where(temperature == self.T_data)[0][0]
-            j_vals = [eq - 1, eq, eq + 1]
-        else:
-            j_vals = [
-                np.sum(temperature > self.T_data) - 1,
-                np.sum(temperature > self.T_data),
-            ]
-
-        if np.sum(metallicity == self.Z_data) == 1:
-            eq = np.where(metallicity == self.Z_data)[0][0]
-            k_vals = [eq - 1, eq, eq + 1]
-        else:
-            k_vals = [
-                np.sum(metallicity > self.Z_data) - 1,
-                np.sum(metallicity > self.Z_data),
-            ]
-
-        if np.sum(redshift == self.red_data) == 1:
-            eq = np.where(redshift == self.red_data)[0][0]
-            m_vals = [eq - 1, eq, eq + 1]
-        else:
-            m_vals = [
-                np.sum(redshift > self.red_data) - 1,
-                np.sum(redshift > self.red_data),
-            ]
-
-        self.i_vals = i_vals
-        self.j_vals = j_vals
-        self.k_vals = k_vals
-        self.m_vals = m_vals
+        i_vals, j_vals, k_vals, m_vals = self._identify_pos_in_each_dim(nH, temperature, metallicity, redshift)
 
         batch_ids = set()
         # identify unique batches
@@ -336,17 +349,18 @@ class DataSift(ABC):
             i, j, k, m = self._transform_edges(i, j, k, m)
             batch_id = self._identify_batch(i, j, k, m)
             batch_ids.add(batch_id)
-        # batch_ids = set(batch_ids)
-        # print("Batches involved: ", batch_ids)
-        # later use this logic to fetch batches from cloud if not present
 
-        self._fetch_data(batch_ids)
+        # print("Batches involved: ", batch_ids)
+
+        # self._fetch_data(batch_ids)
 
         return batch_ids
 
+    """
     @abstractmethod
     def _fetch_data(self: "DataSift", batch_ids: Set[int]) -> None:
         pass
+    """
 
     @abstractmethod
     def _get_file_path(self: "DataSift", batch_id: int) -> Path:
@@ -354,10 +368,10 @@ class DataSift(ABC):
 
     def _interpolate(
         self: "DataSift",
-        nH: Union[int, float],
-        temperature: Union[int, float],
-        metallicity: Union[int, float],
-        redshift: Union[int, float],
+        nH: Union[int, float, list, np.ndarray],
+        temperature: Union[int, float, list, np.ndarray],
+        metallicity: Union[int, float, list, np.ndarray],
+        redshift: Union[int, float, list, np.ndarray],
         mode: str,
         interp_data: str,
         interp_value_shape: Union[Tuple[int], List[int]],
@@ -366,7 +380,7 @@ class DataSift(ABC):
             None,
             None,
         ),
-    ) -> np.ndarray:
+    ) -> Tuple[np.ndarray, bool]:
         """
         Interpolate from pre-computed Cloudy table.
 
@@ -389,10 +403,8 @@ class DataSift(ABC):
             ionization condition
             either CIE (collisional) or PIE (photo).
             The default is 'PIE'.
-        interpField : str
-            ionization condition
-            either CIE (collisional) or PIE (photo).
-            The default is 'PIE'.
+        interp_data : str
+            data location within HDF5 file
         scaling_func : callable function, optional
             function space in which intrepolation is
             carried out.
@@ -402,77 +414,149 @@ class DataSift(ABC):
 
         Returns
         -------
-        interp_value : np.ndarray
+        (interp_value, if_multiple_output) : (np.ndarray, bool)
             The interpolated result.
         """
 
-        _array_argument, _dummy_array = self._process_arguments_flags(nH, temperature, metallicity, redshift)
-        
-        if mode != "PIE" and mode != "CIE":
-            print("Problem! Invalid mode: %s." % mode)
-            return None
+        self._array_argument, self._dummy_array = self._process_arguments_flags(nH, temperature, metallicity, redshift)
+        self._input_shape, self.argument_collection = self._prepare_arguments(nH, temperature, metallicity, redshift, self._array_argument, self._dummy_array)
+
+        _array_argument, _dummy_array = self._array_argument, self._dummy_array
+        _input_shape, argument_collection = self._input_shape, self.argument_collection
+
+        if not (mode == "PIE" or mode == "CIE"):
+            raise ValueError("Problem! Invalid mode: %s." % mode)
 
         batch_ids = self._find_all_batches(nH, temperature, metallicity, redshift)
+        # Download files on demand if absent locally
         self._check_and_download(specific_file_ids=batch_ids)
-        i_vals = self.i_vals
-        j_vals = self.j_vals
-        k_vals = self.k_vals
-        m_vals = self.m_vals
 
+        # Load the data to memory from disk
         data = []
         for batch_id in batch_ids:
             filename = self._get_file_path(batch_id)
             hdf = h5py.File(filename, "r")
             data.append({"batch_id": batch_id, "file": hdf})
-
         """
-        The trick is to take the floor value for interpolation only if it is the
-        most frequent value in all the nearest neighbor. If not, then simply ignore
-        the contribution of the floor value in interpolation.
+        if np.sum(_dummy_array) == 4 or np.sum(_array_argument) == 0:
+            _argument = [argument[0] for argument in argument_collection]
+            i_vals, j_vals, k_vals, m_vals = self._identify_pos_in_each_dim(*_argument)
         """
-        epsilon = 1e-15
-        _all_values = []
-        _all_weights = []
-        for i, j, k, m in product(i_vals, j_vals, k_vals, m_vals):
-            i, j, k, m = self._transform_edges(i, j, k, m)
-            # nearest neighbour interpolation
-            d_i = np.abs(scaling_func(self.nH_data[i]) - scaling_func(float(nH)))
-            d_j = np.abs(scaling_func(self.T_data[j]) - scaling_func(float(temperature)))
-            d_k = np.abs(scaling_func(self.Z_data[k]) - scaling_func(float(metallicity)))
-            d_m = np.abs(scaling_func(self.red_data[m]) - scaling_func(float(redshift)))
-            distL2 = np.sqrt(d_i**2 + d_j**2 + d_k**2 + d_m**2)
-            if distL2 <= 0.0:
-                distL2 = epsilon
-            _all_weights.append(1 / distL2)
+        interp_value = []
+        for indx in range(np.product(_input_shape)):
+            _argument = []
+            for arg_pos, _dummy in enumerate(_dummy_array):
+                if _dummy or not (_array_argument[arg_pos]):
+                    _argument.append(argument_collection[arg_pos][0])
+                else:
+                    _argument.append(argument_collection[arg_pos][indx])
+                if not (_dummy) and _array_argument[arg_pos]:
+                    _reference = np.zeros_like(argument_collection[arg_pos]).reshape(_input_shape)
+            i_vals, j_vals, k_vals, m_vals = self._identify_pos_in_each_dim(*_argument)
 
-            batch_id = self._identify_batch(i, j, k, m)
+            """
+            The trick is to take the floor value for interpolation only if it is the
+            most frequent value in all the nearest neighbor. If not, then simply ignore
+            the contribution of the floor value in interpolation.
+            """
+            epsilon = 1e-15
+            _all_values = []
+            _all_weights = []
+            for i, j, k, m in product(i_vals, j_vals, k_vals, m_vals):
+                i, j, k, m = self._transform_edges(i, j, k, m)
+                # nearest neighbour interpolation
+                d_i = np.abs(scaling_func(self.nH_data[i]) - scaling_func(float(_argument[0])))
+                d_j = np.abs(scaling_func(self.T_data[j]) - scaling_func(float(_argument[1])))
+                d_k = np.abs(scaling_func(self.Z_data[k]) - scaling_func(float(_argument[2])))
+                d_m = np.abs(scaling_func(self.red_data[m]) - scaling_func(float(_argument[3])))
+                distL2 = np.sqrt(d_i**2 + d_j**2 + d_k**2 + d_m**2)
+                if distL2 <= 0.0:
+                    distL2 = epsilon
+                _all_weights.append(1 / distL2)
 
-            for id_data in data:
-                if id_data["batch_id"] == batch_id:
-                    hdf = id_data["file"]
-                    local_pos = self._get_counter(i, j, k, m) % self.batch_size - 1
-            try:
-                value = np.array(hdf[interp_data])[local_pos, :]
-            except UnboundLocalError as e:
-                print("Error: HDF5 files not properly loaded/initialized! Code Aborted!")
-                sys.exit(1)
+                batch_id = self._identify_batch(i, j, k, m)
 
-            if cut[0] is not None:
-                value = np.piecewise(value, [value <= cut[0]], [cut[0], lambda x: x])
-            if cut[1] is not None:
-                value = np.piecewise(value, [value >= cut[1]], [cut[1], lambda x: x])
-            _all_values.append(value)
+                for id_data in data:
+                    if id_data["batch_id"] == batch_id:
+                        hdf = id_data["file"]
+                        local_pos = self._get_counter(i, j, k, m) % self.batch_size - 1
+                try:
+                    value = np.array(hdf[interp_data])[local_pos, :]
+                except UnboundLocalError:
+                    print("Error: HDF5 files not properly loaded/initialized! Code Aborted!")
+                    sys.exit(1)
 
-        all_values = np.array(_all_values)
-        all_weights = np.array(_all_weights)
-        # Filter the outliers (deviation from mean across column is large)
-        all_values[(np.abs(all_values - np.mean(all_values, axis=0)) > 2.0 * np.std(all_values, axis=0))] = 0.0
+                if cut[0] is not None:
+                    value = np.piecewise(value, [value <= cut[0]], [cut[0], lambda x: x])
+                if cut[1] is not None:
+                    value = np.piecewise(value, [value >= cut[1]], [cut[1], lambda x: x])
+                _all_values.append(value)
 
-        # _median_value = np.median(_all_values, axis=0)
-        interp_value = all_weights.T @ all_values / np.sum(all_weights)
-        # if (len(interp_value.shape)==2):
-        #     interp_value = interp_value[0]
+            all_values = np.array(_all_values)
+            all_weights = np.array(_all_weights)
+            # Filter the outliers (deviation from mean across column is large)
+            all_values[(np.abs(all_values - np.mean(all_values, axis=0)) > 2.0 * np.std(all_values, axis=0))] = 0.0
+
+            # _median_value = np.median(_all_values, axis=0)
+            interp_value.append(all_weights.T @ all_values / np.sum(all_weights))
+            # if (len(interp_value.shape)==2):
+            #     interp_value = interp_value[0]
 
         for id_data in data:
             id_data["file"].close()
-        return interp_value
+        if np.sum(_dummy_array) == 4 or np.sum(_array_argument) == 0:
+            return (interp_value[0], False)
+        else:
+            _tmp = np.array(interp_value).reshape((*_input_shape, *np.array(interp_value[0]).shape))
+            return (_tmp, True)
+
+    def _determine_multiple(
+        self: "DataSift",
+        nH: Union[int, float, list, np.ndarray],
+        temperature: Union[int, float, list, np.ndarray],
+        metallicity: Union[int, float, list, np.ndarray],
+        redshift: Union[int, float, list, np.ndarray],
+        mode: str,
+    ) -> bool:
+        """
+        Interpolate from pre-computed Cloudy table.
+
+        Parameters
+        ----------
+        nH : float, optional
+            Hydrogen number density
+            (all hydrogen both neutral and ionized.
+            The default is 1.2e-4.
+        temperature : float, optional
+            Plasma temperature.
+            The default is 2.7e6.
+        metallicity : float, optional
+            Plasma metallicity with respect to solar.
+            The default is 0.5.
+        redshift : float, optional
+            Cosmological redshift of the universe.
+            The default is 0.2.
+        mode : str, optional
+            ionization condition
+            either CIE (collisional) or PIE (photo).
+            The default is 'PIE'.
+        interp_data : str
+            data location within HDF5 file
+        scaling_func : callable function, optional
+            function space in which intrepolation is
+            carried out.
+            The default is linear. log10 is another popular choice.
+        cut : upper and lower bound on  data
+            The default is (None, None)
+
+        Returns
+        -------
+        _multiple_output) : bool
+            If multiple input is passed.
+        """
+        _is_multiple = (isinstance(nH, list) or isinstance(nH, np.ndarray)) and np.array(nH).flatten().shape[0] > 1
+        _is_multiple = _is_multiple or (isinstance(temperature, list) or isinstance(temperature, np.ndarray)) and np.array(temperature).flatten().shape[0] > 1
+        _is_multiple = _is_multiple or (isinstance(metallicity, list) or isinstance(metallicity, np.ndarray)) and np.array(metallicity).flatten().shape[0] > 1
+        _is_multiple = _is_multiple or (isinstance(redshift, list) or isinstance(redshift, np.ndarray)) and np.array(redshift).flatten().shape[0] > 1
+
+        return _is_multiple

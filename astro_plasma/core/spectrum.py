@@ -7,7 +7,7 @@ Created on Thu Dec  1 18:23:40 2022
 
 # Built-in imports
 from pathlib import Path
-from typing import Union, Optional, Callable, Set
+from typing import Union, Optional, Callable
 
 # Third party imports
 import h5py
@@ -63,6 +63,7 @@ class EmissionSpectrum(DataSift):
         self._energy = np.array(data["output/energy"])
         data.close()
 
+    """
     def _fetch_data(self: "EmissionSpectrum", batch_ids: Set[int]) -> None:
         urls = []
         for batch_id in batch_ids:
@@ -74,6 +75,7 @@ class EmissionSpectrum(DataSift):
             )
 
         fetch(urls=urls, base_dir=self.base_dir)
+    """
 
     def _get_file_path(self: "EmissionSpectrum", batch_id: int) -> Path:
         return self.base_dir / self.file_name_template.format(batch_id)
@@ -128,15 +130,35 @@ class EmissionSpectrum(DataSift):
         self.spectrum = np.zeros((self._energy.shape[0], 2))
         self.spectrum[:, 0] = self._energy
 
-        self.spectrum[:, 1] = super()._interpolate(
-            nH,
-            temperature,
-            metallicity,
-            redshift,
-            mode,
-            f"output/emission/{mode}/total",
-            (self.spectrum.shape[0],),
-            scaling_func,
-            (None, None),  # threshold cuts
-        )
+        _is_multiple = self._determine_multiple(nH, temperature, metallicity, redshift, mode)
+
+        if _is_multiple:
+            spectrum, _ = super()._interpolate(
+                nH,
+                temperature,
+                metallicity,
+                redshift,
+                mode,
+                f"output/emission/{mode}/total",
+                (self.spectrum.shape[0],),
+                scaling_func,
+                (None, None),  # threshold cuts
+            )
+            spectrum = spectrum.flatten().reshape((*self._input_shape, spectrum.shape[-1]))
+            self.spectrum = np.zeros((*spectrum.shape, 2), dtype=np.float64)
+            for i in range(spectrum.shape[0]):
+                self.spectrum[i, :, 0] = self._energy
+            self.spectrum[:, :, 1] = spectrum
+        else:
+            self.spectrum[:, 1], _ = super()._interpolate(
+                nH,
+                temperature,
+                metallicity,
+                redshift,
+                mode,
+                f"output/emission/{mode}/total",
+                (self.spectrum.shape[0],),
+                scaling_func,
+                (None, None),  # threshold cuts
+            )
         return self.spectrum

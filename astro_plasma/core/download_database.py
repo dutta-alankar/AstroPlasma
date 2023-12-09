@@ -61,12 +61,12 @@ def check_hashes_and_trim(
     else:
         try:
             hash_list = fetch_list_from_url(hash_list_url)
-        except requests.exceptions.ConnectionError as e:
+        except requests.exceptions.ConnectionError:
             print("Problem downloading data! Most likely internet connection issue! Code Aborted!")
             sys.exit(1)
         with open(download_location / "hashlist.txt", "w") as f:
-            for hash_val in hash_list:
-                f.write(f"{hash_val}\n")
+            for indx, hash_val in enumerate(hash_list):
+                f.write(hash_val + "\n" if (indx + 1) < len(hash_list) else hash_val)
     links_and_names_trimmed = []
     for indx, (_, filename) in enumerate(links_and_names):
         if not (os.path.isfile(download_location / filename) and checksum(download_location / filename, hash_list[indx])):
@@ -75,14 +75,14 @@ def check_hashes_and_trim(
 
 
 def generate_hashes(links_and_names: List[Tuple[str, Path]], download_location: Path) -> None:
-    hashlist = []
+    hash_list = []
     for _, filename in links_and_names:
         if os.path.isfile(download_location / filename):
             file_hash = blake2bsum(download_location / filename)
-            hashlist.append(file_hash)
+            hash_list.append(file_hash)
     with open(download_location / "hashlist.txt", "w") as f:
-        for indx, hash_val in enumerate(hashlist):
-            f.write(hash_val + "\n" if (indx + 1) < len(hashlist) else hash_val)
+        for indx, hash_val in enumerate(hash_list):
+            f.write(hash_val + "\n" if (indx + 1) < len(hash_list) else hash_val)
 
 
 def download_datafiles(
@@ -92,43 +92,45 @@ def download_datafiles(
     hashgen: bool = False,
     hash_list_url: Optional[str] = None,
     specific_file_ids: Optional[List[int]] = None,
-    force_online: bool = False
+    force_online: bool = False,
 ) -> None:
     # print("Debug: ", "Inside download datafiles! ", initialize)
     caller_name = inspect.stack()[1].code_context[0]
     if initialize:
-        specific_file_ids = [0,]
+        specific_file_ids = [
+            0,
+        ]
     if specific_file_ids is not None:
         # This %06d might needs changing according to the specifics of the database
         if "ionization" in caller_name:
-            names = list(map(lambda id_val:"ionization.b_%06d.h5"%id_val, specific_file_ids)) 
+            names = list(map(lambda id_val: "ionization.b_%06d.h5" % id_val, specific_file_ids))
         elif "emission" in caller_name:
-            names = list(map(lambda id_val:"emission.b_%06d.h5"%id_val, specific_file_ids))
+            names = list(map(lambda id_val: "emission.b_%06d.h5" % id_val, specific_file_ids))
         else:
             print("Invalid call to `download_datafiles`:", end=" ")
             print("Undefined usage/some recursive call happened! Code Aborted!")
             sys.exit(1)
-               
-    _offline_avail = not(False in [os.path.isfile(download_location / name) for name in names])
+
+    _offline_avail = False not in [os.path.isfile(Path(download_location) / name) for name in names]
     # print("Debug: Availability: ", _offline_avail, [str(download_location / name) for name in names])
-    if not(_offline_avail):
+    if not (_offline_avail):
         force_online = True
     try:
-        if force_online or not(_offline_avail):
+        if force_online or not (_offline_avail):
             links = fetch_list_from_url(link_list_url)
             links = [prepare_onedrive_link(link) for link in links]
             links_and_names = [(link, Path(get_filename(link))) for link in links]
         else:
             links_and_names = [("", Path(name)) for name in names]
-    except requests.exceptions.ConnectionError as e:
-        if not(_offline_avail):
+    except requests.exceptions.ConnectionError:
+        if not (_offline_avail):
             print("Problem downloading data! Most likely internet connection issue! Code Aborted!")
             sys.exit(1)
-            
+
     # print("Debug: ", links_and_names)
     if initialize:
         links_and_names = [links_and_names[0]]
-    if specific_file_ids is not None and (not(_offline_avail) or force_online):
+    if specific_file_ids is not None and (not (_offline_avail) or force_online):
         links_and_names = list(map(links_and_names.__getitem__, specific_file_ids))
     if hashgen:
         generate_hashes(
