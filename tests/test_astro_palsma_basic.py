@@ -57,3 +57,61 @@ def test_hash():
     # check the hash of the datafile <filenumber>
     hash_emission_found = astro_plasma.core.utils.blake2bsum(LOCAL_DATA_PATH / "emission" / emission_filename)
     assert hash_emission_found == hash_emission_expect
+
+
+def test_dimension():
+    # Import AstroPlasma Ionization module
+    from astro_plasma import Ionization
+    import numpy as np
+
+    fIon = Ionization.interpolate_ion_frac
+
+    nH = np.power(10.0, np.random.uniform(low=-5.0, high=-2.0))  # Hydrogen number density in cm^-3
+    temperature = np.power(10.0, np.random.uniform(low=3.8, high=6.5))  # Temperature of the plasma in kelvin
+    metallicity = np.random.uniform(low=0.2, high=0.9)  # Metallicity of plasma with respect to solar
+    redshift = np.random.uniform(low=0.1, high=1.2)  # Cosmological redshift
+    mode = "PIE"
+
+    element = np.random.randint(low=1, high=32)
+    np.random.randint(low=1, high=element + 1)
+
+    frac = fIon(
+        nH=nH,
+        temperature=temperature,
+        metallicity=metallicity,
+        redshift=redshift,
+        element=element,
+        mode=mode,
+    )  # This value is in log10
+    assert np.array(frac).ndim == 0
+
+    nH = np.power(10.0, np.random.uniform(low=-5.0, high=-2.0))  # Hydrogen number density in cm^-3
+    temperature = np.power(10.0, np.linspace(3.8, 6.5, 5))  # Temperature of the plasma in kelvin
+    metallicity = np.random.uniform(low=0.2, high=0.9)  # Metallicity of plasma with respect to solar
+    redshift = np.random.uniform(low=0.1, high=1.2)  # Cosmological redshift
+
+    frac = fIon(
+        nH=nH,
+        temperature=temperature,
+        metallicity=metallicity,
+        redshift=redshift,
+        element=element,
+        mode=mode,
+    )  # This value is in log10
+    assert np.array(frac).shape == temperature.shape
+
+    nH = np.logspace(-5.0, -2.0, 2)  # Hydrogen number density in cm^-3
+    temperature = np.logspace(3.8, 6.5, 5)  # Temperature of the plasma in kelvin
+    nH, temperature = np.meshgrid(nH, temperature)
+    metallicity = np.random.uniform(low=0.2, high=0.9)  # Metallicity of plasma with respect to solar
+    redshift = np.random.uniform(low=0.1, high=1.2)  # Cosmological redshift
+
+    frac = fIon(
+        nH=nH,
+        temperature=temperature,
+        metallicity=metallicity,
+        redshift=redshift,
+        element=element,
+        mode=mode,
+    )  # This value is in log10
+    assert np.array(frac).shape == temperature.shape

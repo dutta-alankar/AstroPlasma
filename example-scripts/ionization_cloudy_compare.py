@@ -47,7 +47,7 @@ frac = np.loadtxt(
 
 do_isothermal, do_isentropic = True, True
 
-fIon = Ionization().interpolate_ion_frac
+fIon = Ionization.interpolate_ion_frac
 element = 8
 fig = plt.figure()
 ax = fig.add_subplot(111)
@@ -56,19 +56,16 @@ Temp = np.logspace(4.2, 7.2, 500)
 ion = 5
 p = plt.loglog(
     Temp,
-    10.0
-    ** np.array(
-        [
-            fIon(
-                temperature=T,
-                metallicity=0.99,
-                redshift=0.001,
-                element=element,
-                ion=ion,
-                mode="CIE",
-            )
-            for T in Temp
-        ]
+    np.power(
+        10.0,
+        fIon(
+            temperature=Temp,
+            metallicity=0.99,
+            redshift=0.001,
+            element=element,
+            ion=ion,
+            mode="CIE",
+        ),
     ),
     label=r"$f_{OV}$",
     alpha=0.6,
@@ -85,20 +82,17 @@ plt.loglog(
 ion = 6
 p = plt.loglog(
     Temp,
-    10.0
-    ** np.array(
-        [
-            fIon(
-                nH=1.2e-4,
-                temperature=T,
-                metallicity=0.99,
-                redshift=0.01,
-                element=element,
-                ion=ion,
-                mode="CIE",
-            )
-            for T in Temp
-        ]
+    np.power(
+        10.0,
+        fIon(
+            nH=1.2e-4,
+            temperature=Temp,
+            metallicity=0.99,
+            redshift=0.01,
+            element=element,
+            ion=ion,
+            mode="CIE",
+        ),
     ),
     label=r"$f_{OVI}$",
     alpha=0.6,
@@ -115,19 +109,16 @@ plt.loglog(
 ion = 7
 p = plt.loglog(
     Temp,
-    10.0
-    ** np.array(
-        [
-            fIon(
-                temperature=T,
-                metallicity=0.99,
-                redshift=0.001,
-                element=element,
-                ion=ion,
-                mode="CIE",
-            )
-            for T in Temp
-        ]
+    np.power(
+        10.0,
+        fIon(
+            temperature=Temp,
+            metallicity=0.99,
+            redshift=0.001,
+            element=element,
+            ion=ion,
+            mode="CIE",
+        ),
     ),
     label=r"$f_{OVII}$",
     alpha=0.6,
@@ -144,19 +135,16 @@ p = plt.loglog(
 ion = 8
 p = plt.loglog(
     Temp,
-    10.0
-    ** np.array(
-        [
-            fIon(
-                temperature=T,
-                metallicity=0.99,
-                redshift=0.001,
-                element=element,
-                ion=ion,
-                mode="CIE",
-            )
-            for T in Temp
-        ]
+    np.power(
+        10.0,
+        fIon(
+            temperature=Temp,
+            metallicity=0.99,
+            redshift=0.001,
+            element=element,
+            ion=ion,
+            mode="CIE",
+        ),
     ),
     label=r"$f_{OVIII}$",
     alpha=0.6,
