@@ -176,11 +176,12 @@ class DataSift(ABC):
                     ]
                 )
             else:
-                argument_collection[indx] = np.array(argument_collection[indx])
                 if _input_shape is None:
                     _input_shape = argument_collection[indx].shape
                 else:
                     if _input_shape != argument_collection[indx].shape:
+                        print("Error: ", argument_collection[indx].shape, _input_shape)
+                        print("Argument: ", argument_collection[indx])
                         raise ValueError("Check needed from user: Invalid input arguments which are not in compliance with each other! Code Aborted!")
             argument_collection[indx] = argument_collection[indx].flatten()
         if np.sum(_dummy_array) == 4 or np.sum(_array_argument) == 0:
@@ -225,7 +226,7 @@ class DataSift(ABC):
             return self._find_all_batches_single(*_argument)
 
         _all_batches_all_data: Set[int] = set()
-        for indx in range(np.product(_input_shape)):
+        for indx in range(np.prod(_input_shape)):
             _argument = []
             for arg_pos, _dummy in enumerate(_dummy_array):
                 if _dummy or not (_array_argument[arg_pos]):
@@ -449,7 +450,7 @@ class DataSift(ABC):
             i_vals, j_vals, k_vals, m_vals = self._identify_pos_in_each_dim(*_argument)
         """
         interp_value = []
-        for indx in range(np.product(_input_shape)):
+        for indx in range(np.prod(_input_shape)):
             _argument = []
             for arg_pos, _dummy in enumerate(_dummy_array):
                 if _dummy or not (_array_argument[arg_pos]):
