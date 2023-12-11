@@ -21,6 +21,7 @@ tqdm = "^4.65.0"
 werkzeug = "^3.0.1"
 pytest = "^7.4.3"
 poetry-plugin-export = "^1.6.0"
+colorama = "^0.4.6"
 
 # Packages required for development
 [tool.poetry.group.dev]
