@@ -200,7 +200,7 @@ class Ionization(DataSift):
             if _is_multiple:
                 return fracIon.flatten().reshape((*self._input_shape, fracIon.shape[-1]))
             else:
-                return fracIon
+                return fracIon.flatten()
 
         _element, _ion = parse_atomic_ion_no(element, ion)
 
@@ -229,7 +229,7 @@ class Ionization(DataSift):
             else:
                 return fracIon.flatten().reshape((*self._input_shape, _element + 1))
         else:
-            fracIon = self._interpolate_ion_frac_all(nH, temperature, metallicity, redshift, mode)[slice_start:slice_stop]
+            fracIon = self._interpolate_ion_frac_all(nH, temperature, metallicity, redshift, mode).flatten()[slice_start:slice_stop]
             # Array starts from 0 but _ion from 1
             return fracIon[_ion - 1] if _ion is not None else fracIon  # This is in log10
 

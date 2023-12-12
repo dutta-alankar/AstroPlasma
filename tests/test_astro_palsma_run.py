@@ -52,12 +52,13 @@ def test_num_dens():
 
     ne = num_dens(
         nH=nH,
-        temperature=temperature,
+        temperature=[temperature],
         metallicity=metallicity,
         redshift=redshift,
         mode=mode,
         part_type="electron",
     )
+    assert np.array(ne).ndim == 0
     ne_expected = 1.4109277149716788e-04
     assert np.isclose(ne, ne_expected)
 

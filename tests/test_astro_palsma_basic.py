@@ -85,6 +85,17 @@ def test_dimension():
         mode=mode,
     )  # This value is in log10
     assert np.array(frac).ndim == 0
+    
+    frac = fIon(
+        nH=nH,
+        temperature=[temperature,],
+        metallicity=metallicity,
+        redshift=redshift,
+        element=element,
+        ion=ion,
+        mode=mode,
+    )  # This value is in log10
+    assert np.array(frac).ndim == 0
 
     nH = np.power(10.0, np.random.uniform(low=-5.0, high=-2.0))  # Hydrogen number density in cm^-3
     temperature = np.power(10.0, np.linspace(3.8, 6.5, 5))  # Temperature of the plasma in kelvin
