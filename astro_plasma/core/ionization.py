@@ -139,9 +139,10 @@ class Ionization(DataSift):
         metallicity: Union[int, float] = 0.5,
         redshift: Union[int, float] = 0.2,
         element: Union[int, AtmElement, str] = AtmElement.Helium,
-        ion: Union[int, None] = 1,
+        ion: Optional[int] = None,
         mode: str = "PIE",
-    ) -> float:
+        all_ions: bool = False,
+    ) -> np.ndarray:
         """
         Interpolates the ionization fraction of the plasma
         from pre-computed Cloudy models of ion networks.
@@ -172,12 +173,15 @@ class Ionization(DataSift):
         ion : int, optional
             Ionization species of the element.
             Must between 1 and element+1.
-            The default is 1.
+            The default is None.
             1:neutral, 2:+, 3:++, ...
         mode : str, optional
             ionization condition
             either CIE (collisional) or PIE (photo).
             The default is 'PIE'.
+        all_ions: bool, optional
+            Output the ionization state of all ions
+            The default is False
 
         Returns
         -------
@@ -189,34 +193,45 @@ class Ionization(DataSift):
 
         """
 
-        element, ion = parse_atomic_ion_no(element, ion)
-
-        # element = 1: H, 2: He, 3: Li, ... 30: Zn
-        # ion = 1 : neutral, 2: +, 3: ++ .... (element+1): (++++... element times)
-        if ion < 0 or ion > element + 1:
-            raise ValueError(f"Problem! Invalid ion {ion} for element {element}.")
-        if element < 0 or element > 30:
-            raise ValueError(f"Problem! Invalid element {element}.")
-
-        # Select only the ions for the requested element
-        slice_start = int((element - 1) * (element + 2) / 2)
-        slice_stop = int(element * (element + 3) / 2)
-
         _is_multiple = self._determine_multiple(nH, temperature, metallicity, redshift, mode)
+
+        if all_ions:
+            fracIon = self._interpolate_ion_frac_all(nH, temperature, metallicity, redshift, mode)
+            if _is_multiple:
+                return fracIon.flatten().reshape((*self._input_shape, fracIon.shape[-1]))
+            else:
+                return fracIon
+
+        _element, _ion = parse_atomic_ion_no(element, ion)
+
+        # _element = 1: H, 2: He, 3: Li, ... 30: Zn
+        # _ion = 1 : neutral, 2: +, 3: ++ .... (_element+1): (++++... _element times)
+        if _ion is not None:
+            if _ion < 0 or _ion > _element + 1:
+                raise ValueError(f"Problem! Invalid ion {_ion} for element {_element}.")
+        if _element < 0 or _element > 30:
+            raise ValueError(f"Problem! Invalid element {_element}.")
+
+        # Select only the ions for the requested _element
+        slice_start = int((_element - 1) * (_element + 2) / 2)
+        slice_stop = int(_element * (_element + 3) / 2)
 
         if _is_multiple:
             fracIon = self._interpolate_ion_frac_all(nH, temperature, metallicity, redshift, mode)
             slices = [slice(None)] * (fracIon.ndim - 1)
-            slices.append(slice(slice_start, slice_stop))
+            slices.append(slice(slice_start, slice_stop))  # slice to select only ions of one element
             fracIon = fracIon[tuple(slices)]
-            # Array starts from 0 but ion from 1
-            slices = slices[:-1]
-            slices.append(slice(ion - 1, ion))
-            return fracIon[tuple(slices)].flatten().reshape(self._input_shape)  # This is in log10
+            if _ion is not None:
+                # Array starts from 0 but ion from 1
+                slices = slices[:-1]
+                slices.append(slice(_ion - 1, _ion))  # slice to select a particular ion
+                return fracIon[tuple(slices)].flatten().reshape(self._input_shape)  # This is in log10
+            else:
+                return fracIon.flatten().reshape((*self._input_shape, _element + 1))
         else:
             fracIon = self._interpolate_ion_frac_all(nH, temperature, metallicity, redshift, mode)[slice_start:slice_stop]
-            # Array starts from 0 but ion from 1
-            return fracIon[ion - 1]  # This is in log10
+            # Array starts from 0 but _ion from 1
+            return fracIon[_ion - 1] if _ion is not None else fracIon  # This is in log10
 
     def interpolate_num_dens(
         self: "Ionization",

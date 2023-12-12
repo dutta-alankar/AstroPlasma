@@ -73,7 +73,7 @@ def test_dimension():
     mode = "PIE"
 
     element = np.random.randint(low=1, high=32)
-    np.random.randint(low=1, high=element + 1)
+    ion = np.random.randint(low=1, high=element + 1)
 
     frac = fIon(
         nH=nH,
@@ -81,6 +81,7 @@ def test_dimension():
         metallicity=metallicity,
         redshift=redshift,
         element=element,
+        ion=ion,
         mode=mode,
     )  # This value is in log10
     assert np.array(frac).ndim == 0
@@ -96,6 +97,7 @@ def test_dimension():
         metallicity=metallicity,
         redshift=redshift,
         element=element,
+        ion=ion,
         mode=mode,
     )  # This value is in log10
     assert np.array(frac).shape == temperature.shape
@@ -112,6 +114,28 @@ def test_dimension():
         metallicity=metallicity,
         redshift=redshift,
         element=element,
+        ion=ion,
         mode=mode,
     )  # This value is in log10
     assert np.array(frac).shape == temperature.shape
+
+    # all ions of any one element
+    frac = fIon(
+        nH=nH,
+        temperature=temperature,
+        metallicity=metallicity,
+        redshift=redshift,
+        element=element,
+        mode=mode,
+    )  # This value is in log10
+    assert np.array(frac).shape == (*temperature.shape, element + 1)
+
+    # all ions of all elements
+    frac = fIon(
+        nH=nH,
+        temperature=temperature,
+        metallicity=metallicity,
+        redshift=redshift,
+        all_ions=True,
+    )  # This value is in log10
+    assert np.array(frac).shape == (*temperature.shape, 495)
