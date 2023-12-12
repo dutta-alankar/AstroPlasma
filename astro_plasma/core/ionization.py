@@ -302,7 +302,7 @@ class Ionization(DataSift):
             for element in range(30):
                 for ion in range(element + 2):
                     slices.append(slice(ion_count, ion_count + 1))
-                    _ion_fraction = fracIon[tuple(slices)].flatten().reshape(self._input_shape) if _is_multiple else fracIon[ion_count]
+                    _ion_fraction = fracIon[tuple(slices)].flatten().reshape(self._input_shape) if _is_multiple else fracIon[:, ion_count]
                     slices = slices[:-1]
                     if element + 1 == 1:  # H
                         ndens += (ion + 1) * (Xp(metallicity) / X_solar) * abn[element] * _ion_fraction * nH
@@ -319,7 +319,7 @@ class Ionization(DataSift):
             for element in range(30):
                 for ion in range(element + 2):
                     slices.append(slice(ion_count, ion_count + 1))
-                    _ion_fraction = fracIon[tuple(slices)].flatten().reshape(self._input_shape) if _is_multiple else fracIon[ion_count]
+                    _ion_fraction = fracIon[tuple(slices)].flatten().reshape(self._input_shape) if _is_multiple else fracIon[:, ion_count]
                     slices = slices[:-1]
                     if element + 1 == 1:  # H
                         ne += ion * (Xp(metallicity) / X_solar) * nH * abn[element] * _ion_fraction
@@ -336,7 +336,7 @@ class Ionization(DataSift):
             for element in range(30):
                 for ion in range(element + 2):
                     slices.append(slice(ion_count, ion_count + 1))
-                    _ion_fraction = fracIon[tuple(slices)].flatten().reshape(self._input_shape) if _is_multiple else fracIon[ion_count]
+                    _ion_fraction = fracIon[tuple(slices)].flatten().reshape(self._input_shape) if _is_multiple else fracIon[:, ion_count]
                     slices = slices[:-1]
                     if ion == 0:
                         if element + 1 == 1:  # H
@@ -355,7 +355,7 @@ class Ionization(DataSift):
                 ion_count += 1  # neglects the neutral species
                 for ion in range(1, element + 2):
                     slices.append(slice(ion_count, ion_count + 1))
-                    _ion_fraction = fracIon[tuple(slices)].flatten().reshape(self._input_shape) if _is_multiple else fracIon[ion_count]
+                    _ion_fraction = fracIon[tuple(slices)].flatten().reshape(self._input_shape) if _is_multiple else fracIon[:, ion_count]
                     slices = slices[:-1]
                     if element + 1 == 1:  # H
                         nion += (Xp(metallicity) / X_solar) * nH * abn[element] * _ion_fraction
