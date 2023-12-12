@@ -107,6 +107,25 @@ def parse_atomic_ion_no(
     return (elem_atm_no, ion)
 
 
+def element_indices(
+    element: Union[int, AtmElement, str],
+    ion: Optional[int] = None,
+) -> Tuple[int, int]:
+    _element, _ion = parse_atomic_ion_no(element, ion)
+
+    # _element = 1: H, 2: He, 3: Li, ... 30: Zn
+    # _ion = 1 : neutral, 2: +, 3: ++ .... (_element+1): (++++... _element times)
+    if _ion < 0 or _ion > _element + 1:
+        raise ValueError(f"Problem! Invalid ion {_ion} for element {_element}.")
+    if _element < 0 or _element > 30:
+        raise ValueError(f"Problem! Invalid element {_element}.")
+
+    # Select only the ions for the requested _element
+    slice_start = int((_element - 1) * (_element + 2) / 2)
+    slice_stop = int(_element * (_element + 3) / 2)
+    return (slice_start, slice_stop)
+
+
 def fetch(urls: List[Tuple[str, Path]], base_dir: Path):
     # ([(link, filename)], save_location)
     base_dir.mkdir(mode=0o766, parents=True, exist_ok=True)
