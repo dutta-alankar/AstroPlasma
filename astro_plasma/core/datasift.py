@@ -118,7 +118,7 @@ class DataSift(ABC):
             flags.
 
         """
-        _argument_type = ["nH", "temperature", "metallicity", "redshift"]
+        # _argument_type = ["nH", "temperature", "metallicity", "redshift"]
         _array_argument = [True, True, True, True]  # array to flag which arguments are arrays
         _array_argument[0] = isinstance(nH, list) or isinstance(nH, np.ndarray)
         _array_argument[1] = isinstance(temperature, list) or isinstance(temperature, np.ndarray)
@@ -233,7 +233,8 @@ class DataSift(ABC):
                     _argument.append(argument_collection[arg_pos][0])
                 else:
                     _argument.append(argument_collection[arg_pos][indx])
-            _all_batches_all_data = _all_batches_all_data.union(self._find_all_batches_single(*_argument))
+            nH_val, temp_val, met_val, red_val = _argument
+            _all_batches_all_data = _all_batches_all_data.union(self._find_all_batches_single(nH_val, temp_val, met_val, red_val))
         if _all_batches_all_data == set():
             raise ValueError("Problem identifying batches! Code Aborted!")
         return _all_batches_all_data
