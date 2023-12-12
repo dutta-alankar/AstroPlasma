@@ -85,10 +85,12 @@ def test_dimension():
         mode=mode,
     )  # This value is in log10
     assert np.array(frac).ndim == 0
-    
+
     frac = fIon(
         nH=nH,
-        temperature=[temperature,],
+        temperature=[
+            temperature,
+        ],
         metallicity=metallicity,
         redshift=redshift,
         element=element,
