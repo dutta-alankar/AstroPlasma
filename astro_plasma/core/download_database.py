@@ -111,10 +111,11 @@ def download_datafiles(
             print("Undefined usage/some recursive call happened! Code Aborted!")
             sys.exit(1)
 
-    _offline_avail = False not in [os.path.isfile(Path(download_location) / name) for name in names]
-    # print("Debug: Availability: ", _offline_avail, [str(download_location / name) for name in names])
-    if not (_offline_avail):
-        force_online = True
+        _offline_avail = False not in [os.path.isfile(Path(download_location) / name) for name in names]
+        if not (_offline_avail):
+            force_online = True
+    else:
+        _offline_avail = False
     try:
         if force_online or not (_offline_avail):
             links = fetch_list_from_url(link_list_url)
@@ -157,7 +158,7 @@ def download_ionization_data(
         "https://indianinstituteofscience-my.sharepoint.com/:u:/g/personal/alankardutta_iisc_ac_in/EYnSBoTNOmdPqs3GPE0PDW0BDafcR78jbGCUM8tFqW8UAw?e=cCFbse"
     )
     ionization_hash_url = prepare_onedrive_link(
-        "https://indianinstituteofscience-my.sharepoint.com/:t:/g/personal/alankardutta_iisc_ac_in/EbK_KzUA5lVChnpsJFu2pAcBzVnjX6CEHUQp9e9Yi83-Yw?e=9WAi2b"
+        "https://indianinstituteofscience-my.sharepoint.com/:t:/g/personal/alankardutta_iisc_ac_in/ETCJ1CWIJOlAkcuj3WNxtG8Bjwt0Y3ctul8kffzafB84tQ?e=0nmRdf"
     )
     download_datafiles(ionization_links_url, LOCAL_DATA_PATH / "ionization", initialize, hashgen, ionization_hash_url, specific_file_ids)
 
