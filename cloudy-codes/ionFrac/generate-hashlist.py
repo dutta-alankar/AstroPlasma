@@ -9,6 +9,7 @@ import os
 from pathlib import Path
 from typing import Union
 
+
 # Taken from: https://stackoverflow.com/questions/16874598/how-do-i-calculate-the-md5-checksum-of-a-file-in-python
 def blake2bsum(filename: Union[str, Path]) -> str:
     chunk_size = 8192
@@ -18,7 +19,8 @@ def blake2bsum(filename: Union[str, Path]) -> str:
             file_hash.update(chunk)
     return file_hash.hexdigest()
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     hashlist = []
     root_path = Path("./data")
     all_files = os.listdir(root_path)
@@ -30,4 +32,4 @@ if __name__=="__main__":
             hashlist.append(blake2bsum(root_path / Path(this_file)))
     with open(root_path / Path("hashlist.txt"), "w") as hashfile:
         for indx, hashval in enumerate(hashlist):
-            hashfile.write(hashval + "\n" if indx < (len(hashlist)-1) else "")
+            hashfile.write(hashval + "\n" if indx < (len(hashlist) - 1) else "")
