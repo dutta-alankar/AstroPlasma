@@ -99,7 +99,9 @@ class DataSift(ABC):
         redshift: Union[int, float, List, np.ndarray],
     ) -> Tuple[List[bool], List[bool]]:
         """
-        Determine if multiple datapoints are requested.
+        Determine if multiple datapoints are requested. Flags if
+        some of the arguments are arrays. Also flags if any array
+        is of size 1 which is a dummy array.
 
         Parameters
         ----------
@@ -120,10 +122,10 @@ class DataSift(ABC):
         """
         # _argument_type = ["nH", "temperature", "metallicity", "redshift"]
         _array_argument = [True, True, True, True]  # array to flag which arguments are arrays
-        _array_argument[0] = isinstance(nH, list) or isinstance(nH, np.ndarray)
-        _array_argument[1] = isinstance(temperature, list) or isinstance(temperature, np.ndarray)
-        _array_argument[2] = isinstance(metallicity, list) or isinstance(metallicity, np.ndarray)
-        _array_argument[3] = isinstance(redshift, list) or isinstance(redshift, np.ndarray)
+        _array_argument[0] = isinstance(nH, list) or (isinstance(nH, np.ndarray) and np.array(nH).ndim > 0)
+        _array_argument[1] = isinstance(temperature, list) or (isinstance(temperature, np.ndarray) and np.array(temperature).ndim > 0)
+        _array_argument[2] = isinstance(metallicity, list) or (isinstance(metallicity, np.ndarray) and np.array(metallicity).ndim > 0)
+        _array_argument[3] = isinstance(redshift, list) or (isinstance(redshift, np.ndarray) and np.array(redshift).ndim > 0)
 
         _dummy_array = [False, False, False, False]  # array to flag which arguments are length 1 array
         if _array_argument[0]:

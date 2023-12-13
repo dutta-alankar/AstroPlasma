@@ -29,7 +29,7 @@ load_dotenv()
 # download chunk size, # bytes to download at a time
 CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", "4096"))
 BASE_URL = os.getenv("ASTROPLASMA_SERVER", "http://localhost:8000")
-PARALLEL_JOBS = int(os.getenv("PARALLEL_DOWNLOAD_JOBS", "3"))
+PARALLEL_JOBS = int(os.getenv("PARALLEL_DOWNLOAD_JOBS", "4"))
 
 
 class AtmElement(Enum):
