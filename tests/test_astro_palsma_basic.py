@@ -24,7 +24,7 @@ def test_hash():
 
     LOCAL_DATA_PATH = astro_plasma.core.utils.LOCAL_DATA_PATH
     ionization_hash_url = astro_plasma.core.utils.prepare_onedrive_link(
-        "https://indianinstituteofscience-my.sharepoint.com/:t:/g/personal/alankardutta_iisc_ac_in/EbK_KzUA5lVChnpsJFu2pAcBzVnjX6CEHUQp9e9Yi83-Yw?e=9WAi2b"
+        "https://indianinstituteofscience-my.sharepoint.com/:t:/g/personal/alankardutta_iisc_ac_in/ETCJ1CWIJOlAkcuj3WNxtG8Bjwt0Y3ctul8kffzafB84tQ?e=0nmRdf"
     )
     ionization_links_url = astro_plasma.core.utils.prepare_onedrive_link(
         "https://indianinstituteofscience-my.sharepoint.com/:u:/g/personal/alankardutta_iisc_ac_in/EYnSBoTNOmdPqs3GPE0PDW0BDafcR78jbGCUM8tFqW8UAw?e=cCFbse"

@@ -99,7 +99,9 @@ class DataSift(ABC):
         redshift: Union[int, float, List, np.ndarray],
     ) -> Tuple[List[bool], List[bool]]:
         """
-        Determine if multiple datapoints are requested.
+        Determine if multiple datapoints are requested. Flags if
+        some of the arguments are arrays. Also flags if any array
+        is of size 1 which is a dummy array.
 
         Parameters
         ----------
