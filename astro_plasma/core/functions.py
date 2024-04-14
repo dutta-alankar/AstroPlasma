@@ -4,13 +4,19 @@ Created on Tue Dec 13 10:31:29 2022
 
 @author: alankar
 """
+from __future__ import annotations
+
+from typing import Type
 
 import numpy as np
 from scipy.interpolate import interp1d
-import os
+
+from utils import LOCAL_DATA_PATH
+
+NumericOrArrayType = Type[float | int | list[int | float] | np.ndarray]
 
 
-def cooling_approx(temperature, metallicity):
+def cooling_approx(temperature: NumericOrArrayType, metallicity: NumericOrArrayType) -> NumericOrArrayType:
     """
     Cooling function of an Astrophysical plasma.
     Generated with a HM12 Xray-UV background.
@@ -19,30 +25,32 @@ def cooling_approx(temperature, metallicity):
 
     Parameters
     ----------
-    temperature : float/int/numpy array 1d
+    temperature : NumericOrArrayType
         Temperature of the plasma.
-    metallicity : float/int/numpy array 1d
+    metallicity : NumericOrArrayType
         Metallicity of the plasma with respect to Solar.
 
     Returns
     -------
-    coolcurve : float/int/numpy array 1d
+    cool_curve: NumericOrArrayType
         Plasma cooling function normalized by nH^2.
 
     """
-    if isinstance(temperature, list):
+    if temperature is list:
         temperature = np.array(temperature)
-    if isinstance(metallicity, list):
+    if metallicity is list:
         metallicity = np.array(metallicity)
-    file_path = os.path.realpath(__file__)
-    dir_loc = os.path.split(file_path)[:-1]
-    cooling = np.loadtxt(os.path.join(*dir_loc, "cooltable.dat"))
-    cooling = interp1d(cooling[:, 0], cooling[:, 1], fill_value="extrapolate")
+
+    if temperature is np.ndarray and temperature.ndim > 1:
+        raise ValueError("Temperature ndarray dimension should be 1.")
+
+    if metallicity is np.ndarray and metallicity.ndim > 1:
+        raise ValueError("Metallicity ndarray dimension should be 1.")
 
     slope1 = -1 / (np.log10(8.7e3) - np.log10(1.2e4))
     slope2 = 1 / (np.log10(1.2e4) - np.log10(7e4))
     slope3 = -1 / (np.log10(2e6) - np.log10(8e7))
-    coolcurve = cooling(temperature)
+
     factor = np.piecewise(
         temperature,
         [
@@ -62,6 +70,9 @@ def cooling_approx(temperature, metallicity):
             lambda x: 1,
         ],
     )
-    coolcurve = (factor + (1 - factor) * metallicity) * coolcurve
 
-    return coolcurve
+    cooling = np.loadtxt(LOCAL_DATA_PATH / "cooltable.dat")
+    cooling_interp = interp1d(cooling[:, 0], cooling[:, 1], fill_value="extrapolate")
+    cool_curve = cooling_interp(temperature)
+
+    return (factor + (1 - factor) * metallicity) * cool_curve
