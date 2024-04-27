@@ -55,8 +55,7 @@ class DataSift:
         )
         return counter
 
-    def _get_file_path(self, batch_id: int) -> Path:
-        ...
+    def _get_file_path(self, batch_id: int) -> Path: ...
 
     def _determine_multiple_input(
         self,
