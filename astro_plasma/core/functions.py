@@ -16,7 +16,7 @@ from utils import LOCAL_DATA_PATH
 NumericOrArrayType = Type[float | int | list[int | float] | np.ndarray]
 
 
-def cooling_approx(temperature: NumericOrArrayType, metallicity: NumericOrArrayType) -> NumericOrArrayType:
+def cooling_approx(_temperature: NumericOrArrayType, _metallicity: NumericOrArrayType) -> NumericOrArrayType:
     """
     Cooling function of an Astrophysical plasma.
     Generated with a HM12 Xray-UV background.
@@ -25,26 +25,24 @@ def cooling_approx(temperature: NumericOrArrayType, metallicity: NumericOrArrayT
 
     Parameters
     ----------
-    temperature : NumericOrArrayType
+    _temperature : NumericOrArrayType
         Temperature of the plasma.
-    metallicity : NumericOrArrayType
+    _metallicity : NumericOrArrayType
         Metallicity of the plasma with respect to Solar.
 
     Returns
     -------
-    cool_curve: NumericOrArrayType
+    NumericOrArrayType
         Plasma cooling function normalized by nH^2.
 
     """
-    if temperature is list:
-        temperature = np.array(temperature)
-    if metallicity is list:
-        metallicity = np.array(metallicity)
+    temperature = np.array(_temperature) if type(_temperature) is list else _temperature  # noqa: E721
+    metallicity = np.array(_metallicity) if type(_metallicity) is list else _metallicity  # noqa: E721
 
-    if temperature is np.ndarray and temperature.ndim > 1:
+    if type(temperature) is np.ndarray and temperature.ndim > 1:
         raise ValueError("Temperature ndarray dimension should be 1.")
 
-    if metallicity is np.ndarray and metallicity.ndim > 1:
+    if type(metallicity) is np.ndarray and metallicity.ndim > 1:
         raise ValueError("Metallicity ndarray dimension should be 1.")
 
     slope1 = -1 / (np.log10(8.7e3) - np.log10(1.2e4))

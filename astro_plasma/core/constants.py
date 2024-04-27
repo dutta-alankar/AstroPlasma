@@ -5,10 +5,11 @@ Created on Fri Aug 26 14:19:12 2022
 @author: Alankar
 """
 
-import numpy as np
 from typing import Union, List
 
-## useful constants
+import numpy as np
+
+# useful constants
 yr = 365 * 24 * 60**2
 Myr = 1e6 * yr
 pi = np.pi

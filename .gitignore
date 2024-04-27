@@ -147,3 +147,6 @@ cloudy.exe
 
 # VSCode related
 .vscode
+
+# Pycharm Configuration
+.idea

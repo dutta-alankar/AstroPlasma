@@ -4,183 +4,121 @@ Created on Sat Nov 18 20:37:04 2023
 
 @author: alankar
 """
+from __future__ import annotations
+
+import logging
 
 # Built-in imports
-import os
-import sys
-import inspect
+import re
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Union, Tuple, Optional, List
+
+import numpy as np
 
 # Third party imports
 import requests
-from urllib.parse import urlparse
-import werkzeug
 
 # Local package imports
-from .utils import LOCAL_DATA_PATH, fetch, checksum, blake2bsum, prepare_onedrive_link
+from .utils import LOCAL_DATA_PATH, DB_BASE_URL, CHUNK_SIZE, PARALLEL_JOBS, verify_checksum, prepare_onedrive_link, save_hash_to_file
+
+log = logging.getLogger(__name__)
 
 
-def fetch_list_from_url(link_list_url: str) -> List[str]:
-    # print(link_list_url)
-    response = requests.get(link_list_url, stream=True)
-    if response.status_code != 200:
-        sys.exit(f"Problem communicating with dataserver! (error code: {response.status_code})")
-    # print(response)
-    links = response.content.decode("utf-8").split("\n")
-    return links
+def download_datafiles(filename_format: str, download_links_url: str, download_dir: Path, **kwargs):
+    """
+    Fetch the datafiles and save them to the ``download_location``.
 
+    Parameters
+    ----------
+    filename_format: str
+        Format string syntax to create file names
+    download_links_url: str
+        URL to fetch the links for all the files
+    download_dir: Path
+        Base path to download the files
+    kwargs: dict
+        Extra configuration
 
-# Taken from: https://stackoverflow.com/questions/31804799/how-to-get-pdf-filename-with-python-requests
-def get_filename(url: str) -> str:
-    try:
-        with requests.get(url, stream=True) as req:
-            if req.status_code != 200:
-                sys.exit(f"Problem communicating with dataserver! (error code: {req.status_code})")
-            if content_disposition := req.headers.get("Content-Disposition"):
-                param, options = werkzeug.http.parse_options_header(content_disposition)
-                if param == "attachment" and (filename := options.get("filename")):
-                    return filename
-            path = urlparse(req.url).path
-            name = path[path.rfind("/") + 1 :]
-            return name
-    except requests.exceptions.RequestException as e:
-        raise e
+    References
+    ----------
+    https://docs.python.org/3/library/string.html#format-string-syntax
 
+    """
+    initialize = kwargs.get("initialize", False)
+    generate_hashes = kwargs.get("generate_hashes", False)
+    hash_list_url = kwargs.get("hash_list_file_url")
+    file_ids = [0] if initialize else kwargs.get("file_ids", [])
+    if file_ids and type(file_ids) is not list:  # noqa: E721
+        file_ids = list(file_ids)
+    links_response = requests.get(download_links_url)
+    download_links = np.array(re.split(r"\r?\n", links_response.text.strip()))
+    n_download_links = download_links.shape[0]
 
-def check_files(link_list_url: str) -> None:
-    links = fetch_list_from_url(link_list_url)
-    links = [prepare_onedrive_link(link) for link in links]
-    for link in links:
-        print(get_filename(link))
-
-
-def check_hashes_and_trim(
-    links_and_names: List[Tuple[str, Path]],
-    download_location: Path,
-    hash_list_url: Optional[str] = None,
-) -> List[Tuple[str, Path]]:
-    _local_hashlist = os.path.isfile(download_location / "hashlist.txt")
-    if _local_hashlist:
-        with open(download_location / "hashlist.txt", "r") as f:
-            hash_list = [line.split("\n")[0] for line in f.readlines()]
+    if file_ids:
+        download_links = map(prepare_onedrive_link, download_links[file_ids])
     else:
-        try:
-            hash_list = fetch_list_from_url(hash_list_url)
-        except requests.exceptions.ConnectionError:
-            print("Problem downloading data! Most likely internet connection issue! Code Aborted!")
-            sys.exit(1)
-        with open(download_location / "hashlist.txt", "w") as f:
-            for indx, hash_val in enumerate(hash_list):
-                f.write(hash_val + "\n" if (indx + 1) < len(hash_list) else hash_val)
-    links_and_names_trimmed = []
-    for indx, (_, filename) in enumerate(links_and_names):
-        if not (os.path.isfile(download_location / filename) and checksum(download_location / filename, hash_list[indx])):
-            links_and_names_trimmed.append(links_and_names[indx])
-    return links_and_names_trimmed
+        download_links = map(prepare_onedrive_link, download_links)
 
-
-def generate_hashes(links_and_names: List[Tuple[str, Path]], download_location: Path) -> None:
-    hash_list = []
-    for _, filename in links_and_names:
-        if os.path.isfile(download_location / filename):
-            file_hash = blake2bsum(download_location / filename)
-            hash_list.append(file_hash)
-    with open(download_location / "hashlist.txt", "w") as f:
-        for indx, hash_val in enumerate(hash_list):
-            f.write(hash_val + "\n" if (indx + 1) < len(hash_list) else hash_val)
-
-
-def download_datafiles(
-    link_list_url: str,
-    download_location: Union[str, Path],
-    initialize: bool = False,
-    hashgen: bool = False,
-    hash_list_url: Optional[str] = None,
-    specific_file_ids: Optional[List[int]] = None,
-    force_online: bool = False,
-) -> None:
-    # print("Debug: ", "Inside download datafiles! ", initialize)
-    caller_name = inspect.stack()[1].code_context[0]
-    if initialize:
-        specific_file_ids = [
-            0,
-        ]
-    if specific_file_ids is not None:
-        # This %06d might needs changing according to the specifics of the database
-        if "ionization" in caller_name:
-            names = list(map(lambda id_val: "ionization.b_%06d.h5" % id_val, specific_file_ids))
-        elif "emission" in caller_name:
-            names = list(map(lambda id_val: "emission.b_%06d.h5" % id_val, specific_file_ids))
-        else:
-            print("Invalid call to `download_datafiles`:", end=" ")
-            print("Undefined usage/some recursive call happened! Code Aborted!")
-            sys.exit(1)
-
-        _offline_avail = False not in [os.path.isfile(Path(download_location) / name) for name in names]
-        if not (_offline_avail):
-            force_online = True
+    if hash_list_url:
+        hashes_response = requests.get(hash_list_url)
+        hashes = np.array(re.split(r"\r?\n", hashes_response.text.strip()))
+        if file_ids:
+            hashes = hashes[file_ids]
     else:
-        _offline_avail = False
-    try:
-        if force_online or not (_offline_avail):
-            links = fetch_list_from_url(link_list_url)
-            links = [prepare_onedrive_link(link) for link in links]
-            links_and_names = [(link, Path(get_filename(link))) for link in links]
+        hashes = [None] * n_download_links
+
+    file_names = map(lambda file_id: filename_format.format(file_id), file_ids or range(n_download_links))
+
+    if not download_dir.exists():
+        download_dir.mkdir(mode=0o766, parents=True)
+
+    def download_job(target_url: str, save_path: Path, generate_hash: bool, checksum: str = None):
+        # noinspection PyShadowingNames
+        file_content_response = requests.get(target_url, stream=True)
+        if save_path.exists() and verify_checksum(save_path, checksum):
+            log.debug("Target file already exists")
         else:
-            links_and_names = [("", Path(name)) for name in names]
-    except requests.exceptions.ConnectionError:
-        if not (_offline_avail):
-            print("Problem downloading data! Most likely internet connection issue! Code Aborted!")
-            sys.exit(1)
+            log.info("Downloading %s", save_path.name)
+            with open(save_path, "wb") as file:
+                for data in file_content_response.iter_content(chunk_size=CHUNK_SIZE):
+                    file.write(data)
+                file_content_response.close()
 
-    # print("Debug: ", links_and_names)
-    if initialize:
-        links_and_names = [links_and_names[0]]
-    if specific_file_ids is not None and (not (_offline_avail) or force_online):
-        links_and_names = list(map(links_and_names.__getitem__, specific_file_ids))
-    if hashgen:
-        generate_hashes(
-            links_and_names,
-            Path(download_location) if not (isinstance(download_location, Path)) else download_location,
-        )
-        return None
-    links_and_names = check_hashes_and_trim(
-        links_and_names,
-        Path(download_location) if not (isinstance(download_location, Path)) else download_location,
-        hash_list_url,
-    )
-    if len(links_and_names) == 0:
-        return None
-    fetch(links_and_names, Path(download_location) if not (isinstance(download_location, Path)) else download_location)
+        if generate_hash:
+            save_hash_to_file(download_dir / "hashes.json", save_path, checksum)
+
+    with ThreadPoolExecutor(max_workers=PARALLEL_JOBS) as pool:
+        for url, file_name, pre_computed_checksum in zip(download_links, file_names, hashes):
+            log.debug("Submitting %s to downloader pool", url)
+            pool.submit(download_job, url, download_dir / file_name, generate_hashes, pre_computed_checksum)
 
 
-def download_ionization_data(
-    initialize: bool = False,
-    hashgen: bool = False,
-    specific_file_ids: Optional[List[int]] = None,
-) -> None:
-    ionization_links_url = prepare_onedrive_link(
-        "https://indianinstituteofscience-my.sharepoint.com/:u:/g/personal/alankardutta_iisc_ac_in/EYnSBoTNOmdPqs3GPE0PDW0BDafcR78jbGCUM8tFqW8UAw?e=cCFbse"
+def download_ionization_data(initialize=False, hashgen=False, file_ids: list[int] = None):
+    ionization_links_url = prepare_onedrive_link(f"{DB_BASE_URL}/EYnSBoTNOmdPqs3GPE0PDW0BDafcR78jbGCUM8tFqW8UAw?e=cCFbse")
+    ionization_hash_url = prepare_onedrive_link(f"{DB_BASE_URL}/ETCJ1CWIJOlAkcuj3WNxtG8Bjwt0Y3ctul8kffzafB84tQ?e=0nmRdf")
+    download_datafiles(
+        "ionization.b_{:06d}.h5",
+        ionization_links_url,
+        LOCAL_DATA_PATH / "ionization",
+        initialize=initialize,
+        generate_hashes=hashgen,
+        hash_list_file_url=ionization_hash_url,
+        file_ids=file_ids,
     )
-    ionization_hash_url = prepare_onedrive_link(
-        "https://indianinstituteofscience-my.sharepoint.com/:t:/g/personal/alankardutta_iisc_ac_in/ETCJ1CWIJOlAkcuj3WNxtG8Bjwt0Y3ctul8kffzafB84tQ?e=0nmRdf"
-    )
-    download_datafiles(ionization_links_url, LOCAL_DATA_PATH / "ionization", initialize, hashgen, ionization_hash_url, specific_file_ids)
 
 
-def download_emission_data(
-    initialize: bool = False,
-    hashgen: bool = False,
-    specific_file_ids: Optional[List[int]] = None,
-) -> None:
-    emission_links_url = prepare_onedrive_link(
-        "https://indianinstituteofscience-my.sharepoint.com/:u:/g/personal/alankardutta_iisc_ac_in/EWJuOmWHwAVEnEtziAV5kg8BXtFp_44-0smofLpr_f_2Pg?e=7sreMC"
+def download_emission_data(initialize: bool = False, hashgen: bool = False, file_ids: list[int] = None):
+    emission_links_url = prepare_onedrive_link(f"{DB_BASE_URL}/EWJuOmWHwAVEnEtziAV5kg8BXtFp_44-0smofLpr_f_2Pg?e=7sreMC")
+    emission_hash_url = prepare_onedrive_link(f"{DB_BASE_URL}/EZbmBm1BL_hEmKMyYXYsOZIBMIBxr3mJazjGvL53T5ZoAw?e=7bMW2B")
+    download_datafiles(
+        "emission.b_{:06d}.h5",
+        emission_links_url,
+        LOCAL_DATA_PATH / "emission",
+        initialize=initialize,
+        generate_hashes=hashgen,
+        hash_list_file_url=emission_hash_url,
+        file_ids=file_ids,
     )
-    emission_hash_url = prepare_onedrive_link(
-        "https://indianinstituteofscience-my.sharepoint.com/:t:/g/personal/alankardutta_iisc_ac_in/EZbmBm1BL_hEmKMyYXYsOZIBMIBxr3mJazjGvL53T5ZoAw?e=7bMW2B"
-    )
-    download_datafiles(emission_links_url, LOCAL_DATA_PATH / "emission", initialize, hashgen, emission_hash_url, specific_file_ids)
 
 
 def download_all() -> None:
@@ -193,10 +131,10 @@ def hash_all() -> None:
     download_emission_data(hashgen=True)
 
 
-def initialize_data(data_type: str) -> None:
-    if data_type == "ionization":
+def initialize_data(predicate: str):
+    if predicate == "ionization":
         download_ionization_data(initialize=True)
-    elif data_type == "emission":
+    elif predicate == "emission":
         download_emission_data(initialize=True)
     else:
-        raise Exception("Invalid choice!\nAbort!")
+        raise ValueError(f"Predicate {predicate} is not allowed.")

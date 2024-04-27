@@ -5,35 +5,26 @@ Created on Tue Apr  4 21:30:23 2023
 @author: alankar
 """
 
-from abc import ABC, abstractmethod
-import numpy as np
+from __future__ import annotations
+
+import logging
+import sys
 from itertools import product
 from pathlib import Path
-from typing import Protocol, Callable, Optional, Union, Tuple, List, Set
+from typing import Callable
+
 import h5py
-import sys
+import numpy as np
 
-_warn = False
+from .download_database import download_ionization_data, download_emission_data
 
-
-class inherited_from_DataSift(Protocol):
-    # This must be compulsorily implemented by any class inheriting from DataSift
-    _check_and_download: Callable
+log = logging.getLogger(__name__)
 
 
-class DataSift(ABC):
-    def __init__(
-        self: "DataSift",
-        child_obj: "inherited_from_DataSift",
-        data: h5py.File,
-    ) -> None:
+class DataSift:
+    def __init__(self, data: h5py.File, **kwargs):
         """
         Prepares the location to read data for interpolation.
-
-        Returns
-        -------
-        None.
-
         """
         self.nH_data = np.array(data["params/nH"])
         self.T_data = np.array(data["params/temperature"])
@@ -42,27 +33,37 @@ class DataSift(ABC):
 
         self.batch_size = np.prod(np.array(data["header/batch_dim"]))
         self.total_size = np.prod(np.array(data["header/total_size"]))
-        self._check_and_download = child_obj._check_and_download
 
-    def _identify_batch(self: "DataSift", i: int, j: int, k: int, m: int) -> int:
+        child_class_name = self.__class__.mro()[0].__name__
+        if child_class_name == "Ionization":
+            self._downloader_function = download_ionization_data
+        elif child_class_name == "EmissionSpectrum":
+            self._downloader_function = download_emission_data
+        else:
+            raise ValueError(f"Class {child_class_name} inheritance is not supported.")
+
+    def _identify_batch(self, i: int, j: int, k: int, m: int) -> int:
         batch_id = self._get_counter(i, j, k, m) // self.batch_size
         return batch_id
 
-    def _get_counter(self: "DataSift", i: int, j: int, k: int, m: int) -> int:
+    def _get_counter(self, i: int, j: int, k: int, m: int) -> int:
         counter = (
-            (m) * self.Z_data.shape[0] * self.T_data.shape[0] * self.nH_data.shape[0]
-            + (k) * self.T_data.shape[0] * self.nH_data.shape[0]
-            + (j) * self.nH_data.shape[0]
-            + (i)
+            m * self.Z_data.shape[0] * self.T_data.shape[0] * self.nH_data.shape[0]
+            + k * self.T_data.shape[0] * self.nH_data.shape[0]
+            + j * self.nH_data.shape[0]
+            + i
         )
         return counter
 
+    def _get_file_path(self, batch_id: int) -> Path:
+        ...
+
     def _determine_multiple_input(
-        self: "DataSift",
-        nH: Union[int, float, List, np.ndarray],
-        temperature: Union[int, float, List, np.ndarray],
-        metallicity: Union[int, float, List, np.ndarray],
-        redshift: Union[int, float, List, np.ndarray],
+        self,
+        nH: int | float | list | np.ndarray,
+        temperature: int | float | list | np.ndarray,
+        metallicity: int | float | list | np.ndarray,
+        redshift: int | float | list | np.ndarray,
     ) -> bool:
         """
         Determine if multiple datapoints are requested.
@@ -70,7 +71,7 @@ class DataSift(ABC):
         Parameters
         ----------
         nH : float
-            Hydrogen number density (all hydrogen both neutral and ionized.
+            Hydrogen number density (all hydrogen both neutral and ionized.)
         temperature : float, array, list
             Plasma temperature.
         metallicity : float, array, list
@@ -92,12 +93,12 @@ class DataSift(ABC):
         return condition
 
     def _process_arguments_flags(
-        self: "DataSift",
-        nH: Union[int, float, List, np.ndarray],
-        temperature: Union[int, float, List, np.ndarray],
-        metallicity: Union[int, float, List, np.ndarray],
-        redshift: Union[int, float, List, np.ndarray],
-    ) -> Tuple[List[bool], List[bool]]:
+        self,
+        nH: int | float | list | np.ndarray,
+        temperature: int | float | list | np.ndarray,
+        metallicity: int | float | list | np.ndarray,
+        redshift: int | float | list | np.ndarray,
+    ) -> tuple[list[bool], list[bool]]:
         """
         Determine if multiple datapoints are requested. Flags if
         some of the arguments are arrays. Also flags if any array
@@ -106,7 +107,7 @@ class DataSift(ABC):
         Parameters
         ----------
         nH : float
-            Hydrogen number density (all hydrogen both neutral and ionized.
+            Hydrogen number density (all hydrogen both neutral and ionized.)
         temperature : float, array, list
             Plasma temperature.
         metallicity : float, array, list
@@ -116,9 +117,8 @@ class DataSift(ABC):
 
         Returns
         -------
-        flags tuple : tuple
-            flags.
-
+        tuple
+            All the process argument flags
         """
         # _argument_type = ["nH", "temperature", "metallicity", "redshift"]
         _array_argument = [True, True, True, True]  # array to flag which arguments are arrays
@@ -137,24 +137,24 @@ class DataSift(ABC):
         if _array_argument[3]:
             _dummy_array[3] = np.array(redshift).shape[0] == 1
 
-        return (_array_argument, _dummy_array)
+        return _array_argument, _dummy_array
 
     def _prepare_arguments(
-        self: "DataSift",
-        nH: Union[int, float, List, np.ndarray],
-        temperature: Union[int, float, List, np.ndarray],
-        metallicity: Union[int, float, List, np.ndarray],
-        redshift: Union[int, float, List, np.ndarray],
-        _array_argument: List[bool],
-        _dummy_array: List[bool],
-    ) -> Tuple[Optional[Tuple[int]], List[np.ndarray]]:
+        self,
+        nH: int | float | list | np.ndarray,
+        temperature: int | float | list | np.ndarray,
+        metallicity: int | float | list | np.ndarray,
+        redshift: int | float | list | np.ndarray,
+        _array_argument: list[bool],
+        _dummy_array: list[bool],
+    ) -> tuple[tuple[int] | None, list[np.ndarray]]:
         """
         Determine if multiple datapoints are requested.
 
         Parameters
         ----------
         nH : float
-            Hydrogen number density (all hydrogen both neutral and ionized.
+            Hydrogen number density (all hydrogen both neutral and ionized.)
         temperature : float, array, list
             Plasma temperature.
         metallicity : float, array, list
@@ -168,10 +168,10 @@ class DataSift(ABC):
             prepared input data.
 
         """
-        _input_shape: Optional[Tuple[int]] = None
+        _input_shape: tuple[int] = None
         argument_collection = [np.array(nH), np.array(temperature), np.array(metallicity), np.array(redshift)]
         for indx, _if_this_is_arr in enumerate(_array_argument):
-            if not (_if_this_is_arr):
+            if not _if_this_is_arr:
                 argument_collection[indx] = np.array(
                     [
                         argument_collection[indx],
@@ -190,34 +190,16 @@ class DataSift(ABC):
             _input_shape = (1,)  # default only one datapoint is requested
         if _input_shape is None:
             raise ValueError("Check needed from user: Invalid input arguments which are not in compliance with each other! Code Aborted!")
-        return (_input_shape, argument_collection)
+        return _input_shape, argument_collection
 
-    def _find_all_batches(
-        self: "DataSift",
-        nH: Union[int, float, List, np.ndarray],
-        temperature: Union[int, float, List, np.ndarray],
-        metallicity: Union[int, float, List, np.ndarray],
-        redshift: Union[int, float, List, np.ndarray],
-    ) -> Set[int]:
+    def _find_all_batches(self) -> set[int]:
         """
         Determine if multiple datapoints are requested.
 
-        Parameters
-        ----------
-        nH : float
-            Hydrogen number density (all hydrogen both neutral and ionized.
-        temperature : float, array, list
-            Plasma temperature.
-        metallicity : float, array, list
-            Plasma metallicity with respect to solar.
-        redshift : float, array, list
-            Cosmological redshift of the universe.
-
         Returns
         -------
-        batch_ids : set
+        set
             Set of all the unique batch ids from the entire requested data.
-
         """
 
         _array_argument, _dummy_array = self._array_argument, self._dummy_array
@@ -227,7 +209,7 @@ class DataSift(ABC):
             _argument = [argument[0] for argument in argument_collection]
             return self._find_all_batches_single(*_argument)
 
-        _all_batches_all_data: Set[int] = set()
+        _all_batches_all_data: set[int] = set()
         for indx in range(np.prod(_input_shape)):
             _argument = []
             for arg_pos, _dummy in enumerate(_dummy_array):
@@ -235,57 +217,47 @@ class DataSift(ABC):
                     _argument.append(argument_collection[arg_pos][0])
                 else:
                     _argument.append(argument_collection[arg_pos][indx])
-            nH_val, temp_val, met_val, red_val = _argument
-            _all_batches_all_data = _all_batches_all_data.union(self._find_all_batches_single(nH_val, temp_val, met_val, red_val))
+            hydrogen_num_density_val, temp_val, met_val, red_val = _argument
+            _all_batches_all_data = _all_batches_all_data.union(self._find_all_batches_single(hydrogen_num_density_val, temp_val, met_val, red_val))
         if _all_batches_all_data == set():
             raise ValueError("Problem identifying batches! Code Aborted!")
         return _all_batches_all_data
 
-    def _transform_edges(self: "DataSift", i: int, j: int, k: int, m: int) -> Tuple[int, int, int, int]:
-        # Detect the edge cases
+    def _transform_edges(self, i: int, j: int, k: int, m: int) -> tuple[int, int, int, int]:
         if i == self.nH_data.shape[0]:
-            if _warn:
-                print("Problem: nH")
+            log.warning("Invalid value for hydrogen number density.")
             i = i - 1
         if i == -1:
-            if _warn:
-                print("Problem: nH")
+            log.warning("Invalid value for hydrogen number density.")
             i = i + 1
         if j == self.T_data.shape[0]:
-            if _warn:
-                print("Problem: T")
+            log.warning("Invalid temperature value.")
             j = j - 1
         if j == -1:
-            if _warn:
-                print("Problem: T")
+            log.warning("Invalid temperature value.")
             j = j + 1
         if k == self.Z_data.shape[0]:
-            if _warn:
-                print("Problem: met")
+            log.warning("Invalid value for mettalicity.")
             k = k - 1
         if k == -1:
-            if _warn:
-                print("Problem: met")
+            log.warning("Invalid value for mettalicity.")
             k = k + 1
         if m == self.red_data.shape[0]:
-            if _warn:
-                print("Problem: red")
+            log.warning("Invalid value for redshift.")
             m = m - 1
         if m == -1:
-            if _warn:
-                print("Problem: red")
+            log.warning("Invalid value for redshift.")
             m = m + 1
-        return (i, j, k, m)
+        return i, j, k, m
 
     def _identify_pos_in_each_dim(
-        self: "DataSift",
-        nH: Union[int, float],
-        temperature: Union[int, float],
-        metallicity: Union[int, float],
-        redshift: Union[int, float],
-    ) -> Tuple[List[int], List[int], List[int], List[int]]:
+        self,
+        nH: int | float,
+        temperature: int | float,
+        metallicity: int | float,
+        redshift: int | float,
+    ) -> tuple[list[int], list[int], list[int], list[int]]:
         # positions in each data just around the requested value for any variable
-        i_vals, j_vals, k_vals, m_vals = None, None, None, None
         if np.sum(nH == self.nH_data) == 1:
             eq = int(np.where(nH == self.nH_data)[0][0])
             i_vals = [eq - 1, eq, eq + 1]
@@ -322,22 +294,22 @@ class DataSift(ABC):
                 np.sum(redshift > self.red_data),
             ]
 
-        return (i_vals, j_vals, k_vals, m_vals)
+        return i_vals, j_vals, k_vals, m_vals
 
     def _find_all_batches_single(
-        self: "DataSift",
-        nH: Union[int, float],
-        temperature: Union[int, float],
-        metallicity: Union[int, float],
-        redshift: Union[int, float],
-    ) -> Set[int]:
+        self,
+        nH: int | float,
+        temperature: int | float,
+        metallicity: int | float,
+        redshift: int | float,
+    ) -> set[int]:
         """
         Find the batches needed from the data files.
 
         Parameters
         ----------
         nH : float
-            Hydrogen number density (all hydrogen both neutral and ionized.
+            Hydrogen number density (all hydrogen both neutral and ionized.)
         temperature : float
             Plasma temperature.
         metallicity : float
@@ -347,9 +319,8 @@ class DataSift(ABC):
 
         Returns
         -------
-        batch_ids : set
+        set
             Set of all the unique batch ids.
-
         """
         i_vals, j_vals, k_vals, m_vals = self._identify_pos_in_each_dim(nH, temperature, metallicity, redshift)
 
@@ -366,31 +337,17 @@ class DataSift(ABC):
 
         return batch_ids
 
-    """
-    @abstractmethod
-    def _fetch_data(self: "DataSift", batch_ids: Set[int]) -> None:
-        pass
-    """
-
-    @abstractmethod
-    def _get_file_path(self: "DataSift", batch_id: int) -> Path:
-        pass
-
     def _interpolate(
-        self: "DataSift",
-        nH: Union[int, float, list, np.ndarray],
-        temperature: Union[int, float, list, np.ndarray],
-        metallicity: Union[int, float, list, np.ndarray],
-        redshift: Union[int, float, list, np.ndarray],
+        self,
+        nH: int | float | list | np.ndarray,
+        temperature: int | float | list | np.ndarray,
+        metallicity: int | float | list | np.ndarray,
+        redshift: int | float | list | np.ndarray,
         mode: str,
         interp_data: str,
-        interp_value_shape: Union[Tuple[int], List[int]],
         scaling_func: Callable = lambda x: x,
-        cut: Tuple[Optional[Union[float, int]], Optional[Union[float, int]]] = (
-            None,
-            None,
-        ),
-    ) -> Tuple[np.ndarray, bool]:
+        cut: tuple[float | int | None, float | int | None] = (None, None),
+    ) -> tuple[np.ndarray, bool]:
         """
         Interpolate from pre-computed Cloudy table.
 
@@ -398,7 +355,7 @@ class DataSift(ABC):
         ----------
         nH : float, optional
             Hydrogen number density
-            (all hydrogen both neutral and ionized.
+            (all hydrogen both neutral and ionized.)
             The default is 1.2e-4.
         temperature : float, optional
             Plasma temperature.
@@ -424,7 +381,7 @@ class DataSift(ABC):
 
         Returns
         -------
-        (interp_value, if_multiple_output) : (np.ndarray, bool)
+        (np.ndarray, bool)
             The interpolated result.
         """
 
@@ -437,9 +394,9 @@ class DataSift(ABC):
         if not (mode == "PIE" or mode == "CIE"):
             raise ValueError("Problem! Invalid mode: %s." % mode)
 
-        batch_ids = self._find_all_batches(nH, temperature, metallicity, redshift)
+        batch_ids = self._find_all_batches()
         # Download files on demand if absent locally
-        self._check_and_download(specific_file_ids=batch_ids)
+        self._downloader_function(file_ids=list(batch_ids))
 
         # Load the data to memory from disk
         data = []
@@ -460,8 +417,8 @@ class DataSift(ABC):
                     _argument.append(argument_collection[arg_pos][0])
                 else:
                     _argument.append(argument_collection[arg_pos][indx])
-            nH_this, temperature_this, metallicity_this, redshift_this = _argument
-            i_vals, j_vals, k_vals, m_vals = self._identify_pos_in_each_dim(nH_this, temperature_this, metallicity_this, redshift_this)
+            hydrogen_num_density_this, temperature_this, metallicity_this, redshift_this = _argument
+            i_vals, j_vals, k_vals, m_vals = self._identify_pos_in_each_dim(hydrogen_num_density_this, temperature_this, metallicity_this, redshift_this)
 
             """
             The trick is to take the floor value for interpolation only if it is the
@@ -478,10 +435,10 @@ class DataSift(ABC):
                 d_j = np.abs(scaling_func(self.T_data[j]) - scaling_func(float(_argument[1])))
                 d_k = np.abs(scaling_func(self.Z_data[k]) - scaling_func(float(_argument[2])))
                 d_m = np.abs(scaling_func(self.red_data[m]) - scaling_func(float(_argument[3])))
-                distL2 = np.sqrt(d_i**2 + d_j**2 + d_k**2 + d_m**2)
-                if distL2 <= 0.0:
-                    distL2 = epsilon
-                _all_weights.append(1 / distL2)
+                dist_l2 = np.sqrt(d_i**2 + d_j**2 + d_k**2 + d_m**2)
+                if dist_l2 <= 0.0:
+                    dist_l2 = epsilon
+                _all_weights.append(1 / dist_l2)
 
                 batch_id = self._identify_batch(i, j, k, m)
 
@@ -489,6 +446,10 @@ class DataSift(ABC):
                     if id_data["batch_id"] == batch_id:
                         hdf = id_data["file"]
                         local_pos = self._get_counter(i, j, k, m) % self.batch_size - 1
+                        break
+                else:
+                    raise ValueError("Target batch id is not found.")
+
                 try:
                     value = np.array(hdf[interp_data])[local_pos, :]
                 except UnboundLocalError:
@@ -514,18 +475,17 @@ class DataSift(ABC):
         for id_data in data:
             id_data["file"].close()
         if np.sum(_dummy_array) == 4 or np.sum(_array_argument) == 0:
-            return (interp_value[0], False)
+            return interp_value[0], False
         else:
             _tmp = np.array(interp_value).reshape((*_input_shape, *np.array(interp_value[0]).shape))
-            return (_tmp, True)
+            return _tmp, True
 
     def _determine_multiple(
-        self: "DataSift",
-        nH: Union[int, float, list, np.ndarray],
-        temperature: Union[int, float, list, np.ndarray],
-        metallicity: Union[int, float, list, np.ndarray],
-        redshift: Union[int, float, list, np.ndarray],
-        mode: str,
+        self,
+        nH: int | float | list | np.ndarray,
+        temperature: int | float | list | np.ndarray,
+        metallicity: int | float | list | np.ndarray,
+        redshift: int | float | list | np.ndarray,
     ) -> bool:
         """
         Interpolate from pre-computed Cloudy table.
@@ -534,7 +494,7 @@ class DataSift(ABC):
         ----------
         nH : float, optional
             Hydrogen number density
-            (all hydrogen both neutral and ionized.
+            (all hydrogen both neutral and ionized.)
             The default is 1.2e-4.
         temperature : float, optional
             Plasma temperature.
@@ -545,23 +505,11 @@ class DataSift(ABC):
         redshift : float, optional
             Cosmological redshift of the universe.
             The default is 0.2.
-        mode : str, optional
-            ionization condition
-            either CIE (collisional) or PIE (photo).
-            The default is 'PIE'.
-        interp_data : str
-            data location within HDF5 file
-        scaling_func : callable function, optional
-            function space in which intrepolation is
-            carried out.
-            The default is linear. log10 is another popular choice.
-        cut : upper and lower bound on  data
-            The default is (None, None)
 
         Returns
         -------
-        _multiple_output) : bool
-            If multiple input is passed.
+        bool
+            ``True`` If multiple input is passed, otherwise ``False``.
         """
         _is_multiple = (isinstance(nH, list) or isinstance(nH, np.ndarray)) and np.array(nH).flatten().shape[0] > 1
         _is_multiple = _is_multiple or (isinstance(temperature, list) or isinstance(temperature, np.ndarray)) and np.array(temperature).flatten().shape[0] > 1

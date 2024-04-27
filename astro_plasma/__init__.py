@@ -7,8 +7,7 @@ logging.basicConfig(
 )
 
 
-from .core import ionization, spectrum  # noqa
-from .core.download_database import initialize_data  # noqa
+from .core import ionization, spectrum  # noqa: E721,E402
 
 
 log = logging.getLogger(__name__)
