@@ -16,10 +16,9 @@ jobs:
       id: badge
       with:
         debug: true
-        directory: ./astro_plasma
+        directory: ./
         badge: ./misc/lines_of_code.svg
-        ignore: data
-        #|README
+        ignore: misc|example-scripts|cloudy-codes|requirements|astro_plasma/data|README
 
     - name: Print the output
       run: |
