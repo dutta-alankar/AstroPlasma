@@ -30,9 +30,9 @@ def cooling_approx(temperature, metallicity):
         Plasma cooling function normalized by nH^2.
 
     """
-    if type(temperature) == list:
+    if isinstance(temperature, list):
         temperature = np.array(temperature)
-    if type(metallicity) == list:
+    if isinstance(metallicity, list):
         metallicity = np.array(metallicity)
     file_path = os.path.realpath(__file__)
     dir_loc = os.path.split(file_path)[:-1]

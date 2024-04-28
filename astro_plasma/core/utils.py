@@ -66,7 +66,7 @@ class AtmElement(Enum):
 
     @staticmethod
     def parse(predicate: Union[str, int]) -> "AtmElement":
-        idx = int(type(predicate) == int)
+        idx = int(isinstance(predicate, int))
         error_label = "atomic number" if idx == 1 else "symbol"
 
         for element in AtmElement:
