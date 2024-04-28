@@ -1,8 +1,10 @@
-on: [push]
 name: Count lines of code
+on:
+  push:
+    branches: [main, dev]
 
 jobs:
-  hello_world_job:
+  lines_of_code_job:
     runs-on: ubuntu-latest
     name: Count lines of code
     steps:
@@ -10,7 +12,7 @@ jobs:
       uses: actions/checkout@v4
 
     - name: Launch the local action
-      uses: ./   # Uses an action in the root directory
+      uses: shadowmoose/GHA-LoC-Badge@1.0.0
       id: badge
       with:
         debug: true
@@ -23,7 +25,7 @@ jobs:
         echo "Scanned: ${{ steps.badge.outputs.counted_files }}";
         echo "Line Count: ${{ steps.badge.outputs.total_lines }}";
 
-    - name: Deploy to image-data branch
+    - name: Deploy to badges branch
       uses: peaceiris/actions-gh-pages@v3
       with:
         publish_dir: ./misc
