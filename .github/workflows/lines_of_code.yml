@@ -11,14 +11,15 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
 
-    - name: Launch the local action
+    - name: Count lines of code
       uses: shadowmoose/GHA-LoC-Badge@1.0.0
       id: badge
       with:
         debug: true
         directory: ./astro_plasma
         badge: ./misc/lines_of_code.svg
-        # ignore: cloudy-codes/|example-scripts/|requirements/|README
+        ignore: data
+        #|README
 
     - name: Print the output
       run: |
