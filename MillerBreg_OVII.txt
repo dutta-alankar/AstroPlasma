@@ -1,0 +1,36 @@
+Table 1
+Absorption-line Measurements
+
+
+Number	Name	l	b	EW	Error	$N_{{\rm O}\,{\scriptsize{VII}},{\rm thin}}$	Error	N_model, thin	$N_{{\rm O}\,{\scriptsize{VII}},{\rm saturated}}$	Error	N_model, saturated
+(deg)	(deg)	(mAring)	(mAring)	(10^15 cm^-2)	(10^15 cm^-2)	(10^15 cm^-2)	(10^15 cm^-2)	(10^15 cm^-2)	(10^15 cm^-2)
+1	Mrk 421	179.83	65.03	11.8	0.8	4.12	2.53	4.62	5.36	3.61	4.54
+2	PKS 2155-304	17.73	-52.24	13.7	1.9	4.79	2.60	7.55	6.56	4.06	8.97
+3	3C 273	289.95	64.36	24.6	3.3	8.60	2.77	5.67	18.06	9.28	5.98
+4	MCG-6-30-15	313.29	27.68	32.6	6.8	11.36	3.45	7.73	42.35	27.19	9.28
+5	LMC X-3	273.57	-32.08	21.0	5.0	7.34	3.07	3.91	13.00	7.37	4.39
+6	1 H 1426+428	77.49	64.90	11.6	4.1	4.04	2.90	5.52	5.21	3.99	5.78
+7	Ark 564	92.14	-25.34	12.3	4.6	4.29	2.98	5.25	5.63	4.23	5.38
+8	NGC 4051	148.88	70.09	24.6	3.1	8.59	2.74	4.80	18.02	9.18	4.77
+9	NGC 3783	287.46	22.95	24.1	7.5	8.40	3.64	6.05	17.17	10.64	6.56
+10	NGC 5548	31.96	70.50	7.0	6.8	2.43	3.45	6.07	2.79	6.06	6.59
+11	Ark 120	201.69	-21.13	-6.0	5.5	-2.08	3.16	4.16	-2.34	5.11	3.94
+12	PKS 0558-504	257.96	-28.57	21.7	7.8	7.58	3.70	4.97	13.83	8.86	5.00
+13	Mrk 766	190.68	82.27	0.1	6.8	0.05	3.45	5.06	0.07	4.27	5.12
+14	NGC 4593	297.48	57.40	23.4	8.5	8.16	3.88	5.96	16.10	10.46	6.42
+15	3C 390.3	111.44	27.07	27.4	7.3	9.56	3.57	4.75	23.65	14.46	4.71
+16	NGC 7469	83.10	-45.47	1.6	8.9	0.57	4.01	5.51	0.59	5.57	5.75
+17	Mrk 509	35.97	-29.86	25.9	7.3	9.04	3.57	8.62	20.36	12.39	10.89
+18	3C 120	190.37	-27.40	13.8	9.2	4.81	4.09	4.15	6.59	5.83	3.94
+19	NGC 3516	133.24	42.40	22.0	13.4	7.66	5.30	4.52	14.12	11.38	4.40
+20	Ton 1388	223.36	68.21	34.5	15.7	12.04	6.03	4.83	54.68	45.38	4.82
+21	1H 0414+009	191.82	-33.16	-3.1	14.8	-1.07	5.73	4.20	-1.14	10.16	4.00
+22	MR 2251-178	46.20	-61.33	39.8	19.6	13.90	7.28	6.25	119.63	108.60	6.86
+23	IC 4329a	317.50	30.92	33.8	19.3	11.78	7.20	7.93	49.41	43.14	9.65
+24	Fairall 9	295.07	-57.83	31.1	16.4	10.84	6.27	5.89	35.30	29.08	6.31
+25	MS 0737.9+7441	140.27	29.57	-13.8	20.7	-4.83	7.65	4.34	-6.65	6.57	4.18
+26	3C 59	142.04	-30.54	60.9	19.2	21.24	7.15	4.33	2599.11	2463.75	4.16
+27	ESO 141-G055	338.18	-26.71	21.4	5.3	7.48	3.12	10.75	13.48	7.69	15.06
+28	4U 1820-30	2.79	-7.91	23.9	3.6	8.36	2.81	7.98	16.94	8.79	18.54
+29	X1735-444	346.05	-6.99	24.7	9.7	8.61	4.23	5.02	18.15	12.32	9.98
+Notes. Our sample consists of 26 AGNs, two Galactic sources, and one LMC source. The targets are listed in order of decreasing S/N with the exception of 27-29. These three targets are additions to the sample used by Bregman & Lloyd-Davies (2007). ESO 141-G055 is an AGN, while 4U 1820-30 (located in the globular cluster NGC 6624) and X1735-444 are Galactic X-ray sources. All targets are used in our model fitting and analysis. The thin and saturated subscripts refer to column density conversions assuming the lines are optically thin or saturated assuming a constant Doppler width of 150 km s^-1. The model subscripts refer to the column densities along each line of sight resulting from the best-fit parameters found in Table 2.
