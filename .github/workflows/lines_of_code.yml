@@ -1,7 +1,7 @@
 name: Count lines of code
 on:
   push:
-    branches: [main, dev]
+    branches: [main]
 
 jobs:
   lines_of_code_job:
