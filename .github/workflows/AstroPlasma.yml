@@ -1,4 +1,4 @@
-name: setup_python
+name: AstroPlasma Unit tests
 
 on:
   pull_request:
