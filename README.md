@@ -2,13 +2,15 @@
 
 <img src="https://user-images.githubusercontent.com/39578361/231562510-64469727-9527-4955-b0ce-17a6699ce762.gif"  width="25%" height="20%">
 
-> A *Cloudy* database with functions to quickly interpolate physical state of astrophysical plasma without detailed plasma modeling
+> A *Cloudy* database with functions to quickly interpolate the physical state of astrophysical plasma without detailed plasma modeling
 
 Running Cloudy models on the fly, especially when there are a lot of models to run with different parameters, can become extremely expensive. `AstroPlasma` aims to provide a workaround using a library of pre-computed cloudy models to generate most of the common plasma properties for a large range of parameter space by interpolation. Owing to a simple and easy-to-use interface, `AstroPlasma` also provides an abstraction layer enabling the user to get the plasma properties without worrying much about the details of plasma modeling. We find this extremely useful while building models and predicting observables like column densities in different kinds of astrophysical systems.
 
 [![GitHub](https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white)](https://github.com/dutta-alankar/AstroPlasma)
 
-[![PyPI](https://img.shields.io/badge/requires-Python%20≥%203.8-blue?logo=python&logoColor=white)](https://www.python.org/downloads/release/python-3811/)
+[![PyPI](https://img.shields.io/badge/requires-Python%20≥%203.10-blue?logo=python&logoColor=white)](https://www.python.org/downloads/release/python-310/)
+
+![](https://github.com/dutta-alankar/AstroPlasma/actions/workflows/AstroPlasma.yml/badge.svg?branch=main)
 
 ![GitHub repo size](https://img.shields.io/github/repo-size/dutta-alankar/AstroPlasma) |
 ![GitHub repo file count](https://img.shields.io/github/directory-file-count/dutta-alankar/AstroPlasma) |
