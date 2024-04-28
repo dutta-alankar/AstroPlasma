@@ -18,7 +18,7 @@ jobs:
         debug: true
         directory: ./
         badge: ./misc/lines_of_code.svg
-        ignore: misc|example-scripts|cloudy-codes|requirements|astro_plasma/data|README.md|codemeta.json|LICENSE|poetry.lock|poetry.toml|tests/sample_spectrum.txt
+        ignore: misc|example-scripts|cloudy-codes|requirements|astro_plasma/data|README.md|codemeta.json|LICENSE|poetry.lock|poetry.toml|tests/sample_spectrum.txt|pyproject.toml
 
     - name: Print the output
       run: |
