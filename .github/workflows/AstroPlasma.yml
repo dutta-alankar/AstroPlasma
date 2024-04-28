@@ -1,9 +1,10 @@
 name: AstroPlasma Unit tests
 
 on:
+  workflow_dispatch:
   pull_request:
   push:
-    branches: '**'
+    branches: [main]
 
 jobs:
   python-env:

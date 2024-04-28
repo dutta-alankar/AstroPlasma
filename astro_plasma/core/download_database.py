@@ -24,6 +24,8 @@ from .utils import LOCAL_DATA_PATH, fetch, checksum, blake2bsum, prepare_onedriv
 def fetch_list_from_url(link_list_url: str) -> List[str]:
     # print(link_list_url)
     response = requests.get(link_list_url, stream=True)
+    if response.status_code != 200:
+        sys.exit(f"Problem communicating with dataserver! (error code: {response.status_code}")
     # print(response)
     links = response.content.decode("utf-8").split("\n")
     return links
@@ -33,6 +35,8 @@ def fetch_list_from_url(link_list_url: str) -> List[str]:
 def get_filename(url: str) -> str:
     try:
         with requests.get(url, stream=True) as req:
+            if req.status_code != 200:
+                sys.exit(f"Problem communicating with dataserver! (error code: {req.status_code}")
             if content_disposition := req.headers.get("Content-Disposition"):
                 param, options = werkzeug.http.parse_options_header(content_disposition)
                 if param == "attachment" and (filename := options.get("filename")):
