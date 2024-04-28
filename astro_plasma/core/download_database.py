@@ -22,7 +22,9 @@ from .utils import LOCAL_DATA_PATH, fetch, checksum, blake2bsum, prepare_onedriv
 
 
 def fetch_list_from_url(link_list_url: str) -> List[str]:
+    # print(link_list_url)
     response = requests.get(link_list_url, stream=True)
+    # print(response)
     links = response.content.decode("utf-8").split("\n")
     return links
 
