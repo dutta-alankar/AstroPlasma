@@ -1,0 +1,33 @@
+on: [push]
+name: Count lines of code
+
+jobs:
+  hello_world_job:
+    runs-on: ubuntu-latest
+    name: Count lines of code
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Launch the local action
+      uses: ./   # Uses an action in the root directory
+      id: badge
+      with:
+        debug: true
+        directory: ./
+        badge: ./misc/lines_of_code.svg
+        ignore: cloudy-codes/|example-scripts/|README
+
+    - name: Print the output
+      run: |
+        echo "Scanned: ${{ steps.badge.outputs.counted_files }}";
+        echo "Line Count: ${{ steps.badge.outputs.total_lines }}";
+
+    - name: Deploy to image-data branch
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        publish_dir: ./misc
+        publish_branch: badges
+        github_token: ${{ secrets.TOKEN_GITHUB }}
+        user_name: github-actions[bot]
+        user_email: github-actions[bot]@users.noreply.github.com
