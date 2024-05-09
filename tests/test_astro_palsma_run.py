@@ -12,19 +12,19 @@ def test_ion_frac():
     from astro_plasma.core.utils import AtmElement  # for element naming using symbols (optional)
     import numpy as np
 
-    fIon = Ionization.interpolate_ion_frac
+    f_ion = Ionization.interpolate_ion_frac
 
-    nH = 1.2e-04  # Hydrogen number density in cm^-3
+    hydrogen_num_density = 1.2e-04  # Hydrogen number density in cm^-3
     temperature = 4.2e05  # Temperature of the plasma in kelvin
     metallicity = 0.99  # Metallicity of plasma with respect to solar
     redshift = 0.001  # Cosmological redshift
     mode = "CIE"
 
-    # Lets get the ionization of OVI
+    # Let's get the ionization of OVI
     element = AtmElement.Oxygen
     ion = 6
-    fOVI = fIon(
-        nH=nH,
+    f_ovi = f_ion(
+        nH=hydrogen_num_density,
         temperature=temperature,
         metallicity=metallicity,
         redshift=redshift,
@@ -32,9 +32,9 @@ def test_ion_frac():
         ion=ion,
         mode=mode,
     )  # This value is in log10
-    fOVI = np.power(10.0, fOVI)
-    fOVI_expected = 8.895256915490418e-02
-    assert np.isclose(fOVI, fOVI_expected)
+    f_ovi = np.power(10.0, f_ovi)
+    f_ovi_expected = 8.895256915490418e-02
+    assert np.isclose(f_ovi, f_ovi_expected)
 
 
 def test_num_dens():
@@ -44,14 +44,14 @@ def test_num_dens():
 
     num_dens = Ionization.interpolate_num_dens
 
-    nH = 1.2e-04  # Hydrogen number density in cm^-3
+    hydrogen_num_density = 1.2e-04  # Hydrogen number density in cm^-3
     temperature = 4.2e05  # Temperature of the plasma in kelvin
     metallicity = 0.99  # Metallicity of plasma with respect to solar
     redshift = 0.001  # Cosmological redshift
     mode = "CIE"
 
     ne = num_dens(
-        nH=nH,
+        nH=hydrogen_num_density,
         temperature=[temperature],
         metallicity=metallicity,
         redshift=redshift,
@@ -63,7 +63,7 @@ def test_num_dens():
     assert np.isclose(ne, ne_expected)
 
     n = num_dens(
-        nH=nH,
+        nH=hydrogen_num_density,
         temperature=temperature,
         metallicity=metallicity,
         redshift=redshift,
@@ -74,7 +74,7 @@ def test_num_dens():
     assert np.isclose(n, n_expected)
 
     ni = num_dens(
-        nH=nH,
+        nH=hydrogen_num_density,
         temperature=temperature,
         metallicity=metallicity,
         redshift=redshift,
@@ -85,7 +85,7 @@ def test_num_dens():
     assert np.isclose(ni, ni_expected)
 
     nn = num_dens(
-        nH=nH,
+        nH=hydrogen_num_density,
         temperature=temperature,
         metallicity=metallicity,
         redshift=redshift,
@@ -95,16 +95,16 @@ def test_num_dens():
     nn_expected = 1.0861042185130847e-10
     assert np.isclose(nn, nn_expected)
 
-    nHI = num_dens(
-        nH=nH,
+    n_hi = num_dens(
+        nH=hydrogen_num_density,
         temperature=temperature,
         metallicity=metallicity,
         redshift=redshift,
         mode=mode,
         element="HI",
     )
-    nHI_expected = 1.0731159716825104e-10
-    assert np.isclose(nHI, nHI_expected)
+    n_hi_expected = 1.0731159716825104e-10
+    assert np.isclose(n_hi, n_hi_expected)
 
 
 def test_mu():
@@ -114,14 +114,14 @@ def test_mu():
 
     mean_mass = Ionization.interpolate_mu
 
-    nH = 1.2e-04  # Hydrogen number density in cm^-3
+    hydrogen_num_density = 1.2e-04  # Hydrogen number density in cm^-3
     temperature = 4.2e05  # Temperature of the plasma in kelvin
     metallicity = 0.99  # Metallicity of plasma with respect to solar
     redshift = 0.001  # Cosmological redshift
     mode = "CIE"
 
     mu = mean_mass(
-        nH=nH,
+        nH=hydrogen_num_density,
         temperature=temperature,
         metallicity=metallicity,
         redshift=redshift,
@@ -132,7 +132,7 @@ def test_mu():
     assert np.isclose(mu, mu_expected)
 
     mu_e = mean_mass(
-        nH=nH,
+        nH=hydrogen_num_density,
         temperature=temperature,
         metallicity=metallicity,
         redshift=redshift,
@@ -143,7 +143,7 @@ def test_mu():
     assert np.isclose(mu_e, mu_e_expected)
 
     mu_i = mean_mass(
-        nH=nH,
+        nH=hydrogen_num_density,
         temperature=temperature,
         metallicity=metallicity,
         redshift=redshift,
@@ -161,14 +161,20 @@ def test_spectrum():
 
     gen_spectrum = EmissionSpectrum.interpolate_spectrum
 
-    nH = 1.2e-04  # Hydrogen number density in cm^-3
+    hydrogen_num_density = 1.2e-04  # Hydrogen number density in cm^-3
     temperature = 4.2e05  # Temperature of the plasma in kelvin
     metallicity = 0.99  # Metallicity of plasma with respect to solar
     redshift = 0.001  # Cosmological redshift
     mode = "CIE"
 
     # Generate spectrum
-    spectrum = gen_spectrum(nH=nH, temperature=temperature, metallicity=metallicity, redshift=redshift, mode=mode)
+    spectrum = gen_spectrum(
+        nH=hydrogen_num_density,
+        temperature=temperature,
+        metallicity=metallicity,
+        redshift=redshift,
+        mode=mode,
+    )
 
     spectrum_expected = np.loadtxt("tests/sample_spectrum.txt")
     assert np.sum(np.abs(spectrum - spectrum_expected)) < 1.0e-06

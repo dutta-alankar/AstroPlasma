@@ -6,73 +6,59 @@ Created on Thu Dec  1 18:23:40 2022
 """
 
 # Built-in imports
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Union, Optional, Callable
+from typing import Callable
 
 # Third party imports
 import h5py
 import numpy as np
 
-# Local package imports
-
 from .datasift import DataSift
-from .utils import LOCAL_DATA_PATH, fetch
-from .data_dir import set_base_dir
-from .download_database import download_emission_data
+from .download_database import initialize_data
+from .utils import LOCAL_DATA_PATH
+
+# from typing import  Callable
+
+# Local package imports
 
 DEFAULT_BASE_DIR = LOCAL_DATA_PATH / "emission"
 FILE_NAME_TEMPLATE = "emission.b_{:06d}.h5"
-BASE_URL_TEMPLATE = "emission/download/{:d}/"
-DOWNLOAD_IN_INIT = [
-    (BASE_URL_TEMPLATE.format(0), Path(FILE_NAME_TEMPLATE.format(0))),
-]
 
 
 class EmissionSpectrum(DataSift):
-    def __init__(
-        self: "EmissionSpectrum",
-        base_dir: Optional[Union[str, Path]] = None,
-    ) -> None:
+    def __init__(self, base_dir: Path = DEFAULT_BASE_DIR):
         """
         Prepares the location to read data for generating emisson spectrum.
 
-        Returns
-        -------
-        None.
-
+        Parameters
+        ----------
+        base_dir: Path
+            Database directory
         """
-        self._check_and_download = download_emission_data
-        self.base_url_template = BASE_URL_TEMPLATE
-        self.file_name_template = FILE_NAME_TEMPLATE
-        self.base_dir = base_dir
+        self._base_dir = base_dir
+        initialize_data("emission")
+        with h5py.File(self.base_dir / FILE_NAME_TEMPLATE.format(0)) as file:
+            super().__init__(file)
+
+        # FIXME: It should be iniitalized somewhere in the class
+        self._energy = np.empty(10)
 
     @property
     def base_dir(self):
         return self._base_dir
 
-    @base_dir.setter
-    def base_dir(
-        self,
-        base_dir: Optional[Path] = None,
-    ):
-        self._base_dir = set_base_dir(DEFAULT_BASE_DIR, base_dir)
-
-        fetch(urls=DOWNLOAD_IN_INIT, base_dir=self._base_dir)
-        data = h5py.File(self._base_dir / DOWNLOAD_IN_INIT[0][1], "r")
-        super().__init__(self, data)
-        self._energy = np.array(data["output/energy"])
-        data.close()
-
-    def _get_file_path(self: "EmissionSpectrum", batch_id: int) -> Path:
-        return self.base_dir / self.file_name_template.format(batch_id)
+    def _get_file_path(self, batch_id: int) -> Path:
+        return self.base_dir / FILE_NAME_TEMPLATE.format(batch_id)
 
     def interpolate_spectrum(
-        self: "EmissionSpectrum",
-        nH: Union[int, float] = 1.2e-4,
-        temperature: Union[int, float] = 2.7e6,
-        metallicity: Union[int, float] = 0.5,
-        redshift: Union[int, float] = 0.2,
-        mode: str = "PIE",
+        self,
+        nH: int | float = 1.2e-4,
+        temperature: int | float = 2.7e6,
+        metallicity: int | float = 0.5,
+        redshift: int | float = 0.2,
+        mode="PIE",
         scaling_func: Callable = lambda x: x,
     ) -> np.ndarray:
         """
@@ -82,7 +68,7 @@ class EmissionSpectrum(DataSift):
         ----------
         nH : float, optional
             Hydrogen number density
-            (all hydrogen both neutral and ionized.
+            (all hydrogen both neutral and ionized.)
             The default is 1.2e-4.
         temperature : float, optional
             Plasma temperature.
@@ -104,8 +90,8 @@ class EmissionSpectrum(DataSift):
 
         Returns
         -------
-        spectrum : numpy array 2d
-            returns the emitted spectrum
+        np.ndarray
+            Returns the emitted spectrum
             as a 2d numpy array with two columns.
             Column 0: Energy in keV
             Column 1: spectral energy distribution (emissivity):
@@ -116,7 +102,7 @@ class EmissionSpectrum(DataSift):
         self.spectrum = np.zeros((self._energy.shape[0], 2))
         self.spectrum[:, 0] = self._energy
 
-        _is_multiple = self._determine_multiple(nH, temperature, metallicity, redshift, mode)
+        _is_multiple = self._determine_multiple(nH, temperature, metallicity, redshift)
 
         if _is_multiple:
             spectrum, _ = super()._interpolate(
@@ -126,11 +112,11 @@ class EmissionSpectrum(DataSift):
                 redshift,
                 mode,
                 f"output/emission/{mode}/total",
-                (self.spectrum.shape[0],),
                 scaling_func,
-                (None, None),  # threshold cuts
+                (self.spectrum.shape[0], None),
             )
             spectrum = spectrum.flatten().reshape((*self._input_shape, spectrum.shape[-1]))
+            # noinspection PyAttributeOutsideInit
             self.spectrum = np.zeros((*spectrum.shape, 2), dtype=np.float64)
             for i in range(spectrum.shape[0]):
                 self.spectrum[i, :, 0] = self._energy
@@ -143,8 +129,7 @@ class EmissionSpectrum(DataSift):
                 redshift,
                 mode,
                 f"output/emission/{mode}/total",
-                (self.spectrum.shape[0],),
                 scaling_func,
-                (None, None),  # threshold cuts
+                (self.spectrum.shape[0], None),
             )
         return self.spectrum
