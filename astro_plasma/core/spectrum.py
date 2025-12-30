@@ -8,6 +8,7 @@ Created on Thu Dec  1 18:23:40 2022
 # Built-in imports
 from pathlib import Path
 from typing import Union, Optional, Callable
+import os
 
 # Third party imports
 import h5py
@@ -16,16 +17,13 @@ import numpy as np
 # Local package imports
 
 from .datasift import DataSift
-from .utils import LOCAL_DATA_PATH, fetch
+from .utils import LOCAL_DATA_PATH
 from .data_dir import set_base_dir
 from .download_database import download_emission_data
 
 DEFAULT_BASE_DIR = LOCAL_DATA_PATH / "emission"
 FILE_NAME_TEMPLATE = "emission.b_{:06d}.h5"
-BASE_URL_TEMPLATE = "emission/download/{:d}/"
-DOWNLOAD_IN_INIT = [
-    (BASE_URL_TEMPLATE.format(0), Path(FILE_NAME_TEMPLATE.format(0))),
-]
+DOWNLOAD_IN_INIT = (Path(os.path.basename(FILE_NAME_TEMPLATE.format(0))), 0)
 
 
 class EmissionSpectrum(DataSift):
@@ -42,7 +40,6 @@ class EmissionSpectrum(DataSift):
 
         """
         self._check_and_download = download_emission_data
-        self.base_url_template = BASE_URL_TEMPLATE
         self.file_name_template = FILE_NAME_TEMPLATE
         self.base_dir = base_dir
 
@@ -57,11 +54,10 @@ class EmissionSpectrum(DataSift):
     ):
         self._base_dir = set_base_dir(DEFAULT_BASE_DIR, base_dir)
 
-        fetch(urls=DOWNLOAD_IN_INIT, base_dir=self._base_dir)
-        data = h5py.File(self._base_dir / DOWNLOAD_IN_INIT[0][1], "r")
-        super().__init__(self, data)
-        self._energy = np.array(data["output/energy"])
-        data.close()
+        self._check_and_download(initialize=True)
+        with h5py.File(self._base_dir / DOWNLOAD_IN_INIT[0], "r") as data:
+            super().__init__(self, data)
+            self._energy = np.array(data["output/energy"])
 
     def _get_file_path(self: "EmissionSpectrum", batch_id: int) -> Path:
         return self.base_dir / self.file_name_template.format(batch_id)

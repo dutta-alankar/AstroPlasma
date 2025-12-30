@@ -9,27 +9,40 @@ Created on Mon Jan  9 20:28:15 2023
 import os
 import re
 import hashlib
+import time
+import random
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import List, Tuple, Union, Optional
-from urllib.parse import urljoin
+from typing import Tuple, Union, Optional, Sequence
 
 # Third party imports
-import requests
+from webdav4.client import Client
 from dotenv import load_dotenv
-from tqdm import tqdm
+from rich.progress import (
+    Progress,
+    BarColumn,
+    DownloadColumn,
+    TransferSpeedColumn,
+    TimeRemainingColumn,
+    TextColumn,
+)
 from enum import Enum
 
 LOCAL_DATA_PATH = Path(__file__).parent.parent / "data"
 ROMAN_DICT = {"I": 1, "V": 5, "X": 10}
+WEBDAV_MPCDF_URL = "https://datashare.mpcdf.mpg.de/public.php/webdav/"
 
 # load env file to os.environ and can be access from os.getenv()
 load_dotenv()
 
 # download chunk size, # bytes to download at a time
-CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", "4096"))
+CHUNK_SIZE_MIN = int(os.getenv("CHUNK_SIZE_MIN", "128")) * 1024
+CHUNK_SIZE_MAX = int(os.getenv("CHUNK_SIZE_MAX", "8192")) * 1024
+MAX_RETRIES = int(os.getenv("MAX_RETRIES", "5"))
+TARGET_UPDATE_INTERVAL = float(os.getenv("TARGET_UPDATE_INTERVAL", "0.1"))
 BASE_URL = os.getenv("ASTROPLASMA_SERVER", "http://localhost:8000")
 PARALLEL_JOBS = int(os.getenv("PARALLEL_DOWNLOAD_JOBS", "4"))
+RETAIN_BARS = False
 
 
 class AtmElement(Enum):
@@ -126,40 +139,95 @@ def element_indices(
     return (slice_start, slice_stop)
 
 
-def fetch(urls: List[Tuple[str, Path]], base_dir: Path):
-    # ([(link, filename)], save_location)
+def fetch_webdav(token: str, files: Sequence[Tuple[Union[str, Path], int]], base_dir: Union[str, Path]) -> None:
+    # ([(remote_file_location, file_id)], save_directory)
+
+    if not (isinstance(base_dir, Path)):
+        base_dir = Path(base_dir)
     base_dir.mkdir(mode=0o766, parents=True, exist_ok=True)
+    client = Client(WEBDAV_MPCDF_URL, auth=(token, ""))
 
-    # unit job of downloading and saving file
-    def download_job(url: str, save_path: Path):
-        response = requests.get(url, stream=True)
-        file_size = int(response.headers.get("content-length", 0))
+    progress = Progress(
+        TextColumn("[bold blue]{task.description}", justify="right"),
+        BarColumn(bar_width=None, complete_style="blue", finished_style="green"),
+        "[progress.percentage]{task.percentage:>3.1f}%",
+        "•",
+        DownloadColumn(),
+        "•",
+        TransferSpeedColumn(),
+        "•",
+        TimeRemainingColumn(),
+    )
 
-        progress = tqdm(
-            desc=save_path.name,
-            total=file_size,
-            ascii=True,
-            unit_scale=True,
-            unit="iB",
-            leave=False,
-        )
+    def download_job(remote_path: Union[str, Path], task_id: int) -> None:
+        local_filename = Path(os.path.basename(remote_path))
+        local_path = base_dir / local_filename
+        temp_path = local_path.with_suffix(local_path.suffix + ".part")
 
-        if save_path.exists() and save_path.stat().st_size == file_size:
-            progress.update(file_size)
-            return
+        try:
+            progress.update(task_id, visible=True)
+            file_size = client.content_length(str(remote_path))
+            progress.update(task_id, total=file_size)
 
-        with open(save_path, "wb") as file:
-            for data in response.iter_content(chunk_size=CHUNK_SIZE):
-                progress.update(len(data))
-                file.write(data)
-            progress.close()
-            response.close()
+            # 1. Skip if already exists
+            if local_path.exists() and local_path.stat().st_size == file_size:
+                # Force bar to 100% before removing
+                progress.update(task_id, completed=file_size, description=f"[green]Done: {local_filename}")
+                # time.sleep(0.1)
+                progress.remove_task(task_id)
+                return
 
-    with ThreadPoolExecutor(max_workers=PARALLEL_JOBS, thread_name_prefix="cloudy_dnldr") as pool:
-        # iterative download and show progress bar using tqdm
-        for url_path, file_name in urls:
-            url = urljoin(BASE_URL, url_path)
-            pool.submit(download_job, url, base_dir / file_name)
+            # 2. Retry Loop
+            for attempt in range(MAX_RETRIES):
+                current_chunk_size = 256 * 1024
+                try:
+                    progress.update(task_id, description=f"Att {attempt+1}: {local_filename}", completed=0)
+
+                    with client.open(str(remote_path), "rb") as remote_file:
+                        with open(temp_path, "wb") as local_file:
+                            while True:
+                                start_time = time.perf_counter()
+                                chunk = remote_file.read(current_chunk_size)
+                                if not chunk:
+                                    break
+
+                                local_file.write(chunk)
+                                elapsed = time.perf_counter() - start_time
+                                progress.update(task_id, advance=len(chunk))
+
+                                if elapsed > 0:
+                                    ideal_size = int(current_chunk_size * (TARGET_UPDATE_INTERVAL / elapsed))
+                                    current_chunk_size = max(CHUNK_SIZE_MIN, min(ideal_size, CHUNK_SIZE_MAX))
+
+                    # Verify and Finalize
+                    if temp_path.stat().st_size == file_size:
+                        temp_path.replace(local_path)
+                        # --- THE FIX: Explicitly set 100% and refresh UI ---
+                        progress.update(task_id, completed=file_size, description=f"[green]Done: {local_filename}")
+                        if not RETAIN_BARS:
+                            time.sleep(0.2)  # Give the user a moment to see the 100%
+                            progress.remove_task(task_id)
+                        return
+
+                except Exception as e:
+                    wait_time = (2**attempt) + random.random()
+                    progress.console.print(f"[yellow]Error on {local_filename}: {e}. Retrying...")
+                    time.sleep(wait_time)
+
+            progress.console.print(f"[red]CRITICAL: Failed {local_filename}")
+            progress.remove_task(task_id)
+
+        except Exception as e:
+            progress.console.print(f"[red]Setup error for {local_filename}: {e}")
+            progress.remove_task(task_id)
+
+    with progress:
+        # ThreadPoolExecutor's 'with' block ensures we wait for all threads to finish
+        # before 'progress' (the outer block) stops.
+        with ThreadPoolExecutor(max_workers=min(PARALLEL_JOBS, len(files))) as pool:
+            for remote_path, _ in files:
+                task_id = progress.add_task(description=os.path.basename(remote_path), total=None, visible=False)
+                pool.submit(download_job, remote_path, task_id)
 
 
 # Taken from: https://stackoverflow.com/questions/16874598/how-do-i-calculate-the-md5-checksum-of-a-file-in-python

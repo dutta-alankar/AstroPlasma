@@ -41,19 +41,3 @@ repos:
   hooks:
   - id: pretty-format-yaml
     args: [--autofix, --indent, '2']
-
-- repo: https://github.com/python-poetry/poetry
-  rev: 1.8.0
-  hooks:
-  - id: poetry-check
-  - id: poetry-lock
-    args: [--no-update, --check]
-  - id: poetry-export
-    args: [--without-hashes, --output, requirements/requirements.txt]
-    name: poetry-export-requirements
-  - id: poetry-export
-    args: [--without-hashes, --with, dev, --output, requirements/requirements-dev.txt]
-    name: poetry-export-dev-requirements
-  - id: poetry-export
-    args: [--without-hashes, --with, dev, --with, cloudy_run, --with, test, --output, requirements/requirements-all.txt]
-    name: poetry-export-all-requirements
