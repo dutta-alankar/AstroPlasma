@@ -21,41 +21,44 @@ def test_hash():
     import astro_plasma
     from pathlib import Path
     import numpy as np
+    import os
 
     LOCAL_DATA_PATH = astro_plasma.core.utils.LOCAL_DATA_PATH
-    ionization_hash_url = astro_plasma.core.utils.prepare_onedrive_link(
-        "https://indianinstituteofscience-my.sharepoint.com/:t:/g/personal/alankardutta_iisc_ac_in/ETCJ1CWIJOlAkcuj3WNxtG8Bjwt0Y3ctul8kffzafB84tQ?e=0nmRdf"
-    )
-    ionization_links_url = astro_plasma.core.utils.prepare_onedrive_link(
-        "https://indianinstituteofscience-my.sharepoint.com/:u:/g/personal/alankardutta_iisc_ac_in/EYnSBoTNOmdPqs3GPE0PDW0BDafcR78jbGCUM8tFqW8UAw?e=cCFbse"
-    )
-    all_urls = astro_plasma.core.download_database.fetch_list_from_url(ionization_links_url)
-    filenumber = int(np.random.randint(0, len(all_urls) - 1, 1)[0])
-    ionization_file_url = astro_plasma.core.utils.prepare_onedrive_link(all_urls[filenumber])
-    hash_ionization_expect = astro_plasma.core.download_database.fetch_list_from_url(ionization_hash_url)[filenumber]
-    ionization_filename = astro_plasma.core.download_database.get_filename(ionization_file_url)
-    if not (Path(LOCAL_DATA_PATH / "ionization" / ionization_filename).is_file()):
-        astro_plasma.core.utils.fetch([(ionization_file_url, Path(ionization_filename))], LOCAL_DATA_PATH / "ionization")
+
+    ionization_token = "EzYYrEgXdQscQJo"
+    directory = LOCAL_DATA_PATH / Path("ionization")
+    if not((directory / Path("hashlist.txt")).is_file()):
+        astro_plasma.core.download_database.fetch_hashlist_from_url(ionization_token, directory / Path("hashlist.txt"))
+    with open(directory / Path("hashlist.txt"), "r") as file:
+        hash_list = [line.split("\n")[0] for line in file.readlines()]
+    file_id = int(np.random.randint(0, len(hash_list) - 1, 1)[0])
+    hash_ionization_expect = hash_list[file_id]
+    ionization_filename_list = astro_plasma.core.download_database.fetch_filelist_from_url(ionization_token)
+    ionization_filename = os.path.basename(ionization_filename_list[file_id])
+    if not (Path(directory / ionization_filename).is_file()):
+        astro_plasma.core.download_database.download_datafiles(files_link_token=ionization_token, 
+                                                               download_location=directory, 
+                                                               specific_file_ids=[file_id,])
     # check the hash of the datafile <filenumber>
-    hash_ionization_found = astro_plasma.core.utils.blake2bsum(LOCAL_DATA_PATH / "ionization" / ionization_filename)
+    hash_ionization_found = astro_plasma.core.utils.blake2bsum(LOCAL_DATA_PATH / Path("ionization") / Path(ionization_filename))
     assert hash_ionization_found == hash_ionization_expect
 
-    filenumber = int(np.random.randint(0, len(all_urls) - 1, 1)[0])
-    emission_hash_url = astro_plasma.core.utils.prepare_onedrive_link(
-        "https://indianinstituteofscience-my.sharepoint.com/:t:/g/personal/alankardutta_iisc_ac_in/EZbmBm1BL_hEmKMyYXYsOZIBMIBxr3mJazjGvL53T5ZoAw?e=7bMW2B"
-    )
-    emission_links_url = astro_plasma.core.utils.prepare_onedrive_link(
-        "https://indianinstituteofscience-my.sharepoint.com/:u:/g/personal/alankardutta_iisc_ac_in/EWJuOmWHwAVEnEtziAV5kg8BXtFp_44-0smofLpr_f_2Pg?e=7sreMC"
-    )
-    all_urls = astro_plasma.core.download_database.fetch_list_from_url(emission_links_url)
-    filenumber = int(np.random.randint(0, len(all_urls) - 1, 1)[0])
-    hash_emission_expect = astro_plasma.core.download_database.fetch_list_from_url(emission_hash_url)[filenumber]
-    emission_file_url = astro_plasma.core.utils.prepare_onedrive_link(all_urls[filenumber])
-    emission_filename = astro_plasma.core.download_database.get_filename(emission_file_url)
-    if not (Path(LOCAL_DATA_PATH / "emission" / emission_filename).is_file()):
-        astro_plasma.core.utils.fetch([(emission_file_url, Path(emission_filename))], LOCAL_DATA_PATH / "emission")
+    emission_token = "3Edp5YzJqWnXYWq"
+    directory = LOCAL_DATA_PATH / Path("emission")
+    if not((directory / Path("hashlist.txt")).is_file()):
+        astro_plasma.core.download_database.fetch_hashlist_from_url(emission_token, directory / Path("hashlist.txt"))
+    with open(directory / Path("hashlist.txt"), "r") as file:
+        hash_list = [line.split("\n")[0] for line in file.readlines()]
+    file_id = int(np.random.randint(0, len(hash_list) - 1, 1)[0])
+    hash_emission_expect = hash_list[file_id]
+    emission_filename_list = astro_plasma.core.download_database.fetch_filelist_from_url(emission_token)
+    emission_filename = os.path.basename(emission_filename_list[file_id])
+    if not (Path(directory / emission_filename).is_file()):
+        astro_plasma.core.download_database.download_datafiles(files_link_token=emission_token, 
+                                                               download_location=directory, 
+                                                               specific_file_ids=[file_id,])
     # check the hash of the datafile <filenumber>
-    hash_emission_found = astro_plasma.core.utils.blake2bsum(LOCAL_DATA_PATH / "emission" / emission_filename)
+    hash_emission_found = astro_plasma.core.utils.blake2bsum(LOCAL_DATA_PATH / Path("emission") / Path(emission_filename))
     assert hash_emission_found == hash_emission_expect
 
 
