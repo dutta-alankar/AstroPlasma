@@ -7,6 +7,16 @@ Created on Tue Dec  5 18:27:11 2023
 
 import traceback
 import logging
+import os
+
+
+def rename_directory(old_name, new_name):
+    # Check if the source directory exists
+    if os.path.exists(old_name):
+        try:
+            os.rename(old_name, new_name)
+        except OSError as e:
+            print(f"Error: {e}")
 
 
 def test_import():
@@ -36,9 +46,7 @@ def test_hash():
     ionization_filename_list = astro_plasma.core.download_database.fetch_filelist_from_url(ionization_token)
     ionization_filename = os.path.basename(ionization_filename_list[file_id])
     if not (Path(directory / ionization_filename).is_file()):
-        astro_plasma.core.download_database.download_datafiles(
-            files_link_token=ionization_token,
-            download_location=directory,
+        astro_plasma.core.download_database.download_ionization_data(
             specific_file_ids=[
                 file_id,
             ],
@@ -58,9 +66,7 @@ def test_hash():
     emission_filename_list = astro_plasma.core.download_database.fetch_filelist_from_url(emission_token)
     emission_filename = os.path.basename(emission_filename_list[file_id])
     if not (Path(directory / emission_filename).is_file()):
-        astro_plasma.core.download_database.download_datafiles(
-            files_link_token=emission_token,
-            download_location=directory,
+        astro_plasma.core.download_database.download_emission_data(
             specific_file_ids=[
                 file_id,
             ],
