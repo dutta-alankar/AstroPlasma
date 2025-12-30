@@ -27,7 +27,7 @@ def test_hash():
 
     ionization_token = "EzYYrEgXdQscQJo"
     directory = LOCAL_DATA_PATH / Path("ionization")
-    if not((directory / Path("hashlist.txt")).is_file()):
+    if not ((directory / Path("hashlist.txt")).is_file()):
         astro_plasma.core.download_database.fetch_hashlist_from_url(ionization_token, directory / Path("hashlist.txt"))
     with open(directory / Path("hashlist.txt"), "r") as file:
         hash_list = [line.split("\n")[0] for line in file.readlines()]
@@ -36,16 +36,20 @@ def test_hash():
     ionization_filename_list = astro_plasma.core.download_database.fetch_filelist_from_url(ionization_token)
     ionization_filename = os.path.basename(ionization_filename_list[file_id])
     if not (Path(directory / ionization_filename).is_file()):
-        astro_plasma.core.download_database.download_datafiles(files_link_token=ionization_token, 
-                                                               download_location=directory, 
-                                                               specific_file_ids=[file_id,])
+        astro_plasma.core.download_database.download_datafiles(
+            files_link_token=ionization_token,
+            download_location=directory,
+            specific_file_ids=[
+                file_id,
+            ],
+        )
     # check the hash of the datafile <filenumber>
     hash_ionization_found = astro_plasma.core.utils.blake2bsum(LOCAL_DATA_PATH / Path("ionization") / Path(ionization_filename))
     assert hash_ionization_found == hash_ionization_expect
 
     emission_token = "3Edp5YzJqWnXYWq"
     directory = LOCAL_DATA_PATH / Path("emission")
-    if not((directory / Path("hashlist.txt")).is_file()):
+    if not ((directory / Path("hashlist.txt")).is_file()):
         astro_plasma.core.download_database.fetch_hashlist_from_url(emission_token, directory / Path("hashlist.txt"))
     with open(directory / Path("hashlist.txt"), "r") as file:
         hash_list = [line.split("\n")[0] for line in file.readlines()]
@@ -54,9 +58,13 @@ def test_hash():
     emission_filename_list = astro_plasma.core.download_database.fetch_filelist_from_url(emission_token)
     emission_filename = os.path.basename(emission_filename_list[file_id])
     if not (Path(directory / emission_filename).is_file()):
-        astro_plasma.core.download_database.download_datafiles(files_link_token=emission_token, 
-                                                               download_location=directory, 
-                                                               specific_file_ids=[file_id,])
+        astro_plasma.core.download_database.download_datafiles(
+            files_link_token=emission_token,
+            download_location=directory,
+            specific_file_ids=[
+                file_id,
+            ],
+        )
     # check the hash of the datafile <filenumber>
     hash_emission_found = astro_plasma.core.utils.blake2bsum(LOCAL_DATA_PATH / Path("emission") / Path(emission_filename))
     assert hash_emission_found == hash_emission_expect
