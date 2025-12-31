@@ -43,6 +43,8 @@ TARGET_UPDATE_INTERVAL = float(os.getenv("TARGET_UPDATE_INTERVAL", "0.1"))
 BASE_URL = os.getenv("ASTROPLASMA_SERVER", "http://localhost:8000")
 PARALLEL_JOBS = int(os.getenv("PARALLEL_DOWNLOAD_JOBS", "4"))
 RETAIN_BARS = False
+IONIZATION_LINK_TOKEN = "EzYYrEgXdQscQJo"
+EMISSION_LINK_TOKEN = "3Edp5YzJqWnXYWq"
 
 
 class AtmElement(Enum):

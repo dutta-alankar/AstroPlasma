@@ -17,7 +17,7 @@ from typing import Union, Tuple, Optional, List
 from webdav4.client import Client
 
 # Local package imports
-from .utils import LOCAL_DATA_PATH, WEBDAV_MPCDF_URL, fetch_webdav, checksum, blake2bsum
+from .utils import LOCAL_DATA_PATH, WEBDAV_MPCDF_URL, IONIZATION_LINK_TOKEN, EMISSION_LINK_TOKEN, fetch_webdav, checksum, blake2bsum
 
 
 def download_from_server_small(
@@ -115,9 +115,9 @@ def download_datafiles(
         ]
     if specific_file_ids is not None:
         # This %06d might needs changing according to the specifics of the database
-        if "ionization" in caller_name:
+        if ("ionization" in caller_name) or (files_link_token == IONIZATION_LINK_TOKEN):
             names = list(map(lambda id_val: f"ionization.b_{id_val:06d}.h5", specific_file_ids))
-        elif "emission" in caller_name:
+        elif ("emission" in caller_name) or (files_link_token == EMISSION_LINK_TOKEN):
             names = list(map(lambda id_val: f"emission.b_{id_val:06d}.h5", specific_file_ids))
         else:
             print("Invalid call to `download_datafiles`:", end=" ")
@@ -166,7 +166,7 @@ def download_ionization_data(
     hashgen: bool = False,
     specific_file_ids: Optional[List[int]] = None,
 ) -> None:
-    ionization_files_link_token = "EzYYrEgXdQscQJo"
+    ionization_files_link_token = IONIZATION_LINK_TOKEN
     download_datafiles(ionization_files_link_token, LOCAL_DATA_PATH / "ionization", initialize, hashgen, specific_file_ids)
 
 
@@ -175,7 +175,7 @@ def download_emission_data(
     hashgen: bool = False,
     specific_file_ids: Optional[List[int]] = None,
 ) -> None:
-    emission_files_link_token = "3Edp5YzJqWnXYWq"
+    emission_files_link_token = EMISSION_LINK_TOKEN
     download_datafiles(emission_files_link_token, LOCAL_DATA_PATH / "emission", initialize, hashgen, specific_file_ids)
 
 
