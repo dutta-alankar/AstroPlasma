@@ -34,8 +34,10 @@ def test_hash():
     import os
 
     LOCAL_DATA_PATH = astro_plasma.core.utils.LOCAL_DATA_PATH
+    IONIZATION_LINK_TOKEN = astro_plasma.core.utils.IONIZATION_LINK_TOKEN
+    EMISSION_LINK_TOKEN = astro_plasma.core.utils.EMISSION_LINK_TOKEN
 
-    ionization_token = "EzYYrEgXdQscQJo"
+    ionization_token = IONIZATION_LINK_TOKEN
     directory = LOCAL_DATA_PATH / Path("ionization")
     if not ((directory / Path("hashlist.txt")).is_file()):
         astro_plasma.core.download_database.fetch_hashlist_from_url(ionization_token, directory / Path("hashlist.txt"))
@@ -55,7 +57,7 @@ def test_hash():
     hash_ionization_found = astro_plasma.core.utils.blake2bsum(LOCAL_DATA_PATH / Path("ionization") / Path(ionization_filename))
     assert hash_ionization_found == hash_ionization_expect
 
-    emission_token = "3Edp5YzJqWnXYWq"
+    emission_token = EMISSION_LINK_TOKEN
     directory = LOCAL_DATA_PATH / Path("emission")
     if not ((directory / Path("hashlist.txt")).is_file()):
         astro_plasma.core.download_database.fetch_hashlist_from_url(emission_token, directory / Path("hashlist.txt"))

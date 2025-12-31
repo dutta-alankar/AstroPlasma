@@ -96,7 +96,6 @@ def generate_hashes(directory: Union[str, Path], filenames: List[Union[str, Path
             f.write(hash_val + "\n" if (indx + 1) < len(hash_list) else hash_val)
 
 
-# should always be called from either `download_ionization_data` or `download_emission_data`
 def download_datafiles(
     files_link_token: str,
     download_location: Union[str, Path],
