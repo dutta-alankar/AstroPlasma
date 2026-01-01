@@ -41,7 +41,7 @@ class EmissionSpectrum(DataSift):
         """
         self._check_and_download = download_emission_data
         self.file_name_template = FILE_NAME_TEMPLATE
-        self.base_dir = base_dir
+        self.base_dir = Path(base_dir) if base_dir is not None else base_dir
 
     @property
     def base_dir(self):
