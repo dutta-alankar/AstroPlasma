@@ -23,7 +23,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install uv
-        uv pip install -r requirements/requirements-dev.txt
+        uv pip install --system -r requirements/requirements-dev.txt
     - name: Test AstroPlasma
       run: |
         export PYTHONPATH=${{ steps.current_directory.outputs.stdout }}
