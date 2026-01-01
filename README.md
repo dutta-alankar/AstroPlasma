@@ -304,6 +304,7 @@ plt.show()
 > **Note**: `AstroPlasma` assumes by default that the data is located at `<module_location>/data/<ionization/emission>`.
 The user can change this to something else using `Ionization.base_dir = "<new_ionization_data_location_dir>"` or `EmissionSpectrum.base_dir = "<new_emission_data_location_dir>"`, where these new directories must contain the valid `hdf5` data files.
 
+**Note**: We haven't made the server online yet. As a temporary measure, please download and use the data hosted [here](https://datashare.mpcdf.mpg.de/s/eiGXTmgM8z6rr9w)
 ```
 [https://datashare.mpcdf.mpg.de/s/eiGXTmgM8z6rr9w](https://datashare.mpcdf.mpg.de/s/eiGXTmgM8z6rr9w)
 ```
