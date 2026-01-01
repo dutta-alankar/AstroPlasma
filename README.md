@@ -306,7 +306,7 @@ The user can change this to something else using `Ionization.base_dir = "<new_io
 
 **Note**: We haven't made the server online yet. As a temporary measure, please download and use the data hosted [here](https://datashare.mpcdf.mpg.de/s/eiGXTmgM8z6rr9w)
 ```
-[https://datashare.mpcdf.mpg.de/s/eiGXTmgM8z6rr9w](https://datashare.mpcdf.mpg.de/s/eiGXTmgM8z6rr9w)
+https://datashare.mpcdf.mpg.de/s/eiGXTmgM8z6rr9w
 ```
 
 ### Downloading files on demand
