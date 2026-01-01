@@ -22,7 +22,6 @@ Running Cloudy models on the fly, especially when there are a lot of models to r
 <!--- Tests and style --->
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black) |
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/charliermarsh/ruff/main/assets/badge/v1.json)](https://github.com/charliermarsh/ruff) |
-[![poetry-badge](https://img.shields.io/badge/packaging-poetry-cyan.svg)](https://python-poetry.org/)
 
 [![pre-commit.ci status](https://results.pre-commit.ci/badge/github/dutta-alankar/AstroPlasma/main.svg)](https://results.pre-commit.ci/latest/github/dutta-alankar/AstroPlasma/main)
 
@@ -75,17 +74,6 @@ At any point later, in order to use AstroPlasma, just activate this virtual envi
 ```
 source venv/bin/activate
 ```
-
-#### Alternative setup using `poetry`
-Alternatively, one can use `poetry` to install and setup `AstroPlasma`
-> Install `poetry` following the installation instructions [here](https://python-poetry.org/docs/#installation).
-
-> Do the following depending on requirements:
-  - For user, `poetry install`
-  - For developer, `poetry install --with dev,test`
-  - For  running `Cloudy` scripts, `poetry install --with cloudy_run`. Note that `Python.h` from the `python3.10-dev` package must be available for installing `mpi4py` dependency required by the `Cloudy` scripts.
-> Later at any time activate the virtual environment using `poetry shell` from inside the repo.
-> As a one-time process, install `AstroPlasma` in this virtual environment using `python -m pip install --editable .`.
 
 ### Download the database
 Once `AstroPlasma` and its dependencies are set up, the simplest way to get the entire database locally is to run the following script in Python with the virtual environment activated. Before running the following script, the environment variable `export PARALLEL_DOWNLOAD_JOBS=8` needs to be set. Here, one can replace `8` with any number that sets how many files in the database will be downloaded from the web simultaneously.
@@ -316,12 +304,9 @@ plt.show()
 > **Note**: `AstroPlasma` assumes by default that the data is located at `<module_location>/data/<ionization/emission>`.
 The user can change this to something else using `Ionization.base_dir = "<new_ionization_data_location_dir>"` or `EmissionSpectrum.base_dir = "<new_emission_data_location_dir>"`, where these new directories must contain the valid `hdf5` data files.
 
-> **Note**: One can also use the `pypoetry` tool to install and create an `in-place` virtual environment for this repo.
-
-> **Note**: We haven't made the server online yet. As a temporary measure, please download and use the data hosted [here](https://indianinstituteofscience-my.sharepoint.com/:f:/g/personal/alankardutta_iisc_ac_in/EhdL9SYY45FOq7zjrWGD0NQBcy3pn6oTP2B9pGhxPwLnkQ?e=E956ug):
-
+**Note**: We haven't made the server online yet. As a temporary measure, please download and use the data hosted [here](https://datashare.mpcdf.mpg.de/s/eiGXTmgM8z6rr9w)
 ```
-https://indianinstituteofscience-my.sharepoint.com/:f:/g/personal/alankardutta_iisc_ac_in/EhdL9SYY45FOq7zjrWGD0NQBcy3pn6oTP2B9pGhxPwLnkQ?e=E956ug
+[https://datashare.mpcdf.mpg.de/s/eiGXTmgM8z6rr9w](https://datashare.mpcdf.mpg.de/s/eiGXTmgM8z6rr9w)
 ```
 
 ### Downloading files on demand
