@@ -43,7 +43,7 @@ def test_hash():
         astro_plasma.core.download_database.fetch_hashlist_from_url(ionization_token, directory / Path("hashlist.txt"))
     with open(directory / Path("hashlist.txt"), "r") as file:
         hash_list = [line.split("\n")[0] for line in file.readlines()]
-    file_id = int(np.random.randint(0, len(hash_list) - 1, 1)[0])
+    file_id = int(np.random.randint(0, len(hash_list), 1)[0])
     hash_ionization_expect = hash_list[file_id]
     ionization_filename_list = astro_plasma.core.download_database.fetch_filelist_from_url(ionization_token)
     ionization_filename = os.path.basename(ionization_filename_list[file_id])
@@ -91,7 +91,7 @@ def test_dimension():
     redshift = np.random.uniform(low=0.1, high=1.2)  # Cosmological redshift
     mode = "PIE"
 
-    element = np.random.randint(low=1, high=32)
+    element = np.random.randint(low=1, high=31)
     ion = np.random.randint(low=1, high=element + 1)
 
     frac = fIon(
