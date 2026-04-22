@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Protocol, Callable, Optional, Union, Tuple, List, Set
 import h5py
 import sys
+from .utils import should_check_or_download_data
 
 _warn = False
 
@@ -439,7 +440,8 @@ class DataSift(ABC):
 
         batch_ids = self._find_all_batches(nH, temperature, metallicity, redshift)
         # Download files on demand if absent locally
-        self._check_and_download(specific_file_ids=batch_ids)
+        if should_check_or_download_data():
+            self._check_and_download(specific_file_ids=batch_ids)
 
         # Load the data to memory from disk
         data = []

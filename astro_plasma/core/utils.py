@@ -45,11 +45,11 @@ PARALLEL_JOBS = int(os.getenv("PARALLEL_DOWNLOAD_JOBS", "4"))
 RETAIN_BARS = False
 IONIZATION_LINK_TOKEN = "EzYYrEgXdQscQJo"
 EMISSION_LINK_TOKEN = "3Edp5YzJqWnXYWq"
+CHECK_OR_DOWNLOAD_APLASMA_DATA = bool(int(os.getenv("CHECK_OR_DOWNLOAD_APLASMA_DATA", "1")))
 
 
 def should_check_or_download_data() -> bool:
     return bool(int(os.getenv("CHECK_OR_DOWNLOAD_APLASMA_DATA", "1")))
-
 
 class AtmElement(Enum):
     Hydrogen = ("H", 1)

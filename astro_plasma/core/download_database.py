@@ -17,7 +17,16 @@ from typing import Union, Tuple, Optional, List
 from webdav4.client import Client
 
 # Local package imports
-from .utils import LOCAL_DATA_PATH, WEBDAV_MPCDF_URL, IONIZATION_LINK_TOKEN, EMISSION_LINK_TOKEN, fetch_webdav, checksum, blake2bsum
+from .utils import (
+    LOCAL_DATA_PATH,
+    WEBDAV_MPCDF_URL,
+    IONIZATION_LINK_TOKEN,
+    EMISSION_LINK_TOKEN,
+    fetch_webdav,
+    checksum,
+    blake2bsum,
+    should_check_or_download_data,
+)
 
 
 def download_from_server_small(
@@ -104,6 +113,9 @@ def download_datafiles(
     specific_file_ids: Optional[List[int]] = None,
     force_online: bool = False,
 ) -> None:
+    if not should_check_or_download_data() and not hashgen:
+        return None
+
     # print("Debug: ", "Inside download datafiles! ", initialize)
     # set the following to True if you believe some files on disk got corrupted
     _always_hashcheck = False  # check hashes of files already downloaded
@@ -189,9 +201,10 @@ def hash_all() -> None:
 
 
 def initialize_data(data_type: str) -> None:
-    if data_type == "ionization":
-        download_ionization_data(initialize=True)
-    elif data_type == "emission":
-        download_emission_data(initialize=True)
-    else:
-        raise Exception("Invalid choice!\nAbort!")
+    if should_check_or_download_data():
+        if data_type == "ionization":
+            download_ionization_data(initialize=True)
+        elif data_type == "emission":
+            download_emission_data(initialize=True)
+        else:
+            raise Exception("Invalid choice!\nAbort!")
