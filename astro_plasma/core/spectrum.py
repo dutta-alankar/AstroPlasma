@@ -17,7 +17,7 @@ import numpy as np
 # Local package imports
 
 from .datasift import DataSift
-from .utils import LOCAL_DATA_PATH
+from .utils import LOCAL_DATA_PATH, should_check_or_download_data
 from .data_dir import set_base_dir
 from .download_database import download_emission_data
 
@@ -54,7 +54,8 @@ class EmissionSpectrum(DataSift):
     ):
         self._base_dir = set_base_dir(DEFAULT_BASE_DIR, base_dir)
 
-        self._check_and_download(initialize=True)
+        if should_check_or_download_data():
+            self._check_and_download(initialize=True)
         with h5py.File(self._base_dir / DOWNLOAD_IN_INIT[0], "r") as data:
             super().__init__(self, data)
             self._energy = np.array(data["output/energy"])

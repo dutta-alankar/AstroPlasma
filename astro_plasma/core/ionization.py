@@ -15,7 +15,7 @@ import numpy as np
 # Local package imports
 from .constants import mH, mp, X_solar, Y_solar, Z_solar, Xp, Yp, Zp
 from .datasift import DataSift
-from .utils import LOCAL_DATA_PATH, AtmElement, parse_atomic_ion_no
+from .utils import LOCAL_DATA_PATH, AtmElement, parse_atomic_ion_no, should_check_or_download_data
 from .data_dir import set_base_dir
 from .download_database import download_ionization_data
 
@@ -52,7 +52,8 @@ class Ionization(DataSift):
     ):
         self._base_dir = set_base_dir(DEFAULT_BASE_DIR, base_dir)
 
-        self._check_and_download(initialize=True)
+        if should_check_or_download_data():
+            self._check_and_download(initialize=True)
         with h5py.File(self._base_dir / DOWNLOAD_IN_INIT[0], "r") as data:
             super().__init__(self, data)
 
