@@ -36,13 +36,13 @@ class DataSift(ABC):
         None.
 
         """
-        self.nH_data = np.array(data["params/nH"])
-        self.T_data = np.array(data["params/temperature"])
-        self.Z_data = np.array(data["params/metallicity"])
-        self.red_data = np.array(data["params/redshift"])
+        self.nH_data = data["params/nH"][()]
+        self.T_data = data["params/temperature"][()]
+        self.Z_data = data["params/metallicity"][()]
+        self.red_data = data["params/redshift"][()]
 
-        self.batch_size = np.prod(np.array(data["header/batch_dim"]))
-        self.total_size = np.prod(np.array(data["header/total_size"]))
+        self.batch_size = np.prod(data["header/batch_dim"][()])
+        self.total_size = np.prod(data["header/total_size"][()])
         self._check_and_download = child_obj._check_and_download
 
     def _identify_batch(self: "DataSift", i: int, j: int, k: int, m: int) -> int:
@@ -492,7 +492,7 @@ class DataSift(ABC):
                         hdf = id_data["file"]
                         local_pos = self._get_counter(i, j, k, m) % self.batch_size - 1
                 try:
-                    value = np.array(hdf[interp_data])[local_pos, :]
+                    value = hdf[interp_data][local_pos, :]
                 except UnboundLocalError:
                     print("Error: HDF5 files not properly loaded/initialized! Code Aborted!")
                     sys.exit(1)
