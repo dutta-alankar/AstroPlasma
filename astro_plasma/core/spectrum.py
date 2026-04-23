@@ -12,7 +12,7 @@ import os
 
 # Third party imports
 import h5py
-import numpy as np
+from .compat import np
 
 # Local package imports
 
@@ -58,7 +58,7 @@ class EmissionSpectrum(DataSift):
             self._check_and_download(initialize=True)
         with h5py.File(self._base_dir / DOWNLOAD_IN_INIT[0], "r") as data:
             super().__init__(self, data)
-            self._energy = data["output/energy"][()]
+            self._energy = np.asarray(data["output/energy"][()])
 
     def _get_file_path(self: "EmissionSpectrum", batch_id: int) -> Path:
         return self.base_dir / self.file_name_template.format(batch_id)

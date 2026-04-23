@@ -28,3 +28,40 @@ jobs:
       run: |
         export PYTHONPATH=${{ steps.current_directory.outputs.stdout }}
         pytest
+
+  # ---------------------------------------------------------------------------
+  # GPU job — runs only on a self-hosted runner that has a CUDA-capable GPU.
+  # Register such a runner in your repo under Settings → Actions → Runners and
+  # tag it with the label "gpu".  The job is skipped automatically on GitHub's
+  # hosted runners because no runner with that label will match.
+  # ---------------------------------------------------------------------------
+  python-env-cuda:
+    runs-on: [self-hosted, gpu]
+    # Require the CPU job to pass first so we don't waste GPU time on broken code
+    needs: python-env
+    container:
+      image: nvidia/cuda:12.3.2-runtime-ubuntu22.04
+      options: --gpus all
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python 3.11
+      run: |
+        apt-get update -y && apt-get install -y python3.11 python3.11-venv python3-pip
+        python3.11 -m pip install --upgrade pip
+    - name: Get present working directory
+      id: current_directory
+      run: echo "stdout=$(pwd)" >> "$GITHUB_OUTPUT"
+    - name: Install AstroPlasma dependencies + CuPy
+      run: |
+        pip install uv
+        uv pip install --system -r requirements/requirements-dev.txt
+        # Install CuPy wheel matching the CUDA runtime in the container image
+        uv pip install --system cupy-cuda12x
+    - name: Test AstroPlasma on GPU (RUN_ON_CUDA=1)
+      env:
+        RUN_ON_CUDA: '1'
+      run: |
+        export PYTHONPATH=${{ steps.current_directory.outputs.stdout }}
+        # Run only the CUDA-specific tests; the full suite is already covered by
+        # the CPU job above.
+        pytest tests/test_cuda.py -v

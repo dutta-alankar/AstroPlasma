@@ -331,11 +331,63 @@ setenv ASTROPLASMA_SERVER http://web-server-url-here
 
 All the environment variables you can configure (either in env file or via export)
 
-|Environment Variable|Description|
-|:----:|:----:|
-|ASTROPLASMA_SERVER|Base URL of the web server to enable file downloading. To get this information, you can open issue [here](https://github.com/dutta-alankar/AstroPlasma/issues/new?title=[REQUEST]%20Access%20to%20the%20pre-computed%20dataset&body=Hi,%20I%20want%20to%20access%20the%20webserver%20to%20download%20the%20dataset%0A%0AName:%20John%20Doe%0AEmail:%20john.doe@example.com)|
-|PARALLEL_DOWNLOAD_JOBS|Parallel jobs spawned to download the files. The default value is 3. You can increase or decrease based on the download bandwidth of your network connection.|
-|CHUNK_SIZE|Download the chunk size of the dataset files. The default is `4096`. If your download is aborted because of the unstable network, try decreasing this value.|
+|Environment Variable|Default|Description|
+|:----:|:----:|:----|
+|ASTROPLASMA_SERVER|—|Base URL of the web server to enable file downloading. To get this information, you can open issue [here](https://github.com/dutta-alankar/AstroPlasma/issues/new?title=[REQUEST]%20Access%20to%20the%20pre-computed%20dataset&body=Hi,%20I%20want%20to%20access%20the%20webserver%20to%20download%20the%20dataset%0A%0AName:%20John%20Doe%0AEmail:%20john.doe@example.com)|
+|PARALLEL_DOWNLOAD_JOBS|`4`|Parallel jobs spawned to download the files. You can increase or decrease based on the download bandwidth of your network connection.|
+|CHUNK_SIZE|`4096`|Download chunk size of the dataset files (KiB). If your download is aborted because of an unstable network, try decreasing this value.|
+|`CHECK_OR_DOWNLOAD_APLASMA_DATA`|`1`|Controls whether `AstroPlasma` checks for, and attempts to download, missing data files at import time and during interpolation. Set to `0` to disable all network access and file-existence checks — useful when running on an offline HPC node where all data is already present locally. Example: `export CHECK_OR_DOWNLOAD_APLASMA_DATA=0`|
+|`RUN_ON_CUDA`|`0`|When set to `1`, `AstroPlasma` will use [CuPy](https://cupy.dev/) instead of NumPy to perform array operations on a CUDA-capable GPU. This can significantly accelerate large batch interpolation workloads. If `cupy` is not installed or no CUDA device is detected at import time, the code automatically falls back to NumPy and emits a `RuntimeWarning`. Example: `export RUN_ON_CUDA=1`|
+
+#### `CHECK_OR_DOWNLOAD_APLASMA_DATA` — Disable automatic data downloads
+
+By default, `AstroPlasma` will try to download any missing data files from the internet the first time it is imported and whenever an interpolation needs a file that is not yet present locally.  If you are working on a machine that has the full database already available (e.g. an HPC node without outbound internet) you can suppress this behaviour entirely:
+
+```sh
+# bash / sh
+export CHECK_OR_DOWNLOAD_APLASMA_DATA=0
+
+# csh
+setenv CHECK_OR_DOWNLOAD_APLASMA_DATA 0
+```
+
+Or place it in the project-root `.env` file:
+```sh
+CHECK_OR_DOWNLOAD_APLASMA_DATA=0
+```
+
+With this set to `0`:
+- **No network requests** are made at import time or during interpolation.
+- If a required data file is absent, a `FileNotFoundError` will be raised rather than triggering a download.
+- All other `AstroPlasma` functionality remains unchanged.
+
+#### `RUN_ON_CUDA` — GPU-accelerated interpolation with CuPy
+
+`AstroPlasma` can offload its array computations to a CUDA GPU via [CuPy](https://cupy.dev/).  Install CuPy for your CUDA version (see the [CuPy installation guide](https://docs.cupy.dev/en/stable/install.html)) and then set:
+
+```sh
+# bash / sh
+export RUN_ON_CUDA=1
+
+# csh
+setenv RUN_ON_CUDA 1
+```
+
+Or place it in the project-root `.env` file:
+```sh
+RUN_ON_CUDA=1
+```
+
+When `RUN_ON_CUDA=1`:
+- All internal array operations in `datasift.py`, `ionization.py`, and `spectrum.py` are dispatched to **CuPy** (instead of NumPy).
+- HDF5 data is transferred to the GPU at load time via `cupy.asarray()`.
+- Return values are **CuPy arrays**. Call `.get()` on them (or wrap with `numpy.asarray()`) to convert back to NumPy if needed.
+
+If `cupy` is not installed or no CUDA-capable device is found at import time, `AstroPlasma` **automatically falls back to NumPy** and emits a `RuntimeWarning`:
+
+```
+RuntimeWarning: RUN_ON_CUDA=1 but CuPy is unavailable or no CUDA device detected (...). Falling back to numpy.
+```
 
 ## Note to contributors
 

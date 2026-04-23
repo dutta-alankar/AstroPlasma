@@ -10,7 +10,7 @@ import os
 
 # Third party imports
 import h5py
-import numpy as np
+from .compat import np
 
 # Local package imports
 from .constants import mH, mp, X_solar, Y_solar, Z_solar, Xp, Yp, Zp
