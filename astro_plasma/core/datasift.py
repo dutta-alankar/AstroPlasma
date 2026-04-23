@@ -7,6 +7,7 @@ Created on Tue Apr  4 21:30:23 2023
 
 from abc import ABC, abstractmethod
 from itertools import product
+import math
 from pathlib import Path
 from typing import Protocol, Callable, Optional, Union, Tuple, List, Set
 import h5py
@@ -41,8 +42,8 @@ class DataSift(ABC):
         self.Z_data = np.asarray(data["params/metallicity"][()])
         self.red_data = np.asarray(data["params/redshift"][()])
 
-        self.batch_size = np.prod(np.asarray(data["header/batch_dim"][()]))
-        self.total_size = np.prod(np.asarray(data["header/total_size"][()]))
+        self.batch_size = int(np.prod(np.asarray(data["header/batch_dim"][()])))
+        self.total_size = int(np.prod(np.asarray(data["header/total_size"][()])))
         self._check_and_download = child_obj._check_and_download
 
     def _identify_batch(self: "DataSift", i: int, j: int, k: int, m: int) -> int:
@@ -187,7 +188,7 @@ class DataSift(ABC):
                         print("Argument: ", argument_collection[indx])
                         raise ValueError("Check needed from user: Invalid input arguments which are not in compliance with each other! Code Aborted!")
             argument_collection[indx] = argument_collection[indx].flatten()
-        if np.sum(_dummy_array) == 4 or np.sum(_array_argument) == 0:
+        if sum(_dummy_array) == 4 or sum(_array_argument) == 0:
             _input_shape = (1,)  # default only one datapoint is requested
         if _input_shape is None:
             raise ValueError("Check needed from user: Invalid input arguments which are not in compliance with each other! Code Aborted!")
@@ -224,12 +225,12 @@ class DataSift(ABC):
         _array_argument, _dummy_array = self._array_argument, self._dummy_array
         _input_shape, argument_collection = self._input_shape, self.argument_collection
 
-        if np.sum(_dummy_array) == 4 or np.sum(_array_argument) == 0:
+        if sum(_dummy_array) == 4 or sum(_array_argument) == 0:
             _argument = [argument[0] for argument in argument_collection]
             return self._find_all_batches_single(*_argument)
 
         _all_batches_all_data: Set[int] = set()
-        for indx in range(np.prod(_input_shape)):
+        for indx in range(math.prod(_input_shape)):
             _argument = []
             for arg_pos, _dummy in enumerate(_dummy_array):
                 if _dummy or not (_array_argument[arg_pos]):
@@ -287,41 +288,33 @@ class DataSift(ABC):
     ) -> Tuple[List[int], List[int], List[int], List[int]]:
         # positions in each data just around the requested value for any variable
         i_vals, j_vals, k_vals, m_vals = None, None, None, None
-        if np.sum(nH == self.nH_data) == 1:
+        if int(np.sum(nH == self.nH_data)) == 1:
             eq = int(np.where(nH == self.nH_data)[0][0])
             i_vals = [eq - 1, eq, eq + 1]
         else:
-            i_vals = [
-                np.sum(nH > self.nH_data) - 1,
-                np.sum(nH > self.nH_data),
-            ]
+            _s = int(np.sum(nH > self.nH_data))
+            i_vals = [_s - 1, _s]
 
-        if np.sum(temperature == self.T_data) == 1:
+        if int(np.sum(temperature == self.T_data)) == 1:
             eq = int(np.where(temperature == self.T_data)[0][0])
             j_vals = [eq - 1, eq, eq + 1]
         else:
-            j_vals = [
-                np.sum(temperature > self.T_data) - 1,
-                np.sum(temperature > self.T_data),
-            ]
+            _s = int(np.sum(temperature > self.T_data))
+            j_vals = [_s - 1, _s]
 
-        if np.sum(metallicity == self.Z_data) == 1:
+        if int(np.sum(metallicity == self.Z_data)) == 1:
             eq = int(np.where(metallicity == self.Z_data)[0][0])
             k_vals = [eq - 1, eq, eq + 1]
         else:
-            k_vals = [
-                np.sum(metallicity > self.Z_data) - 1,
-                np.sum(metallicity > self.Z_data),
-            ]
+            _s = int(np.sum(metallicity > self.Z_data))
+            k_vals = [_s - 1, _s]
 
-        if np.sum(redshift == self.red_data) == 1:
+        if int(np.sum(redshift == self.red_data)) == 1:
             eq = int(np.where(redshift == self.red_data)[0][0])
             m_vals = [eq - 1, eq, eq + 1]
         else:
-            m_vals = [
-                np.sum(redshift > self.red_data) - 1,
-                np.sum(redshift > self.red_data),
-            ]
+            _s = int(np.sum(redshift > self.red_data))
+            m_vals = [_s - 1, _s]
 
         return (i_vals, j_vals, k_vals, m_vals)
 
@@ -455,7 +448,7 @@ class DataSift(ABC):
             i_vals, j_vals, k_vals, m_vals = self._identify_pos_in_each_dim(*_argument)
         """
         interp_value = []
-        for indx in range(np.prod(_input_shape)):
+        for indx in range(math.prod(_input_shape)):
             _argument = []
             for arg_pos, _dummy in enumerate(_dummy_array):
                 if _dummy or not (_array_argument[arg_pos]):
@@ -515,7 +508,7 @@ class DataSift(ABC):
 
         for id_data in data:
             id_data["file"].close()
-        if np.sum(_dummy_array) == 4 or np.sum(_array_argument) == 0:
+        if sum(_dummy_array) == 4 or sum(_array_argument) == 0:
             return (interp_value[0], False)
         else:
             _tmp = np.array(interp_value).reshape((*_input_shape, *np.array(interp_value[0]).shape))
