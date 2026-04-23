@@ -8,7 +8,7 @@ Running Cloudy models on the fly, especially when there are a lot of models to r
 
 [![GitHub](https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white)](https://github.com/dutta-alankar/AstroPlasma)
 
-[![PyPI](https://img.shields.io/badge/requires-Python%20≥%203.11-blue?logo=python&logoColor=white)](https://www.python.org/downloads/release/python-310/)
+[![PyPI](https://img.shields.io/badge/requires-Python%20≥%203.11-blue?logo=python&logoColor=white)](https://www.python.org/downloads/release/python-311/)
 
 ![](https://github.com/dutta-alankar/AstroPlasma/actions/workflows/AstroPlasma.yml/badge.svg?branch=main)
 
