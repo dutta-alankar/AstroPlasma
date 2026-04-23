@@ -48,31 +48,42 @@ Change to the code directory
 cd AstroPlasma
 ```
 
+#### Install `uv`
+`AstroPlasma` uses [`uv`](https://docs.astral.sh/uv/) for environment and package management. Install it with:
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+Or via pip:
+```bash
+pip install uv
+```
+
 #### Prepare Python virtual environment
-The instructions here can be followed to set up a virtual environment (named `.venv` here) and install AstroPlasma and its dependencies:
-```
-python -m venv .venv
+Create a virtual environment (named `.venv`) and install AstroPlasma in editable mode:
+```bash
+uv venv .venv
 source .venv/bin/activate
-python -m pip install --editable .
+uv pip install --editable .
 ```
+
 #### Install the dependencies:
 For user,
 ```bash
-python -m pip install -r requirements/requirements.txt
+uv pip install -r requirements/requirements.txt
 ```
 For developer,
 ```bash
-python -m pip install -r requirements/requirements-dev.txt
+uv pip install -r requirements/requirements-dev.txt
 ```
 For running `Cloudy` scripts,
 ```bash
-python -m pip install -r requirements/requirements-all.txt
+uv pip install -r requirements/requirements-all.txt
 ```
 > **Note**:  `Python.h` from the `python3.11-dev` package must be available for installing `mpi4py` dependency required by the `Cloudy` scripts.
 
 At any point later, in order to use AstroPlasma, just activate this virtual environment:
-```
-source venv/bin/activate
+```bash
+source .venv/bin/activate
 ```
 
 ### Download the database
