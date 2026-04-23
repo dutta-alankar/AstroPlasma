@@ -10,7 +10,7 @@ packages = [{include = "astro_plasma"}]
 
 # Main install requirements
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.11"
 numpy = "^2.4.4"
 h5py = "^3.7.0"
 urllib3 = "^1.26.15"

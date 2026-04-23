@@ -51,6 +51,7 @@ CHECK_OR_DOWNLOAD_APLASMA_DATA = bool(int(os.getenv("CHECK_OR_DOWNLOAD_APLASMA_D
 def should_check_or_download_data() -> bool:
     return bool(int(os.getenv("CHECK_OR_DOWNLOAD_APLASMA_DATA", "1")))
 
+
 class AtmElement(Enum):
     Hydrogen = ("H", 1)
     Helium = ("He", 2)
