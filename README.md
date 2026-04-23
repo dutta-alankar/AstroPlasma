@@ -8,7 +8,7 @@ Running Cloudy models on the fly, especially when there are a lot of models to r
 
 [![GitHub](https://img.shields.io/badge/github-%23121011.svg?style=for-the-badge&logo=github&logoColor=white)](https://github.com/dutta-alankar/AstroPlasma)
 
-[![PyPI](https://img.shields.io/badge/requires-Python%20≥%203.10-blue?logo=python&logoColor=white)](https://www.python.org/downloads/release/python-310/)
+[![PyPI](https://img.shields.io/badge/requires-Python%20≥%203.11-blue?logo=python&logoColor=white)](https://www.python.org/downloads/release/python-310/)
 
 ![](https://github.com/dutta-alankar/AstroPlasma/actions/workflows/AstroPlasma.yml/badge.svg?branch=main)
 
@@ -35,7 +35,7 @@ Running Cloudy models on the fly, especially when there are a lot of models to r
 </picture>
 
 ## Install
-This is just a one-time process. `AstroPlasma` has been tested with `Python 3.10`
+This is just a one-time process. `AstroPlasma` has been tested with `Python 3.11`
 
 ### Get the AstroPlasma code:
 ```
@@ -68,7 +68,7 @@ For running `Cloudy` scripts,
 ```bash
 python -m pip install -r requirements/requirements-all.txt
 ```
-> **Note**:  `Python.h` from the `python3.10-dev` package must be available for installing `mpi4py` dependency required by the `Cloudy` scripts.
+> **Note**:  `Python.h` from the `python3.11-dev` package must be available for installing `mpi4py` dependency required by the `Cloudy` scripts.
 
 At any point later, in order to use AstroPlasma, just activate this virtual environment:
 ```
