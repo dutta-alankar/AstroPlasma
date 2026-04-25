@@ -12,7 +12,8 @@ import os
 
 # Third party imports
 import h5py
-import numpy as np
+import numpy as _numpy  # always CPU numpy — used for small arrays loaded at init time
+from .compat import np
 
 # Local package imports
 
@@ -58,7 +59,9 @@ class EmissionSpectrum(DataSift):
             self._check_and_download(initialize=True)
         with h5py.File(self._base_dir / DOWNLOAD_IN_INIT[0], "r") as data:
             super().__init__(self, data)
-            self._energy = data["output/energy"][()]
+            # Use plain NumPy so _energy is not pinned to GPU 0 at module-load
+            # time (before any rank selects its device via cp.cuda.Device().use()).
+            self._energy = _numpy.asarray(data["output/energy"][()])
 
     def _get_file_path(self: "EmissionSpectrum", batch_id: int) -> Path:
         return self.base_dir / self.file_name_template.format(batch_id)
@@ -111,7 +114,15 @@ class EmissionSpectrum(DataSift):
         """
 
         self.spectrum = np.zeros((self._energy.shape[0], 2))
-        self.spectrum[:, 0] = self._energy
+        self.spectrum[:, 0] = np.asarray(self._energy)  # promote to current device
+
+        # Coerce array inputs to the correct backend type (CuPy when RUN_ON_CUDA=1).
+        # Plain NumPy arrays arriving from MPI broadcast would cause isinstance
+        # checks in _process_arguments_flags to misidentify them as scalars.
+        if hasattr(nH, "__len__") or hasattr(nH, "shape"):
+            nH = np.asarray(nH)
+        if hasattr(temperature, "__len__") or hasattr(temperature, "shape"):
+            temperature = np.asarray(temperature)
 
         _is_multiple = self._determine_multiple(nH, temperature, metallicity, redshift, mode)
 

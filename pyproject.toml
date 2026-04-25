@@ -1,53 +1,47 @@
-# Base poetry configuration
-[tool.poetry]
+[project]
 name = "astro-plasma"
 version = "0.1.0"
 description = "A Cloudy database with functions to quickly interpolate physical state of astrophysical plasma without detailed Plasma modelling."
-authors = ["Gurkirat Singh <tbhaxor@gmail.com>", "Alankar <alankardutta@iisc.ac.in>"]
-license = "MIT"
+authors = [
+    {name = "Gurkirat Singh", email = "tbhaxor@gmail.com"},
+    {name = "Alankar Dutta", email = "alankardutta@iisc.ac.in"},
+]
+license = {text = "MIT"}
 readme = "README.md"
-packages = [{include = "astro_plasma"}]
+requires-python = ">=3.11"
+dependencies = [
+    "numpy>=2.4.4",
+    "h5py>=3.7.0",
+    "urllib3>=1.26.15",
+    "python-dotenv==1.0.0",
+    "scipy==1.17.1",
+    "rich>=14.2.0",
+    "colorama>=0.4.6",
+    "webdav4>=0.10.0",
+]
 
-# Main install requirements
-[tool.poetry.dependencies]
-python = "^3.11"
-numpy = "^2.4.4"
-h5py = "^3.7.0"
-urllib3 = "^1.26.15"
-python-dotenv = "1.0.0"
-scipy = "1.17.1"
-pytest = "^7.4.3"
-rich = "^14.2.0"
-poetry-plugin-export = "^1.6.0"
-colorama = "^0.4.6"
-webdav4 = "^0.10.0"
-
-# Packages required for development
-[tool.poetry.group.dev]
-optional = true
-
-[tool.poetry.group.dev.dependencies]
-black = "^23.1.0"
-ruff = "^0.0.261"
-mypy = "^1.2.0"
-types-requests = "^2.28.11.17"
-pre-commit = "^3.3.1"
-
-[tool.poetry.group.test]
-optional = true
-
-[tool.poetry.group.test.dependencies]
-matplotlib = "^3.7.1"
-
-[tool.poetry.group.cloudy_run]
-optional = true
-
-[tool.poetry.group.cloudy_run.dependencies]
-mpi4py = "^3.1.4"
+[project.optional-dependencies]
+dev = [
+    "black>=23.1.0",
+    "ruff>=0.0.261",
+    "mypy>=1.2.0",
+    "types-requests>=2.28.11.17",
+    "pre-commit>=3.3.1",
+    "pytest>=7.4.3",
+]
+test = [
+    "matplotlib>=3.7.1",
+]
+cloudy = [
+    "mpi4py>=3.1.4",
+]
 
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["astro_plasma"]
 
 # Ruff configurations
 [tool.ruff]

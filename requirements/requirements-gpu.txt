@@ -8,3 +8,4 @@ scipy==1.17.1
 rich>=14.2.0
 colorama>=0.4.6
 webdav4>=0.10.0
+cupy>=14.0.1; extra == "gpu"
