@@ -11,7 +11,7 @@ import math
 from pathlib import Path
 from typing import Protocol, Callable, Optional, Union, Tuple, List, Set
 import h5py
-import sys
+import numpy as _numpy  # always CPU numpy — used for small lookup tables in __init__
 from .compat import np
 from .utils import should_check_or_download_data
 
@@ -37,13 +37,18 @@ class DataSift(ABC):
         None.
 
         """
-        self.nH_data = np.asarray(data["params/nH"][()])
-        self.T_data = np.asarray(data["params/temperature"][()])
-        self.Z_data = np.asarray(data["params/metallicity"][()])
-        self.red_data = np.asarray(data["params/redshift"][()])
+        # Use plain NumPy for these small parameter lookup arrays.  They are
+        # loaded once at __init__ time (before any MPI rank sets its CuPy device)
+        # and are only used for scalar index searches — not GPU vectorisation.
+        # Storing them as CuPy arrays would pin them to GPU 0 and trigger
+        # cross-device peer-access warnings on every other rank.
+        self.nH_data = _numpy.asarray(data["params/nH"][()])
+        self.T_data = _numpy.asarray(data["params/temperature"][()])
+        self.Z_data = _numpy.asarray(data["params/metallicity"][()])
+        self.red_data = _numpy.asarray(data["params/redshift"][()])
 
-        self.batch_size = int(np.prod(np.asarray(data["header/batch_dim"][()])))
-        self.total_size = int(np.prod(np.asarray(data["header/total_size"][()])))
+        self.batch_size = int(_numpy.prod(_numpy.asarray(data["header/batch_dim"][()])))
+        self.total_size = int(_numpy.prod(_numpy.asarray(data["header/total_size"][()])))
         self._check_and_download = child_obj._check_and_download
 
     def _identify_batch(self: "DataSift", i: int, j: int, k: int, m: int) -> int:
@@ -286,34 +291,47 @@ class DataSift(ABC):
         metallicity: Union[int, float],
         redshift: Union[int, float],
     ) -> Tuple[List[int], List[int], List[int], List[int]]:
+        # This function receives scalar values extracted element-by-element from
+        # the argument arrays.  When RUN_ON_CUDA=1 those scalars are CuPy 0-d
+        # arrays and self.*_data are plain NumPy arrays (by design in __init__).
+        # CuPy refuses mixed-type comparisons (cupy_0d == numpy_array), so we
+        # force everything to plain Python floats before the comparisons.
+        nH = float(nH)
+        temperature = float(temperature)
+        metallicity = float(metallicity)
+        redshift = float(redshift)
         # positions in each data just around the requested value for any variable
+        # NOTE: self.*_data are plain NumPy arrays and the scalars are Python
+        # floats, so all comparisons/reductions here must use _numpy (plain
+        # NumPy) rather than np (which equals CuPy when RUN_ON_CUDA=1).
+        # CuPy's where/sum routines explicitly reject non-CuPy array inputs.
         i_vals, j_vals, k_vals, m_vals = None, None, None, None
-        if int(np.sum(nH == self.nH_data)) == 1:
-            eq = int(np.where(nH == self.nH_data)[0][0])
+        if int(_numpy.sum(nH == self.nH_data)) == 1:
+            eq = int(_numpy.where(nH == self.nH_data)[0][0])
             i_vals = [eq - 1, eq, eq + 1]
         else:
-            _s = int(np.sum(nH > self.nH_data))
+            _s = int(_numpy.sum(nH > self.nH_data))
             i_vals = [_s - 1, _s]
 
-        if int(np.sum(temperature == self.T_data)) == 1:
-            eq = int(np.where(temperature == self.T_data)[0][0])
+        if int(_numpy.sum(temperature == self.T_data)) == 1:
+            eq = int(_numpy.where(temperature == self.T_data)[0][0])
             j_vals = [eq - 1, eq, eq + 1]
         else:
-            _s = int(np.sum(temperature > self.T_data))
+            _s = int(_numpy.sum(temperature > self.T_data))
             j_vals = [_s - 1, _s]
 
-        if int(np.sum(metallicity == self.Z_data)) == 1:
-            eq = int(np.where(metallicity == self.Z_data)[0][0])
+        if int(_numpy.sum(metallicity == self.Z_data)) == 1:
+            eq = int(_numpy.where(metallicity == self.Z_data)[0][0])
             k_vals = [eq - 1, eq, eq + 1]
         else:
-            _s = int(np.sum(metallicity > self.Z_data))
+            _s = int(_numpy.sum(metallicity > self.Z_data))
             k_vals = [_s - 1, _s]
 
-        if int(np.sum(redshift == self.red_data)) == 1:
-            eq = int(np.where(redshift == self.red_data)[0][0])
+        if int(_numpy.sum(redshift == self.red_data)) == 1:
+            eq = int(_numpy.where(redshift == self.red_data)[0][0])
             m_vals = [eq - 1, eq, eq + 1]
         else:
-            _s = int(np.sum(redshift > self.red_data))
+            _s = int(_numpy.sum(redshift > self.red_data))
             m_vals = [_s - 1, _s]
 
         return (i_vals, j_vals, k_vals, m_vals)
@@ -425,8 +443,10 @@ class DataSift(ABC):
         self._array_argument, self._dummy_array = self._process_arguments_flags(nH, temperature, metallicity, redshift)
         self._input_shape, self.argument_collection = self._prepare_arguments(nH, temperature, metallicity, redshift, self._array_argument, self._dummy_array)
 
-        _array_argument, _dummy_array = self._array_argument, self._dummy_array
-        _input_shape, argument_collection = self._input_shape, self.argument_collection
+        _array_argument = self._array_argument
+        _dummy_array = self._dummy_array
+        _input_shape = self._input_shape
+        argument_collection = self.argument_collection
 
         if not (mode == "PIE" or mode == "CIE"):
             raise ValueError("Problem! Invalid mode: %s." % mode)
@@ -436,82 +456,156 @@ class DataSift(ABC):
         if should_check_or_download_data():
             self._check_and_download(specific_file_ids=batch_ids)
 
-        # Load the data to memory from disk
-        data = []
-        for batch_id in batch_ids:
-            filename = self._get_file_path(batch_id)
-            hdf = h5py.File(filename, "r")
-            data.append({"batch_id": batch_id, "file": hdf})
-        """
-        if np.sum(_dummy_array) == 4 or np.sum(_array_argument) == 0:
-            _argument = [argument[0] for argument in argument_collection]
-            i_vals, j_vals, k_vals, m_vals = self._identify_pos_in_each_dim(*_argument)
-        """
-        interp_value = []
-        for indx in range(math.prod(_input_shape)):
-            _argument = []
-            for arg_pos, _dummy in enumerate(_dummy_array):
-                if _dummy or not (_array_argument[arg_pos]):
-                    _argument.append(argument_collection[arg_pos][0])
-                else:
-                    _argument.append(argument_collection[arg_pos][indx])
-            nH_this, temperature_this, metallicity_this, redshift_this = _argument
-            i_vals, j_vals, k_vals, m_vals = self._identify_pos_in_each_dim(nH_this, temperature_this, metallicity_this, redshift_this)
+        # ── Grid dimensions (plain CPU numpy) ────────────────────────────────
+        N_nH = self.nH_data.shape[0]
+        N_T = self.T_data.shape[0]
+        N_Z = self.Z_data.shape[0]
+        N_red = self.red_data.shape[0]
 
-            """
-            The trick is to take the floor value for interpolation only if it is the
-            most frequent value in all the nearest neighbor. If not, then simply ignore
-            the contribution of the floor value in interpolation.
-            """
-            epsilon = 1e-15
-            _all_values = []
-            _all_weights = []
-            for i, j, k, m in product(i_vals, j_vals, k_vals, m_vals):
-                i, j, k, m = self._transform_edges(i, j, k, m)
-                # nearest neighbour interpolation
-                d_i = np.abs(scaling_func(self.nH_data[i]) - scaling_func(float(_argument[0])))
-                d_j = np.abs(scaling_func(self.T_data[j]) - scaling_func(float(_argument[1])))
-                d_k = np.abs(scaling_func(self.Z_data[k]) - scaling_func(float(_argument[2])))
-                d_m = np.abs(scaling_func(self.red_data[m]) - scaling_func(float(_argument[3])))
-                distL2 = np.sqrt(d_i**2 + d_j**2 + d_k**2 + d_m**2)
-                if distL2 <= 0.0:
-                    distL2 = epsilon
-                _all_weights.append(1 / distL2)
+        # ── Determine N_ions from a sample batch file ─────────────────────────
+        _sample_id = next(iter(sorted(batch_ids)))
+        with h5py.File(self._get_file_path(_sample_id), "r") as _h:
+            N_ions = _h[interp_data].shape[1]
 
-                batch_id = self._identify_batch(i, j, k, m)
+        # ── Load only the needed HDF5 batches into a compact CPU array ────────
+        #
+        # self.total_size = N_nH * N_T * N_Z * N_red can be ~1M rows × 465 ions
+        # = 3.9 GB — far too large to allocate in full.  We only ever need the
+        # few batches that cover the corners of the requested cells.
+        #
+        # Strategy:
+        #   1. Build a compact table_cpu containing only rows from batch_ids.
+        #   2. Build a remap_cpu[global_counter] → compact_row index array
+        #      (size = total_size; for ionization: 1M × int64 = 8 MB — fine).
+        #   3. Use remap[flat_idx] to index into the compact table on GPU.
+        #
+        # Original per-cell access:  local_pos = counter % batch_size - 1
+        #   counter % batch_size == k  →  local_pos = k - 1  (raw row k-1)
+        #   k == 0                     →  local_pos = -1      (raw row bs-1)
+        # Equivalently: compact_row = roll(raw, +1) so compact[k] = raw[(k-1)%bs]
+        #
+        total_grid = N_nH * N_T * N_Z * N_red  # == self.total_size
+        remap_cpu = _numpy.full(total_grid, -1, dtype=_numpy.int64)
+        compact_rows = 0
+        for batch_id in sorted(batch_ids):
+            start = batch_id * self.batch_size
+            bs = min(self.batch_size, total_grid - start)
+            if bs <= 0:
+                continue
+            remap_cpu[start : start + bs] = _numpy.arange(compact_rows, compact_rows + bs, dtype=_numpy.int64)
+            compact_rows += bs
 
-                for id_data in data:
-                    if id_data["batch_id"] == batch_id:
-                        hdf = id_data["file"]
-                        local_pos = self._get_counter(i, j, k, m) % self.batch_size - 1
-                try:
-                    value = np.asarray(hdf[interp_data][local_pos, :])
-                except UnboundLocalError:
-                    print("Error: HDF5 files not properly loaded/initialized! Code Aborted!")
-                    sys.exit(1)
+        table_cpu = _numpy.zeros((compact_rows, N_ions), dtype=_numpy.float64)
+        for batch_id in sorted(batch_ids):
+            start = batch_id * self.batch_size
+            bs = min(self.batch_size, total_grid - start)
+            if bs <= 0:
+                continue
+            compact_start = int(remap_cpu[start])
+            with h5py.File(self._get_file_path(batch_id), "r") as hdf:
+                raw = _numpy.asarray(hdf[interp_data][:bs], dtype=_numpy.float64)
+            table_cpu[compact_start : compact_start + bs] = _numpy.roll(raw, shift=1, axis=0)
 
-                if cut[0] is not None:
-                    value = np.piecewise(value, [value <= cut[0]], [cut[0], lambda x: x])
-                if cut[1] is not None:
-                    value = np.piecewise(value, [value >= cut[1]], [cut[1], lambda x: x])
-                _all_values.append(value)
+        # Apply value bounds on CPU before GPU transfer
+        if cut[0] is not None:
+            _numpy.clip(table_cpu, a_min=cut[0], a_max=None, out=table_cpu)
+        if cut[1] is not None:
+            _numpy.clip(table_cpu, a_min=None, a_max=cut[1], out=table_cpu)
 
-            all_values = np.array(_all_values)
-            all_weights = np.array(_all_weights)
-            # Filter the outliers (deviation from mean across column is large)
-            all_values[(np.abs(all_values - np.mean(all_values, axis=0)) > 2.0 * np.std(all_values, axis=0))] = 0.0
+        # ── Transfer compact table + remap to GPU (no-op when RUN_ON_CUDA=0) ──
+        remap = np.asarray(remap_cpu)  # (total_grid,) int64 index map
+        table = np.asarray(table_cpu)  # (compact_rows, N_ions)
+        nH_grid = np.asarray(self.nH_data)  # (N_nH,)
+        T_grid = np.asarray(self.T_data)  # (N_T,)
+        Z_grid = np.asarray(self.Z_data)  # (N_Z,)
+        red_grid = np.asarray(self.red_data)  # (N_red,)
 
-            # _median_value = np.median(_all_values, axis=0)
-            interp_value.append(all_weights.T @ all_values / np.sum(all_weights))
-            # if (len(interp_value.shape)==2):
-            #     interp_value = interp_value[0]
+        # ── Build flat (N_cells,) input vectors on GPU ────────────────────────
+        N_cells = math.prod(_input_shape)
 
-        for id_data in data:
-            id_data["file"].close()
+        def _expand(coll, is_arr, is_dummy):
+            # argument_collection entries are already flattened (N_cells,) arrays
+            # when is_arr=True and is_dummy=False; otherwise length-1.
+            if is_arr and not is_dummy:
+                return coll
+            return np.full((N_cells,), float(coll[0]))
+
+        nH_v = _expand(argument_collection[0], _array_argument[0], _dummy_array[0])
+        T_v = _expand(argument_collection[1], _array_argument[1], _dummy_array[1])
+        Z_v = _expand(argument_collection[2], _array_argument[2], _dummy_array[2])
+        red_v = _expand(argument_collection[3], _array_argument[3], _dummy_array[3])
+
+        # ── Apply scaling function to grids and query values ──────────────────
+        sc_nH_g = scaling_func(nH_grid)  # (N_nH,)
+        sc_T_g = scaling_func(T_grid)  # (N_T,)
+        sc_Z_g = scaling_func(Z_grid)  # (N_Z,)
+        sc_red_g = scaling_func(red_grid)  # (N_red,)
+
+        sc_nH_v = scaling_func(nH_v)  # (N_cells,)
+        sc_T_v = scaling_func(T_v)
+        sc_Z_v = scaling_func(Z_v)
+        sc_red_v = scaling_func(red_v)
+
+        # ── Floor-index via searchsorted (vectorised over all N_cells) ─────────
+        # searchsorted(a, v, side='right') - 1  →  last grid index with a[i] <= v
+        i_f = np.searchsorted(sc_nH_g, sc_nH_v, side="right") - 1
+        j_f = np.searchsorted(sc_T_g, sc_T_v, side="right") - 1
+        k_f = np.searchsorted(sc_Z_g, sc_Z_v, side="right") - 1
+        m_f = np.searchsorted(sc_red_g, sc_red_v, side="right") - 1
+
+        i_f = np.clip(i_f, 0, N_nH - 2).astype(np.int64)
+        j_f = np.clip(j_f, 0, N_T - 2).astype(np.int64)
+        k_f = np.clip(k_f, 0, N_Z - 2).astype(np.int64)
+        m_f = np.clip(m_f, 0, N_red - 2).astype(np.int64)
+
+        # ── Vectorised IDW over 2^4 = 16 corners, all N_cells simultaneously ──
+        stride_T = N_nH
+        stride_Z = N_nH * N_T
+        stride_red = N_nH * N_T * N_Z
+        epsilon = 1e-15
+
+        corner_vals_list = []  # each: (N_cells, N_ions)
+        corner_weights_list = []  # each: (N_cells,)
+
+        for di, dj, dk, dm in product(range(2), range(2), range(2), range(2)):
+            ic = np.clip(i_f + di, 0, N_nH - 1)  # (N_cells,)
+            jc = np.clip(j_f + dj, 0, N_T - 1)
+            kc = np.clip(k_f + dk, 0, N_Z - 1)
+            mc = np.clip(m_f + dm, 0, N_red - 1)
+
+            # Flat table index for each cell's corner → remap to compact table
+            flat_idx = mc * stride_red + kc * stride_Z + jc * stride_T + ic  # (N_cells,)
+            corner_vals_list.append(table[remap[flat_idx]])  # GPU gather → (N_cells, N_ions)
+
+            # L2 distance in scaled parameter space
+            d_i = np.abs(sc_nH_g[ic] - sc_nH_v)  # (N_cells,)
+            d_j = np.abs(sc_T_g[jc] - sc_T_v)
+            d_k = np.abs(sc_Z_g[kc] - sc_Z_v)
+            d_m = np.abs(sc_red_g[mc] - sc_red_v)
+
+            dist = np.sqrt(d_i**2 + d_j**2 + d_k**2 + d_m**2)
+            dist = np.where(dist == 0.0, epsilon, dist)
+            corner_weights_list.append(1.0 / dist)  # (N_cells,)
+
+        all_values = np.stack(corner_vals_list, axis=0)  # (16, N_cells, N_ions)
+        all_weights = np.stack(corner_weights_list, axis=0)  # (16, N_cells)
+
+        # Outlier filter: zero out corners whose value deviates > 2σ from mean
+        mean_v = np.mean(all_values, axis=0)  # (N_cells, N_ions)
+        std_v = np.std(all_values, axis=0)
+        outlier = np.abs(all_values - mean_v[None]) > 2.0 * std_v[None]  # (16, N_cells, N_ions)
+        all_values = np.where(outlier, 0.0, all_values)
+
+        # Weighted sum over the 16 corners
+        numer = np.sum(all_weights[:, :, None] * all_values, axis=0)  # (N_cells, N_ions)
+        denom = np.sum(all_weights, axis=0)  # (N_cells,)
+        result = numer / denom[:, None]  # (N_cells, N_ions)
+
+        # ── Return ────────────────────────────────────────────────────────────
         if sum(_dummy_array) == 4 or sum(_array_argument) == 0:
-            return (interp_value[0], False)
+            return (result[0], False)
         else:
-            _tmp = np.array(interp_value).reshape((*_input_shape, *np.array(interp_value[0]).shape))
+            _tmp = result.reshape((*_input_shape, N_ions))
             return (_tmp, True)
 
     def _determine_multiple(
