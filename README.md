@@ -69,8 +69,7 @@ Now install AstroPlasma using
 uv pip install --editable .
 ```
 If you want to enable the optional gpu support use
-```
-bash
+```bash
 uv pip install --editable .[gpu]
 ```
 
