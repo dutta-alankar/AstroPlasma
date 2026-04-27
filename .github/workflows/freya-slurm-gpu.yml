@@ -37,6 +37,25 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
+    - name: Prepare virtual environment (CUDA + test deps)
+      run: |
+        set -euo pipefail
+        module purge
+        module load cuda/12.8 gcc/12 openmpi/4.1
+
+        if ! command -v uv >/dev/null 2>&1; then
+          echo "error: uv is not available on this runner PATH" >&2
+          exit 1
+        fi
+
+        PYTHON_BIN="$(command -v python3 || command -v python)"
+        "${PYTHON_BIN}" -m venv .venv
+
+        uv pip install --python .venv/bin/python -r requirements/requirements-dev.txt
+        uv pip install --python .venv/bin/python cupy-cuda12x
+
+        .venv/bin/python -c "import cupy as cp; print('cupy', cp.__version__)"
+
     - name: Ensure submit script is executable
       run: chmod +x .github/scripts/submit_freya_gpu_test.sh
 

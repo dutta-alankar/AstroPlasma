@@ -32,7 +32,22 @@ module load cuda/12.8 gcc/12 openmpi/4.1
 export LD_LIBRARY_PATH="/mpcdf/soft/SLE_15/packages/skylake/openmpi/gcc_12-12.1.0/4.1.8/lib:${LD_LIBRARY_PATH:-}"
 
 cd "${REPO_ROOT}"
+
+if [[ ! -f .venv/bin/activate ]]; then
+  echo "error: .venv is missing in ${REPO_ROOT}. Ensure workflow step 'Prepare virtual environment' ran." >&2
+  exit 1
+fi
+
 source .venv/bin/activate
+
+if [[ -x .venv/bin/uv ]]; then
+  UV_BIN=.venv/bin/uv
+elif command -v uv >/dev/null 2>&1; then
+  UV_BIN="$(command -v uv)"
+else
+  echo "error: uv is unavailable. Ensure workflow prep step installs dependencies with uv." >&2
+  exit 1
+fi
 
 PY311=/u/adutt/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu
 MPICC=/mpcdf/soft/SLE_15/packages/skylake/openmpi/gcc_12-12.1.0/4.1.8/bin/mpicc
@@ -40,7 +55,7 @@ MPICC=/mpcdf/soft/SLE_15/packages/skylake/openmpi/gcc_12-12.1.0/4.1.8/bin/mpicc
 MPICC="\${MPICC}" \
 CPPFLAGS="-I\${PY311}/include/python3.11" \
 CFLAGS="-I\${PY311}/include/python3.11" \
-uv pip install --python "${REPO_ROOT}/.venv/bin/python" \
+"\${UV_BIN}" pip install --python "${REPO_ROOT}/.venv/bin/python" \
   --force-reinstall --no-cache-dir --no-binary=mpi4py mpi4py
 
 export RUN_ON_CUDA=1
