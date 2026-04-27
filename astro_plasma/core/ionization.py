@@ -10,7 +10,7 @@ import os
 
 # Third party imports
 import h5py
-import numpy as np
+from .compat import np
 
 # Local package imports
 from .constants import mH, mp, X_solar, Y_solar, Z_solar, Xp, Yp, Zp
@@ -288,6 +288,20 @@ class Ionization(DataSift):
             abn = np.array([float(element.split()[-1]) for element in file.readlines()[2:32]])  # Till Zinc
         # element = 1: H, 2: He, 3: Li, ... 30: Zn
         # ion = 1 : neutral, 2: +, 3: ++ .... (element+1): (++++... element times)
+
+        # Coerce array inputs to the correct backend type (CuPy when RUN_ON_CUDA=1).
+        # Plain NumPy arrays can arrive from MPI broadcast on non-root ranks; without
+        # this conversion isinstance(x, cp.ndarray) returns False (breaking the
+        # scalar-vs-array detection logic) and downstream ufuncs/interpolation can fail
+        # because CuPy cannot operate on mixed cupy/numpy inputs.
+        if hasattr(nH, "__len__") or hasattr(nH, "shape"):
+            nH = np.asarray(nH)
+        if hasattr(temperature, "__len__") or hasattr(temperature, "shape"):
+            temperature = np.asarray(temperature)
+        if hasattr(metallicity, "__len__") or hasattr(metallicity, "shape"):
+            metallicity = np.asarray(metallicity)
+        if hasattr(redshift, "__len__") or hasattr(redshift, "shape"):
+            redshift = np.asarray(redshift)
 
         _is_multiple = self._determine_multiple(nH, temperature, metallicity, redshift, mode)
         fracIon = np.power(10.0, self._interpolate_ion_frac_all(nH, temperature, metallicity, redshift, mode))
