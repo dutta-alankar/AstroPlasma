@@ -229,9 +229,14 @@ class DataSift(ABC):
 
         _array_argument, _dummy_array = self._array_argument, self._dummy_array
         _input_shape, argument_collection = self._input_shape, self.argument_collection
+        # Convert to plain NumPy once.  When RUN_ON_CUDA=1, argument_collection
+        # contains CuPy arrays; indexing them element-by-element would cause one
+        # device→host sync per cell.  A single _numpy.asarray bulk-copies each
+        # vector to the host so the per-element loop below stays on CPU.
+        argument_collection_cpu = [_numpy.asarray(a) for a in argument_collection]
 
         if sum(_dummy_array) == 4 or sum(_array_argument) == 0:
-            _argument = [argument[0] for argument in argument_collection]
+            _argument = [argument[0] for argument in argument_collection_cpu]
             return self._find_all_batches_single(*_argument)
 
         _all_batches_all_data: Set[int] = set()
@@ -239,9 +244,9 @@ class DataSift(ABC):
             _argument = []
             for arg_pos, _dummy in enumerate(_dummy_array):
                 if _dummy or not (_array_argument[arg_pos]):
-                    _argument.append(argument_collection[arg_pos][0])
+                    _argument.append(argument_collection_cpu[arg_pos][0])
                 else:
-                    _argument.append(argument_collection[arg_pos][indx])
+                    _argument.append(argument_collection_cpu[arg_pos][indx])
             nH_val, temp_val, met_val, red_val = _argument
             _all_batches_all_data = _all_batches_all_data.union(self._find_all_batches_single(nH_val, temp_val, met_val, red_val))
         if _all_batches_all_data == set():

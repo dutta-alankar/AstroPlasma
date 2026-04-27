@@ -413,6 +413,24 @@ If `cupy` is not installed or no CUDA-capable device is found at import time, `A
 RuntimeWarning: RUN_ON_CUDA=1 but CuPy is unavailable or no CUDA device detected (...). Falling back to numpy.
 ```
 
+> **Developer note — `scaling_func` must be backend-compatible**
+>
+> The internal `DataSift._interpolate` method accepts a `scaling_func` callable that is applied to both the grid arrays (`nH_grid`, `T_grid`, …) and the per-cell query vectors.  When `RUN_ON_CUDA=1` those arrays are **CuPy arrays**, so any `scaling_func` you supply must accept CuPy inputs.
+>
+> **Wrong** (raises `TypeError` on GPU):
+> ```python
+> import numpy as np
+> result = Ionization._interpolate(..., scaling_func=np.log10)   # NumPy ufunc rejects CuPy arrays
+> ```
+>
+> **Correct** — use the backend-agnostic shim from `compat`:
+> ```python
+> from astro_plasma.core.compat import np   # equals cupy when RUN_ON_CUDA=1, numpy otherwise
+> result = Ionization._interpolate(..., scaling_func=np.log10)
+> ```
+>
+> The default (`scaling_func=lambda x: x`) is always safe because it never calls a NumPy ufunc.  Only custom callables that call NumPy directly need to be updated.
+
 ## Note to contributors
 
 If you wish to contribute, fork this repo and open pull requests to the `dev` branch of this repo. Once everything gets tested and is found working, the new code will be merged with the `master` branch.
