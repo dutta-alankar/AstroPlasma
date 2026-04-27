@@ -34,11 +34,11 @@ jobs:
     runs-on: [self-hosted, linux, freya]
     timeout-minutes: 90
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-      - name: Ensure submit script is executable
-        run: chmod +x .github/scripts/submit_freya_gpu_test.sh
+    - name: Ensure submit script is executable
+      run: chmod +x .github/scripts/submit_freya_gpu_test.sh
 
-      - name: Submit and monitor Slurm GPU job
-        run: .github/scripts/submit_freya_gpu_test.sh
+    - name: Submit and monitor Slurm GPU job
+      run: .github/scripts/submit_freya_gpu_test.sh
