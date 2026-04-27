@@ -11,6 +11,7 @@ that:
 """
 
 import importlib
+from pathlib import Path
 import pytest
 import numpy as np
 
@@ -36,16 +37,57 @@ cuda_available = pytest.mark.skipif(
 )
 
 
-def _reload_compat_with_cuda(monkeypatch):
-    """Reload astro_plasma.core.compat with RUN_ON_CUDA forced to 1."""
-    monkeypatch.setenv("RUN_ON_CUDA", "1")
+def _use_cuda_backend(monkeypatch):
+    """Switch the entire astro_plasma module stack to the CuPy backend.
+
+    The problem with only reloading ``compat`` is that ``datasift``,
+    ``ionization``, and ``spectrum`` each do ``from .compat import np`` at
+    *their* import time, binding a local name ``np`` in their own module
+    namespace.  Reloading ``compat`` afterwards does not update those already-
+    bound names, so the interpolation code keeps using NumPy.
+
+    This helper:
+    1. Sets ``RUN_ON_CUDA=True`` in the environment and in ``utils``.
+    2. Calls ``monkeypatch.setattr`` on every module-level ``np`` *before*
+       reloading so that pytest's teardown writes the original (NumPy-backed)
+       values back automatically after the test.
+    3. Reloads the modules in dependency order (compat → datasift → ionization
+       → spectrum → astro_plasma) so that every ``from .compat import np``
+       re-executes and picks up CuPy.
+    4. Returns the reloaded ``astro_plasma`` module so tests can obtain fresh
+       ``Ionization`` / ``EmissionSpectrum`` instances that are backed by CuPy.
+    """
+    import astro_plasma as astro_plasma_mod
     import astro_plasma.core.utils as utils_mod
     import astro_plasma.core.compat as compat_mod
+    import astro_plasma.core.datasift as datasift_mod
+    import astro_plasma.core.ionization as ionization_mod
+    import astro_plasma.core.spectrum as spectrum_mod
 
-    # Patch the already-imported constant so the shim re-reads it
+    # Step 1: flip the runtime flag (monkeypatch restores env + attr after test)
+    monkeypatch.setenv("RUN_ON_CUDA", "1")
     monkeypatch.setattr(utils_mod, "RUN_ON_CUDA", True)
-    importlib.reload(compat_mod)
-    return compat_mod
+
+    # Step 2: register restorers *before* reloading.
+    # monkeypatch.setattr saves the current value as the "old" value it will
+    # write back on teardown.  The reload below then overwrites these names
+    # with CuPy-backed objects; teardown puts the NumPy-backed originals back.
+    monkeypatch.setattr(compat_mod, "np", compat_mod.np)
+    monkeypatch.setattr(datasift_mod, "np", datasift_mod.np)
+    monkeypatch.setattr(ionization_mod, "np", ionization_mod.np)
+    monkeypatch.setattr(spectrum_mod, "np", spectrum_mod.np)
+    monkeypatch.setattr(astro_plasma_mod, "Ionization", astro_plasma_mod.Ionization)
+    monkeypatch.setattr(astro_plasma_mod, "EmissionSpectrum", astro_plasma_mod.EmissionSpectrum)
+
+    # Step 3: reload in dependency order.
+    # Each ``from .compat import np`` re-runs and binds to CuPy.
+    importlib.reload(compat_mod)  # compat.np = cupy
+    importlib.reload(datasift_mod)  # datasift.np = cupy
+    importlib.reload(ionization_mod)  # ionization.np = cupy
+    importlib.reload(spectrum_mod)  # spectrum.np = cupy
+    importlib.reload(astro_plasma_mod)  # fresh Ionization / EmissionSpectrum with cupy
+
+    return astro_plasma_mod
 
 
 # ---------------------------------------------------------------------------
@@ -56,40 +98,32 @@ def _reload_compat_with_cuda(monkeypatch):
 @cuda_available
 def test_compat_selects_cupy(monkeypatch):
     """When RUN_ON_CUDA=1 and a device is present, compat.np must be cupy."""
-    compat = _reload_compat_with_cuda(monkeypatch)
-    assert compat.np.__name__ == "cupy", f"Expected compat.np to be 'cupy', got '{compat.np.__name__}'"
+    _use_cuda_backend(monkeypatch)
+    import astro_plasma.core.compat as compat_mod
+
+    assert compat_mod.np.__name__ == "cupy", f"Expected compat.np to be 'cupy', got '{compat_mod.np.__name__}'"
 
 
 @cuda_available
 def test_ion_frac_cuda_matches_numpy(monkeypatch):
     """Ionization fraction on GPU matches the NumPy reference value."""
     import cupy as cp
-    from astro_plasma import Ionization
     from astro_plasma.core.utils import AtmElement
 
-    _reload_compat_with_cuda(monkeypatch)
-
-    fIon = Ionization.interpolate_ion_frac
-
-    nH = 1.2e-04
-    temperature = 4.2e05
-    metallicity = 0.99
-    redshift = 0.001
-    mode = "CIE"
-    element = AtmElement.Oxygen
-    ion = 6
+    # Switch backend first, then obtain a fresh CuPy-backed Ionization instance
+    astro_plasma_mod = _use_cuda_backend(monkeypatch)
+    fIon = astro_plasma_mod.Ionization.interpolate_ion_frac
 
     fOVI = fIon(
-        nH=nH,
-        temperature=temperature,
-        metallicity=metallicity,
-        redshift=redshift,
-        element=element,
-        ion=ion,
-        mode=mode,
+        nH=1.2e-04,
+        temperature=4.2e05,
+        metallicity=0.99,
+        redshift=0.001,
+        element=AtmElement.Oxygen,
+        ion=6,
+        mode="CIE",
     )
 
-    # Result should be a CuPy scalar/array
     assert isinstance(fOVI, cp.ndarray), "Expected a cupy.ndarray result"
 
     fOVI_numpy = float(cp.asnumpy(cp.power(10.0, fOVI)))
@@ -101,24 +135,16 @@ def test_ion_frac_cuda_matches_numpy(monkeypatch):
 def test_num_dens_cuda_matches_numpy(monkeypatch):
     """Electron number density on GPU matches the NumPy reference value."""
     import cupy as cp
-    from astro_plasma import Ionization
 
-    _reload_compat_with_cuda(monkeypatch)
-
-    num_dens = Ionization.interpolate_num_dens
-
-    nH = 1.2e-04
-    temperature = 4.2e05
-    metallicity = 0.99
-    redshift = 0.001
-    mode = "CIE"
+    astro_plasma_mod = _use_cuda_backend(monkeypatch)
+    num_dens = astro_plasma_mod.Ionization.interpolate_num_dens
 
     ne = num_dens(
-        nH=nH,
-        temperature=temperature,
-        metallicity=metallicity,
-        redshift=redshift,
-        mode=mode,
+        nH=1.2e-04,
+        temperature=4.2e05,
+        metallicity=0.99,
+        redshift=0.001,
+        mode="CIE",
         part_type="electron",
     )
 
@@ -131,34 +157,28 @@ def test_num_dens_cuda_matches_numpy(monkeypatch):
 def test_spectrum_cuda_matches_numpy(monkeypatch):
     """Emission spectrum on GPU matches the NumPy reference spectrum."""
     import cupy as cp
-    from astro_plasma import EmissionSpectrum
 
-    _reload_compat_with_cuda(monkeypatch)
-
-    gen_spectrum = EmissionSpectrum.interpolate_spectrum
-
-    nH = 1.2e-04
-    temperature = 4.2e05
-    metallicity = 0.99
-    redshift = 0.001
-    mode = "CIE"
+    astro_plasma_mod = _use_cuda_backend(monkeypatch)
+    gen_spectrum = astro_plasma_mod.EmissionSpectrum.interpolate_spectrum
 
     spectrum = gen_spectrum(
-        nH=nH,
-        temperature=temperature,
-        metallicity=metallicity,
-        redshift=redshift,
-        mode=mode,
+        nH=1.2e-04,
+        temperature=4.2e05,
+        metallicity=0.99,
+        redshift=0.001,
+        mode="CIE",
     )
 
     spectrum_numpy = cp.asnumpy(cp.asarray(spectrum))
-    spectrum_expected = np.loadtxt("tests/sample_spectrum.txt")
+    # Resolve relative to the test file so the test passes regardless of cwd
+    spectrum_expected = np.loadtxt(Path(__file__).parent / "sample_spectrum.txt")
     assert np.sum(np.abs(spectrum_numpy - spectrum_expected)) < 1.0e-06, "CuPy spectrum deviates from expected reference spectrum"
 
 
 def test_compat_falls_back_to_numpy_without_cuda(monkeypatch):
     """When RUN_ON_CUDA=1 but no device/cupy is available, compat uses numpy."""
     import warnings
+    import sys
 
     monkeypatch.setenv("RUN_ON_CUDA", "1")
     import astro_plasma.core.utils as utils_mod
@@ -167,8 +187,6 @@ def test_compat_falls_back_to_numpy_without_cuda(monkeypatch):
     monkeypatch.setattr(utils_mod, "RUN_ON_CUDA", True)
 
     # Simulate cupy being absent by hiding it from imports
-    import sys
-
     original_cupy = sys.modules.pop("cupy", None)
     try:
         with warnings.catch_warnings(record=True) as caught:

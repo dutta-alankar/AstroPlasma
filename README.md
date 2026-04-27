@@ -63,13 +63,25 @@ Create a virtual environment (named `.venv`) and install AstroPlasma in editable
 ```bash
 uv venv .venv
 source .venv/bin/activate
+```
+Now install AstroPlasma using
+```bash
 uv pip install --editable .
+```
+If you want to enable the optional gpu support use
+```
+bash
+uv pip install --editable .[gpu]
 ```
 
 #### Install the dependencies:
 For user,
 ```bash
 uv pip install -r requirements/requirements.txt
+```
+For user with GPU,
+```bash
+uv pip install -r requirements/requirements-gpu.txt
 ```
 For developer,
 ```bash
@@ -346,7 +358,8 @@ All the environment variables you can configure (either in env file or via expor
 |:----:|:----:|:----|
 |ASTROPLASMA_SERVER|—|Base URL of the web server to enable file downloading. To get this information, you can open issue [here](https://github.com/dutta-alankar/AstroPlasma/issues/new?title=[REQUEST]%20Access%20to%20the%20pre-computed%20dataset&body=Hi,%20I%20want%20to%20access%20the%20webserver%20to%20download%20the%20dataset%0A%0AName:%20John%20Doe%0AEmail:%20john.doe@example.com)|
 |PARALLEL_DOWNLOAD_JOBS|`4`|Parallel jobs spawned to download the files. You can increase or decrease based on the download bandwidth of your network connection.|
-|CHUNK_SIZE|`4096`|Download chunk size of the dataset files (KiB). If your download is aborted because of an unstable network, try decreasing this value.|
+|`CHUNK_SIZE_MIN`|`128`|Minimum download chunk size (KiB). The adaptive downloader will not shrink the chunk below this value even on a slow connection.|
+|`CHUNK_SIZE_MAX`|`8192`|Maximum download chunk size (KiB). The adaptive downloader will not grow the chunk above this value. If your download is aborted because of an unstable network, try decreasing this value.|
 |`CHECK_OR_DOWNLOAD_APLASMA_DATA`|`1`|Controls whether `AstroPlasma` checks for, and attempts to download, missing data files at import time and during interpolation. Set to `0` to disable all network access and file-existence checks — useful when running on an offline HPC node where all data is already present locally. Example: `export CHECK_OR_DOWNLOAD_APLASMA_DATA=0`|
 |`RUN_ON_CUDA`|`0`|When set to `1`, `AstroPlasma` will use [CuPy](https://cupy.dev/) instead of NumPy to perform array operations on a CUDA-capable GPU. This can significantly accelerate large batch interpolation workloads. If `cupy` is not installed or no CUDA device is detected at import time, the code automatically falls back to NumPy and emits a `RuntimeWarning`. Example: `export RUN_ON_CUDA=1`|
 
