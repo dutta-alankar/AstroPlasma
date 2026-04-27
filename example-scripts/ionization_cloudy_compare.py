@@ -12,9 +12,16 @@ import matplotlib.pyplot as plt
 import numpy as np
 import time
 from scipy import interpolate
+import os
+from pathlib import Path
+
+# Set env-vars before any AstroPlasma import so the module sees them at load time
+os.environ.setdefault("CHECK_OR_DOWNLOAD_APLASMA_DATA", "0")
+os.environ.setdefault("RUN_ON_CUDA", "0")
+
 from astro_plasma import Ionization
 
-_parallel = True
+_parallel = False
 
 if _parallel:
     from mpi4py import MPI
@@ -30,6 +37,8 @@ else:
     t_start = time.time()
     rank = 0
     size = 1
+
+SCRIPT_DIR = Path(__file__).resolve().parent
 
 element = 8
 
@@ -98,7 +107,7 @@ matplotlib.rcParams["axes.axisbelow"] = True
 if rank == 0:
     # Cloudy data
     frac = np.loadtxt(
-        "ion-frac-Oxygen.txt",
+        SCRIPT_DIR / "ion-frac-Oxygen.txt",
         skiprows=1,
         converters={i + 1: lambda x: -30 if x == b"--" else x for i in range(element + 1)},
     )
@@ -126,10 +135,11 @@ if rank == 0:
     ax.yaxis.set_ticks_position("both")
     ax.set_ylim(ymin=1e-10, ymax=1.3)
     ax.set_xlim(xmin=4e4)
-    plt.savefig("ionization-test.png", transparent=True)
     if _parallel:
         t_stop = MPI.Wtime()
     else:
         t_stop = time.time()
     print("Elapsed: ", (t_stop - t_start))
+    plt.tight_layout()
+    plt.savefig(SCRIPT_DIR / "ionization_cloudy_compare.png", transparent=True, bbox_inches="tight")
     plt.show()
