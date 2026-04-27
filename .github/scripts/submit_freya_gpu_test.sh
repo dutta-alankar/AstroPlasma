@@ -37,9 +37,9 @@ source .venv/bin/activate
 PY311=/u/adutt/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu
 MPICC=/mpcdf/soft/SLE_15/packages/skylake/openmpi/gcc_12-12.1.0/4.1.8/bin/mpicc
 
-MPICC="${MPICC}" \
-CPPFLAGS="-I${PY311}/include/python3.11" \
-CFLAGS="-I${PY311}/include/python3.11" \
+MPICC="\${MPICC}" \
+CPPFLAGS="-I\${PY311}/include/python3.11" \
+CFLAGS="-I\${PY311}/include/python3.11" \
 uv pip install --python "${REPO_ROOT}/.venv/bin/python" \
   --force-reinstall --no-cache-dir --no-binary=mpi4py mpi4py
 
