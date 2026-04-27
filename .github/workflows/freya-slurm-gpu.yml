@@ -16,17 +16,17 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch' || github.event.pull_request.draft == false
     steps:
-      - name: Manual approval
-        uses: trstringer/manual-approval@v1
-        with:
-          secret: ${{ github.token }}
-          approvers: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.approvers || github.repository_owner }}
-          minimum-approvals: 1
-          issue-title: "Approve Freya Slurm GPU test"
-          issue-body: |
-            Approve this run to submit a GPU test job to Freya Slurm.
-            Ref: ${{ github.ref }}
-            SHA: ${{ github.sha }}
+    - name: Manual approval
+      uses: trstringer/manual-approval@v1
+      with:
+        secret: ${{ github.token }}
+        approvers: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.approvers || github.repository_owner }}
+        minimum-approvals: 1
+        issue-title: Approve Freya Slurm GPU test
+        issue-body: |
+          Approve this run to submit a GPU test job to Freya Slurm.
+          Ref: ${{ github.ref }}
+          SHA: ${{ github.sha }}
 
   freya-gpu-slurm-test:
     name: Submit Slurm GPU Test
