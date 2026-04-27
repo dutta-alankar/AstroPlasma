@@ -38,7 +38,7 @@ jobs:
     timeout-minutes: 90
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
     - name: Prepare virtual environment (CUDA + test deps)
       run: |
