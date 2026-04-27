@@ -46,17 +46,21 @@ jobs:
     - uses: actions/checkout@v3
     - name: Set up Python 3.11
       run: |
-        apt-get update -y && apt-get install -y python3.11 python3.11-venv python3-pip
+        apt-get update -y
+        apt-get install -y software-properties-common
+        add-apt-repository -y ppa:deadsnakes/ppa
+        apt-get update -y
+        apt-get install -y python3.11 python3.11-venv python3.11-distutils
+        python3.11 -m ensurepip --upgrade
         python3.11 -m pip install --upgrade pip
     - name: Get present working directory
       id: current_directory
       run: echo "stdout=$(pwd)" >> "$GITHUB_OUTPUT"
     - name: Install AstroPlasma dependencies + CuPy
       run: |
-        pip install uv
-        uv pip install --system -r requirements/requirements-dev.txt
+        python3.11 -m pip install -r requirements/requirements-dev.txt
         # Install CuPy wheel matching the CUDA runtime in the container image
-        uv pip install --system cupy-cuda12x
+        python3.11 -m pip install cupy-cuda12x
     - name: Test AstroPlasma on GPU (RUN_ON_CUDA=1)
       env:
         RUN_ON_CUDA: '1'

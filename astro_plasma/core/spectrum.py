@@ -123,6 +123,10 @@ class EmissionSpectrum(DataSift):
             nH = np.asarray(nH)
         if hasattr(temperature, "__len__") or hasattr(temperature, "shape"):
             temperature = np.asarray(temperature)
+        if hasattr(metallicity, "__len__") or hasattr(metallicity, "shape"):
+            metallicity = np.asarray(metallicity)
+        if hasattr(redshift, "__len__") or hasattr(redshift, "shape"):
+            redshift = np.asarray(redshift)
 
         _is_multiple = self._determine_multiple(nH, temperature, metallicity, redshift, mode)
 

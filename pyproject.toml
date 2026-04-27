@@ -35,6 +35,9 @@ test = [
 cloudy = [
     "mpi4py>=3.1.4",
 ]
+gpu = [
+    "cupy>=13.0.0",
+]
 
 [build-system]
 requires = ["hatchling"]

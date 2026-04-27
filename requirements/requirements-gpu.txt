@@ -1,5 +1,5 @@
 # Runtime dependencies for AstroPlasma
-# Install with: uv pip install -r requirements/requirements.txt
+# Install with: uv pip install -r requirements/requirements-gpu.txt
 numpy>=2.4.4
 h5py>=3.7.0
 urllib3>=1.26.15
