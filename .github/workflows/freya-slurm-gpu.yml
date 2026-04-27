@@ -6,7 +6,7 @@ on:
       approvers:
         description: Comma-separated GitHub usernames allowed to approve this run
         required: false
-        default: adutt
+        default: dutta-alankar
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
 
@@ -20,7 +20,7 @@ jobs:
         uses: trstringer/manual-approval@v1
         with:
           secret: ${{ github.token }}
-          approvers: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.approvers || 'adutt' }}
+          approvers: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.approvers || github.repository_owner }}
           minimum-approvals: 1
           issue-title: "Approve Freya Slurm GPU test"
           issue-body: |
