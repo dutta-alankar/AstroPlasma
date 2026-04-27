@@ -16,17 +16,17 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch' || github.event.pull_request.draft == false
     steps:
-      - name: Manual approval
-        uses: trstringer/manual-approval@v1
-        with:
-          secret: ${{ github.token }}
-          approvers: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.approvers || 'adutt' }}
-          minimum-approvals: 1
-          issue-title: "Approve Freya Slurm GPU test"
-          issue-body: |
-            Approve this run to submit a GPU test job to Freya Slurm.
-            Ref: ${{ github.ref }}
-            SHA: ${{ github.sha }}
+    - name: Manual approval
+      uses: trstringer/manual-approval@v1
+      with:
+        secret: ${{ github.token }}
+        approvers: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.approvers || 'adutt' }}
+        minimum-approvals: 1
+        issue-title: Approve Freya Slurm GPU test
+        issue-body: |
+          Approve this run to submit a GPU test job to Freya Slurm.
+          Ref: ${{ github.ref }}
+          SHA: ${{ github.sha }}
 
   freya-gpu-slurm-test:
     name: Submit Slurm GPU Test
@@ -34,11 +34,11 @@ jobs:
     runs-on: [self-hosted, linux, freya]
     timeout-minutes: 90
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-      - name: Ensure submit script is executable
-        run: chmod +x .github/scripts/submit_freya_gpu_test.sh
+    - name: Ensure submit script is executable
+      run: chmod +x .github/scripts/submit_freya_gpu_test.sh
 
-      - name: Submit and monitor Slurm GPU job
-        run: .github/scripts/submit_freya_gpu_test.sh
+    - name: Submit and monitor Slurm GPU job
+      run: .github/scripts/submit_freya_gpu_test.sh
