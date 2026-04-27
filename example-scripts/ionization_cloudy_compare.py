@@ -106,10 +106,11 @@ matplotlib.rcParams["axes.axisbelow"] = True
 
 if rank == 0:
     # Cloudy data
+    print(f"Loading Cloudy data from {SCRIPT_DIR / 'ion-frac-Oxygen.txt'}", flush=True)
     frac = np.loadtxt(
         SCRIPT_DIR / "ion-frac-Oxygen.txt",
         skiprows=1,
-        converters={i + 1: lambda x: -30 if x == b"--" else x for i in range(element + 1)},
+        converters={i + 1: lambda x: -30 if x == "--" else x for i in range(element + 1)},
     )
 
     ions = [r"$f_{OV}$", r"$f_{OVI}$", r"$f_{OVI}$", r"$f_{OVIII}$"]
