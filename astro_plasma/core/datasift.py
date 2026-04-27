@@ -233,7 +233,7 @@ class DataSift(ABC):
         # contains CuPy arrays; indexing them element-by-element would cause one
         # device→host sync per cell.  A single _numpy.asarray bulk-copies each
         # vector to the host so the per-element loop below stays on CPU.
-        argument_collection_cpu = [a.get() if hasattr(a, 'get') else _numpy.asarray(a) for a in argument_collection]
+        argument_collection_cpu = [a.get() if hasattr(a, "get") else _numpy.asarray(a) for a in argument_collection]
 
         if sum(_dummy_array) == 4 or sum(_array_argument) == 0:
             _argument = [argument[0] for argument in argument_collection_cpu]
