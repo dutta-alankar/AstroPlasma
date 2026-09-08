@@ -27,11 +27,30 @@ def test_import():
         raise AssertionError
 
 
+def _filename_for_id(filename_list, file_id):
+    """Pick the remote file whose batch number is ``file_id``.
+
+    hashlist.txt is indexed by batch number -- check_hashes_and_trim reads it as
+    hash_list[id] where id is parsed out of the file name -- whereas the WebDAV
+    listing returned by fetch_filelist_from_url comes back in server order.
+    Indexing the listing positionally therefore pairs a hash with an unrelated
+    file except when the two orders happen to coincide.
+    """
+    import os
+    import re
+
+    for name in filename_list:
+        base = os.path.basename(name)
+        match = re.search(r"_(\d+)\.", base)
+        if match is not None and int(match.group(1)) == file_id:
+            return base
+    raise AssertionError(f"No remote data file with batch number {file_id}.")
+
+
 def test_hash():
     import astro_plasma
     from pathlib import Path
     import numpy as np
-    import os
 
     LOCAL_DATA_PATH = astro_plasma.core.utils.LOCAL_DATA_PATH
     IONIZATION_LINK_TOKEN = astro_plasma.core.utils.IONIZATION_LINK_TOKEN
@@ -46,7 +65,7 @@ def test_hash():
     file_id = int(np.random.randint(0, len(hash_list), 1)[0])
     hash_ionization_expect = hash_list[file_id]
     ionization_filename_list = astro_plasma.core.download_database.fetch_filelist_from_url(ionization_token)
-    ionization_filename = os.path.basename(ionization_filename_list[file_id])
+    ionization_filename = _filename_for_id(ionization_filename_list, file_id)
     if not (Path(directory / ionization_filename).is_file()):
         astro_plasma.core.download_database.download_ionization_data(
             specific_file_ids=[
@@ -66,7 +85,7 @@ def test_hash():
     file_id = int(np.random.randint(0, len(hash_list) - 1, 1)[0])
     hash_emission_expect = hash_list[file_id]
     emission_filename_list = astro_plasma.core.download_database.fetch_filelist_from_url(emission_token)
-    emission_filename = os.path.basename(emission_filename_list[file_id])
+    emission_filename = _filename_for_id(emission_filename_list, file_id)
     if not (Path(directory / emission_filename).is_file()):
         astro_plasma.core.download_database.download_emission_data(
             specific_file_ids=[

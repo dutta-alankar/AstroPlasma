@@ -228,30 +228,86 @@ class DataSift(ABC):
         """
 
         _array_argument, _dummy_array = self._array_argument, self._dummy_array
-        _input_shape, argument_collection = self._input_shape, self.argument_collection
+        argument_collection = self.argument_collection
         # Convert to plain NumPy once.  When RUN_ON_CUDA=1, argument_collection
         # contains CuPy arrays; indexing them element-by-element would cause one
         # device→host sync per cell.  A single _numpy.asarray bulk-copies each
-        # vector to the host so the per-element loop below stays on CPU.
+        # vector to the host so the index search below stays on CPU.
         argument_collection_cpu = [a.get() if hasattr(a, "get") else _numpy.asarray(a) for a in argument_collection]
 
         if sum(_dummy_array) == 4 or sum(_array_argument) == 0:
             _argument = [argument[0] for argument in argument_collection_cpu]
             return self._find_all_batches_single(*_argument)
 
-        _all_batches_all_data: Set[int] = set()
-        for indx in range(math.prod(_input_shape)):
-            _argument = []
-            for arg_pos, _dummy in enumerate(_dummy_array):
-                if _dummy or not (_array_argument[arg_pos]):
-                    _argument.append(argument_collection_cpu[arg_pos][0])
-                else:
-                    _argument.append(argument_collection_cpu[arg_pos][indx])
-            nH_val, temp_val, met_val, red_val = _argument
-            _all_batches_all_data = _all_batches_all_data.union(self._find_all_batches_single(nH_val, temp_val, met_val, red_val))
+        # Vectorised replacement for the former per-cell Python loop.  That loop
+        # ran _find_all_batches_single once per cell (~12 NumPy reductions each)
+        # and dominated the wall-time on grids of 10^7+ cells.  Here the
+        # candidate grid indices are collected per dimension over all cells at
+        # once, and the batch ids are those covering the Cartesian product of
+        # the per-dimension candidate sets.  That product is a superset of the
+        # union of the per-cell products the old loop accumulated, so no needed
+        # batch is ever missed.
+        candidate_indices = []
+        for arg_pos, grid in enumerate((self.nH_data, self.T_data, self.Z_data, self.red_data)):
+            vals = _numpy.asarray(argument_collection_cpu[arg_pos], dtype=float).ravel()
+            if _dummy_array[arg_pos] or not _array_argument[arg_pos]:
+                vals = vals[:1]
+            candidate_indices.append(self._candidate_indices(vals, _numpy.asarray(grid, dtype=float)))
+
+        i_cand, j_cand, k_cand, m_cand = candidate_indices
+        n_nH, n_T, n_Z = self.nH_data.shape[0], self.T_data.shape[0], self.Z_data.shape[0]
+        counters = (
+            m_cand[:, None, None, None] * n_Z * n_T * n_nH
+            + k_cand[None, :, None, None] * n_T * n_nH
+            + j_cand[None, None, :, None] * n_nH
+            + i_cand[None, None, None, :]
+        )
+        _all_batches_all_data: Set[int] = {int(b) for b in _numpy.unique(counters // self.batch_size)}
         if _all_batches_all_data == set():
             raise ValueError("Problem identifying batches! Code Aborted!")
         return _all_batches_all_data
+
+    @staticmethod
+    def _candidate_indices(vals: "_numpy.ndarray", grid: "_numpy.ndarray") -> "_numpy.ndarray":
+        """
+        Grid indices along one dimension that any of ``vals`` can reference.
+
+        Mirrors _identify_pos_in_each_dim followed by _transform_edges (which
+        picks [s-1, s], or [eq-1, eq, eq+1] on an exact grid hit, then folds the
+        -1 and N overflows back in) and additionally includes the floor/ceil
+        pair that _interpolate's own searchsorted corner arithmetic gathers, so
+        the batch set always covers every table row the interpolation reads.
+
+        Parameters
+        ----------
+        vals : np.ndarray
+            Query values along this dimension (plain NumPy, any length).
+        grid : np.ndarray
+            Ascending table grid for this dimension.
+
+        Returns
+        -------
+        np.ndarray
+            Sorted unique int64 indices into ``grid``.
+
+        """
+        n = grid.shape[0]
+        lo = _numpy.searchsorted(grid, vals, side="left")  # == count(grid < v)
+        hi = _numpy.searchsorted(grid, vals, side="right")  # == count(grid <= v)
+        exact = hi > lo
+
+        # Corners picked by _interpolate: clip(searchsorted(right) - 1, 0, n - 2), and +1
+        floor = _numpy.clip(hi - 1, 0, max(n - 2, 0))
+        candidates = _numpy.concatenate(
+            (
+                lo - 1,
+                lo,
+                _numpy.where(exact, lo + 1, lo),
+                floor,
+                floor + 1,
+            )
+        )
+        return _numpy.unique(_numpy.clip(candidates, 0, n - 1)).astype(_numpy.int64)
 
     def _transform_edges(self: "DataSift", i: int, j: int, k: int, m: int) -> Tuple[int, int, int, int]:
         # Detect the edge cases
@@ -407,6 +463,7 @@ class DataSift(ABC):
             None,
             None,
         ),
+        columns: Optional[Union[slice, List[int], np.ndarray]] = None,
     ) -> Tuple[np.ndarray, bool]:
         """
         Interpolate from pre-computed Cloudy table.
@@ -438,11 +495,18 @@ class DataSift(ABC):
             The default is linear. log10 is another popular choice.
         cut : upper and lower bound on  data
             The default is (None, None)
+        columns : slice, list, np.ndarray, optional
+            Subset of the table's value columns (e.g. the ions of a single
+            element) to interpolate.  ``None`` (the default) interpolates every
+            column.  Restricting the columns cuts both the peak memory and the
+            gather cost of the 16-corner interpolation proportionally, which
+            matters a great deal for the ionization table's 495 species.
 
         Returns
         -------
         (interp_value, if_multiple_output) : (np.ndarray, bool)
-            The interpolated result.
+            The interpolated result.  Its trailing axis spans the selected
+            columns only when ``columns`` is given.
         """
 
         self._array_argument, self._dummy_array = self._process_arguments_flags(nH, temperature, metallicity, redshift)
@@ -470,7 +534,18 @@ class DataSift(ABC):
         # ── Determine N_ions from a sample batch file ─────────────────────────
         _sample_id = next(iter(sorted(batch_ids)))
         with h5py.File(self._get_file_path(_sample_id), "r") as _h:
-            N_ions = _h[interp_data].shape[1]
+            N_ions_all = _h[interp_data].shape[1]
+
+        if columns is None:
+            col_index = None
+            N_ions = N_ions_all
+        else:
+            col_index = _numpy.arange(N_ions_all)[columns] if isinstance(columns, slice) else _numpy.asarray(columns, dtype=_numpy.int64).ravel()
+            if col_index.size == 0:
+                raise ValueError("Problem! Empty column selection requested.")
+            if col_index.min() < 0 or col_index.max() >= N_ions_all:
+                raise ValueError(f"Problem! Column selection out of range for a table with {N_ions_all} columns.")
+            N_ions = int(col_index.size)
 
         # ── Load only the needed HDF5 batches into a compact CPU array ────────
         #
@@ -490,36 +565,60 @@ class DataSift(ABC):
         # Equivalently: compact_row = roll(raw, +1) so compact[k] = raw[(k-1)%bs]
         #
         total_grid = N_nH * N_T * N_Z * N_red  # == self.total_size
-        remap_cpu = _numpy.full(total_grid, -1, dtype=_numpy.int64)
-        compact_rows = 0
-        for batch_id in sorted(batch_ids):
-            start = batch_id * self.batch_size
-            bs = min(self.batch_size, total_grid - start)
-            if bs <= 0:
-                continue
-            remap_cpu[start : start + bs] = _numpy.arange(compact_rows, compact_rows + bs, dtype=_numpy.int64)
-            compact_rows += bs
 
-        table_cpu = _numpy.zeros((compact_rows, N_ions), dtype=_numpy.float64)
-        for batch_id in sorted(batch_ids):
-            start = batch_id * self.batch_size
-            bs = min(self.batch_size, total_grid - start)
-            if bs <= 0:
-                continue
-            compact_start = int(remap_cpu[start])
-            with h5py.File(self._get_file_path(batch_id), "r") as hdf:
-                raw = _numpy.asarray(hdf[interp_data][:bs], dtype=_numpy.float64)
-            table_cpu[compact_start : compact_start + bs] = _numpy.roll(raw, shift=1, axis=0)
+        # The batch set is fixed by the *table grid* the query lands in, not by
+        # the individual cells, so a domain swept in chunks (or several ions of
+        # the same snapshot) asks for exactly the same compact table over and
+        # over.  Rebuilding it meant re-reading the HDF5 batches and re-staging
+        # them onto the GPU on every call; cache the most recent build instead.
+        cache_key = (
+            interp_data,
+            tuple(sorted(batch_ids)),
+            cut,
+            None if col_index is None else col_index.tobytes(),
+        )
+        cached = getattr(self, "_interp_table_cache", None)
+        if cached is not None and cached[0] == cache_key:
+            remap, table = cached[1], cached[2]
+        else:
+            # Drop the previous table before building the next one so the two
+            # never occupy GPU memory simultaneously.
+            self._interp_table_cache = None
 
-        # Apply value bounds on CPU before GPU transfer
-        if cut[0] is not None:
-            _numpy.clip(table_cpu, a_min=cut[0], a_max=None, out=table_cpu)
-        if cut[1] is not None:
-            _numpy.clip(table_cpu, a_min=None, a_max=cut[1], out=table_cpu)
+            remap_cpu = _numpy.full(total_grid, -1, dtype=_numpy.int64)
+            compact_rows = 0
+            for batch_id in sorted(batch_ids):
+                start = batch_id * self.batch_size
+                bs = min(self.batch_size, total_grid - start)
+                if bs <= 0:
+                    continue
+                remap_cpu[start : start + bs] = _numpy.arange(compact_rows, compact_rows + bs, dtype=_numpy.int64)
+                compact_rows += bs
 
-        # ── Transfer compact table + remap to GPU (no-op when RUN_ON_CUDA=0) ──
-        remap = np.asarray(remap_cpu)  # (total_grid,) int64 index map
-        table = np.asarray(table_cpu)  # (compact_rows, N_ions)
+            table_cpu = _numpy.zeros((compact_rows, N_ions), dtype=_numpy.float64)
+            for batch_id in sorted(batch_ids):
+                start = batch_id * self.batch_size
+                bs = min(self.batch_size, total_grid - start)
+                if bs <= 0:
+                    continue
+                compact_start = int(remap_cpu[start])
+                with h5py.File(self._get_file_path(batch_id), "r") as hdf:
+                    raw = _numpy.asarray(hdf[interp_data][:bs], dtype=_numpy.float64)
+                if col_index is not None:
+                    raw = raw[:, col_index]
+                table_cpu[compact_start : compact_start + bs] = _numpy.roll(raw, shift=1, axis=0)
+
+            # Apply value bounds on CPU before GPU transfer
+            if cut[0] is not None:
+                _numpy.clip(table_cpu, a_min=cut[0], a_max=None, out=table_cpu)
+            if cut[1] is not None:
+                _numpy.clip(table_cpu, a_min=None, a_max=cut[1], out=table_cpu)
+
+            # ── Transfer compact table + remap to GPU (no-op when RUN_ON_CUDA=0) ──
+            remap = np.asarray(remap_cpu)  # (total_grid,) int64 index map
+            table = np.asarray(table_cpu)  # (compact_rows, N_ions)
+            self._interp_table_cache = (cache_key, remap, table)
+
         nH_grid = np.asarray(self.nH_data)  # (N_nH,)
         T_grid = np.asarray(self.T_data)  # (N_T,)
         Z_grid = np.asarray(self.Z_data)  # (N_Z,)
@@ -569,10 +668,15 @@ class DataSift(ABC):
         stride_red = N_nH * N_T * N_Z
         epsilon = 1e-15
 
-        corner_vals_list = []  # each: (N_cells, N_ions)
-        corner_weights_list = []  # each: (N_cells,)
+        corners = list(product(range(2), range(2), range(2), range(2)))
 
-        for di, dj, dk, dm in product(range(2), range(2), range(2), range(2)):
+        # Fill a pre-allocated (16, N_cells, N_ions) buffer rather than building
+        # a list and then np.stack-ing it: the stack would briefly hold a second
+        # full copy, and on a 10^7-cell chunk that alone exhausted the GPU.
+        all_values = np.empty((len(corners), N_cells, N_ions), dtype=table.dtype)
+        all_weights = np.empty((len(corners), N_cells), dtype=np.float64)
+
+        for c, (di, dj, dk, dm) in enumerate(corners):
             ic = np.clip(i_f + di, 0, N_nH - 1)  # (N_cells,)
             jc = np.clip(j_f + dj, 0, N_T - 1)
             kc = np.clip(k_f + dk, 0, N_Z - 1)
@@ -580,7 +684,7 @@ class DataSift(ABC):
 
             # Flat table index for each cell's corner → remap to compact table
             flat_idx = mc * stride_red + kc * stride_Z + jc * stride_T + ic  # (N_cells,)
-            corner_vals_list.append(table[remap[flat_idx]])  # GPU gather → (N_cells, N_ions)
+            all_values[c] = table[remap[flat_idx]]  # GPU gather → (N_cells, N_ions)
 
             # L2 distance in scaled parameter space
             d_i = np.abs(sc_nH_g[ic] - sc_nH_v)  # (N_cells,)
@@ -589,21 +693,23 @@ class DataSift(ABC):
             d_m = np.abs(sc_red_g[mc] - sc_red_v)
 
             dist = np.sqrt(d_i**2 + d_j**2 + d_k**2 + d_m**2)
-            dist = np.where(dist == 0.0, epsilon, dist)
-            corner_weights_list.append(1.0 / dist)  # (N_cells,)
-
-        all_values = np.stack(corner_vals_list, axis=0)  # (16, N_cells, N_ions)
-        all_weights = np.stack(corner_weights_list, axis=0)  # (16, N_cells)
+            all_weights[c] = 1.0 / np.where(dist == 0.0, epsilon, dist)
 
         # Outlier filter: zero out corners whose value deviates > 2σ from mean
         mean_v = np.mean(all_values, axis=0)  # (N_cells, N_ions)
         std_v = np.std(all_values, axis=0)
-        outlier = np.abs(all_values - mean_v[None]) > 2.0 * std_v[None]  # (16, N_cells, N_ions)
-        all_values = np.where(outlier, 0.0, all_values)
-
-        # Weighted sum over the 16 corners
-        numer = np.sum(all_weights[:, :, None] * all_values, axis=0)  # (N_cells, N_ions)
+        std_v *= 2.0  # fold the 2σ factor in, so the test below needs no temporary
         denom = np.sum(all_weights, axis=0)  # (N_cells,)
+        numer = np.zeros((N_cells, N_ions), dtype=all_values.dtype)
+
+        # Mask and accumulate one corner at a time.  The vectorised form built
+        # three more (16, N_cells, N_ions) temporaries — the deviation, the
+        # boolean mask and the np.where copy — which dominated peak memory.
+        for c in range(len(corners)):
+            corner = all_values[c]
+            outlier = np.abs(corner - mean_v) > std_v  # (N_cells, N_ions)
+            numer += all_weights[c][:, None] * np.where(outlier, 0.0, corner)
+
         result = numer / denom[:, None]  # (N_cells, N_ions)
 
         # ── Return ────────────────────────────────────────────────────────────

@@ -2,6 +2,7 @@ name: Freya Slurm GPU Test
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  PYTHON_VERSION: '3.14'
 
 on:
   workflow_dispatch:
@@ -51,8 +52,11 @@ jobs:
           exit 1
         fi
 
-        PYTHON_BIN="$(command -v python3 || command -v python)"
-        "${PYTHON_BIN}" -m venv .venv
+        # 'module purge' drops conda from PATH, leaving the system python3 (3.6),
+        # which uv refuses to use. Let uv provide the interpreter instead.
+        uv python install "${PYTHON_VERSION}"
+        uv venv --python "${PYTHON_VERSION}" .venv
+        .venv/bin/python --version
 
         uv pip install --python .venv/bin/python -r requirements/requirements-dev.txt
         uv pip install --python .venv/bin/python cupy-cuda12x
