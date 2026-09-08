@@ -37,6 +37,23 @@ Running Cloudy models on the fly, especially when there are a lot of models to r
 ## Install
 This is just a one-time process. `AstroPlasma` has been tested with `Python 3.11`
 
+### Install from PyPI
+For simply using `AstroPlasma`, install the published package:
+```bash
+pip install astro-plasma
+```
+Or, with `uv`:
+```bash
+uv pip install astro-plasma
+```
+To additionally pull in the optional GPU support (`CuPy`, see the `RUN_ON_CUDA` section below):
+```bash
+pip install "astro-plasma[gpu]"
+```
+> **Note**: The package ships only the code and two small lookup tables. The `Cloudy` database itself is **not** bundled — it is several GB and is downloaded on demand the first time it is needed, or up front with `download_all()` as described in [Download the database](#download-the-database).
+
+Install from source instead if you intend to modify `AstroPlasma` or run the `Cloudy` scripts.
+
 ### Get the AstroPlasma code:
 ```
 git clone https://github.com/dutta-alankar/AstroPlasma.git
@@ -437,6 +454,35 @@ If you wish to contribute, fork this repo and open pull requests to the `dev` br
 For a successful merge, the code must at least pass all the pre-existing tests. It is recommended to run `pre-commit` locally before pushing your changes to the repo for a proposed PR. To do so just run `pre-commit run --all-files`.
 
 > **Note** It is recommended that the git pre-commit hook be installed using `pre-commit install` to check all the staged files.
+
+### Instructions on generating a release
+
+Releases are cut by pushing a tag. The `Release` workflow (`.github/workflows/release.yml`) then builds the distributions, rehearses the upload on TestPyPI, publishes to PyPI and finally creates the GitHub release with the `.tar.gz` and `.whl` attached.
+
+**One-time setup.** Publishing uses [trusted publishing](https://docs.pypi.org/trusted-publishers/), so no API token is stored anywhere. On both [PyPI](https://pypi.org/manage/account/publishing/) and [TestPyPI](https://test.pypi.org/manage/account/publishing/), add a pending publisher with:
+
+| Field | Value |
+| --- | --- |
+| PyPI project name | `astro-plasma` |
+| Owner | `dutta-alankar` |
+| Repository name | `AstroPlasma` |
+| Workflow name | `release.yml` |
+| Environment name | `pypi` (on PyPI) / `testpypi` (on TestPyPI) |
+
+Then create the matching `pypi` and `testpypi` environments under *Settings → Environments*. Add required reviewers there if you want a manual gate before either upload.
+
+**Cutting a release.**
+
+1. Bump `version` in `pyproject.toml` and merge that to `main`. The workflow refuses to publish if the tag and this version disagree.
+2. Tag the merge commit and push the tag:
+   ```bash
+   git checkout main && git pull
+   git tag release_v1.0.1
+   git push origin release_v1.0.1
+   ```
+3. Watch the run under *Actions*. It stops before PyPI if the version guard fails, if `twine check` fails, or if the wheel contents are wrong — the `Cloudy` `.h5` tables must never be packaged, and `solar_GASS10.abn` and `cooltable.dat` must always be.
+
+> **Note**: A version number on PyPI is permanent and cannot be reused, even after deleting the file. If a release is broken, bump to the next patch version rather than retrying the same one. The TestPyPI step exists so mistakes surface before that point.
 
 ### Instructions on generating `Cloudy` database
 All the codes required to generate the `Cloudy` database are in the `cloudy-codes` directory. This part of the code is not as clean and user-friendly as the rest of `AstroPlasma` because it is unnecessary for an average user. Although I plan to improve this as well in the near future. I have tested this using `Cloudy 17` ([link here to know more on `Cloudy`](https://pa.as.uky.edu/gary/cloudy-project))

@@ -1,6 +1,6 @@
 [project]
 name = "astro-plasma"
-version = "1.0.0"
+version = "1.0.1"
 description = "A Cloudy database with functions to quickly interpolate physical state of astrophysical plasma without detailed Plasma modelling."
 authors = [
     {name = "Alankar Dutta", email = "dutta.alankar@gmail.com"},
@@ -46,6 +46,23 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
 packages = ["astro_plasma"]
+# .gitignore carries a bare `data/` rule, which hatchling honours, and which
+# silently dropped these two tracked tables from the distributions.  They are
+# read at runtime -- solar_GASS10.abn by Ionization.interpolate_num_dens and
+# cooltable.dat by core.functions -- and the downloader never fetches them, so
+# an installed wheel without them raises FileNotFoundError on first use.
+# The bulk HDF5 tables under data/ionization and data/emission stay excluded on
+# purpose: those are downloaded on demand.
+artifacts = [
+    "astro_plasma/data/solar_GASS10.abn",
+    "astro_plasma/data/cooltable.dat",
+]
+
+[tool.hatch.build.targets.sdist]
+artifacts = [
+    "astro_plasma/data/solar_GASS10.abn",
+    "astro_plasma/data/cooltable.dat",
+]
 
 # Ruff configurations
 [tool.ruff]
