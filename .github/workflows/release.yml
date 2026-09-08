@@ -1,0 +1,134 @@
+name: Release
+
+# Pushing a release_v* tag is the whole trigger: the tag is the source of truth
+# for the version, and the job refuses to go further if it disagrees with
+# pyproject.toml.  Order is deliberate -- build once, rehearse on TestPyPI, then
+# the irreversible upload to PyPI, and only then the GitHub release.
+on:
+  push:
+    tags: [release_v*]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build distributions
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v5
+
+    - uses: actions/setup-python@v6
+      with:
+        python-version: '3.11'
+
+    - name: Check the tag matches the packaged version
+      run: |
+        tag_version="${GITHUB_REF_NAME#release_v}"
+        pkg_version="$(python -c 'import tomllib; print(tomllib.load(open("pyproject.toml","rb"))["project"]["version"])')"
+        echo "tag: $GITHUB_REF_NAME -> $tag_version, pyproject.toml: $pkg_version"
+        if [ "$tag_version" != "$pkg_version" ]; then
+          echo "::error::Tag $GITHUB_REF_NAME implies version $tag_version but pyproject.toml declares $pkg_version"
+          exit 1
+        fi
+
+    - name: Build the sdist and the wheel
+      run: |
+        python -m pip install --upgrade pip build twine
+        python -m build
+
+    - name: Check the metadata
+      run: twine check dist/*
+
+    # PyPI versions are permanent, so verify the payload before it is uploaded
+    # rather than after.  The bulk Cloudy tables are downloaded on demand and
+    # must never be packaged; the two small tables the code reads at runtime
+    # must always be.
+    - name: Check the wheel contents
+      run: |
+        python - <<'PY'
+        import glob
+        import sys
+        import zipfile
+
+        wheel = glob.glob("dist/*.whl")[0]
+        names = zipfile.ZipFile(wheel).namelist()
+
+        leaked = [n for n in names if n.endswith((".h5", ".h5data"))]
+        required = ["astro_plasma/data/solar_GASS10.abn", "astro_plasma/data/cooltable.dat"]
+        missing = [n for n in required if n not in names]
+
+        if leaked:
+            print(f"::error::Cloudy data files must not be packaged, found: {leaked[:5]}")
+        for name in missing:
+            print(f"::error::{name} is read at runtime and is missing from the wheel")
+        if leaked or missing:
+            sys.exit(1)
+        print(f"{wheel}: {len(names)} entries, runtime tables present, no Cloudy data")
+        PY
+
+    - uses: actions/upload-artifact@v7
+      with:
+        name: distributions
+        path: dist/
+        if-no-files-found: error
+
+  testpypi:
+    name: Publish to TestPyPI
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/p/astro-plasma
+    permissions:
+      id-token: write  # mints the OIDC token for trusted publishing
+    steps:
+    - uses: actions/download-artifact@v8
+      with:
+        name: distributions
+        path: dist/
+
+    - uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        repository-url: https://test.pypi.org/legacy/
+        # A re-run of a tag that already reached TestPyPI should not fail here;
+        # the real PyPI step below is deliberately left strict.
+        skip-existing: true
+
+  pypi:
+    name: Publish to PyPI
+    needs: testpypi
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/astro-plasma
+    permissions:
+      id-token: write
+    steps:
+    - uses: actions/download-artifact@v8
+      with:
+        name: distributions
+        path: dist/
+
+    - uses: pypa/gh-action-pypi-publish@release/v1
+
+  github-release:
+    name: Create the GitHub release
+    needs: pypi
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # gh release create writes a tag-backed release
+    steps:
+    - uses: actions/download-artifact@v8
+      with:
+        name: distributions
+        path: dist/
+
+    - name: Create the release and attach the distributions
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        gh release create "$GITHUB_REF_NAME" dist/* \
+          --repo "$GITHUB_REPOSITORY" \
+          --title "AstroPlasma ${GITHUB_REF_NAME#release_}" \
+          --generate-notes

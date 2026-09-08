@@ -32,12 +32,14 @@
             "@id": "http://orcid.org/0000-0002-9287-4033",
             "givenName": "Alankar",
             "familyName": "Dutta",
-            "email": "alankardutta@iisc.ac.in",
+            "email": "dutta.alankar@gmail.com",
             "affiliation": {
                 "@type": "Organization",
-                "name": "Department of Physics, Indian Institute of Science, Bangalore, India"
+                "name": "Max Planck Institute for Astrophysics, Garching b. Muenchen, Germany"
             }
-        },
+        }
+    ],
+    "contributor": [
         {
             "@type": "Person",
             "givenName": "Gurkirat",
@@ -47,17 +49,15 @@
                 "@type": "Organization",
                 "name": "Department of Physics, Indian Institute of Science, Bangalore, India"
             }
-        }
-    ],
-    "contributor": [
+        },
         {
             "@type": "Person",
             "givenName": "Ritali",
             "familyName": "Ghosh",
-            "email": "ritalighosh@iisc.ac.in",
+            "email": "ritsg11@gmail.com",
             "affiliation": {
                 "@type": "Organization",
-                "name": "Department of Physics, Indian Institute of Science, Bangalore, India"
+                "name": "ARI/ZAH, University of Heidelberg, Germany"
             }
         }
     ]

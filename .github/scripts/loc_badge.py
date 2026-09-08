@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-"""Count the lines of code in the repository and render the badge SVG.
+"""
+Count the lines of code in the repository and render the badge SVG.
 
 Replaces shadowmoose/GHA-LoC-Badge, which is pinned at its only release (1.0.0,
 2020), still declares ``using: node12`` and reports its results with the retired
@@ -64,7 +65,8 @@ def tracked_files(root: Path) -> list[str]:
 
 
 def is_hidden(name: str) -> bool:
-    """True when any component of the path starts with a dot.
+    """
+    True when any component of the path starts with a dot.
 
     The action being replaced walked the working tree and skipped dot-prefixed
     entries, so .github, .gitignore and friends never reached the total.
@@ -73,7 +75,9 @@ def is_hidden(name: str) -> bool:
 
 
 def count_lines(path: Path) -> int | None:
-    """Line count for a text file, or None when the file looks binary."""
+    """
+    Line count for a text file, or None when the file looks binary.
+    """
     try:
         data = path.read_bytes()
     except OSError:
