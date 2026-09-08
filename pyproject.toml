@@ -4,6 +4,11 @@ version = "1.0.1"
 description = "A Cloudy database with functions to quickly interpolate physical state of astrophysical plasma without detailed Plasma modelling."
 authors = [
     {name = "Alankar Dutta", email = "dutta.alankar@gmail.com"},
+]
+# PEP 621 defines no `contributors` key, and `maintainers` is its nearest
+# standard equivalent, so the two people codemeta.json lists as contributors go
+# here.  PyPI renders this as Maintainer-email, separately from Author-email.
+maintainers = [
     {name = "Gurkirat Singh", email = "tbhaxor@gmail.com"},
     {name = "Ritali Ghosh", email = "ritsg11@gmail.com"},
 ]

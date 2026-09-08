@@ -449,7 +449,7 @@ RuntimeWarning: RUN_ON_CUDA=1 but CuPy is unavailable or no CUDA device detected
 
 ## Note to contributors
 
-If you wish to contribute, fork this repo and open pull requests to the `dev` branch of this repo. Once everything gets tested and is found working, the new code will be merged with the `master` branch.
+If you wish to contribute, fork this repo and open pull requests to the `dev` branch of this repo. Once everything gets tested and is found working, the new code will be merged with the `main` branch.
 
 For a successful merge, the code must at least pass all the pre-existing tests. It is recommended to run `pre-commit` locally before pushing your changes to the repo for a proposed PR. To do so just run `pre-commit run --all-files`.
 
