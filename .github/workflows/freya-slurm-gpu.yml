@@ -2,7 +2,7 @@ name: Freya Slurm GPU Test
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-  PYTHON_VERSION: "3.14"
+  PYTHON_VERSION: '3.14'
 
 on:
   workflow_dispatch:
