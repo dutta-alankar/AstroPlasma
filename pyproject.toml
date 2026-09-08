@@ -1,6 +1,6 @@
 [project]
 name = "astro-plasma"
-version = "0.1.0"
+version = "1.0.0"
 description = "A Cloudy database with functions to quickly interpolate physical state of astrophysical plasma without detailed Plasma modelling."
 authors = [
     {name = "Gurkirat Singh", email = "tbhaxor@gmail.com"},
