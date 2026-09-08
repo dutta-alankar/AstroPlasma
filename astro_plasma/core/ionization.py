@@ -67,6 +67,7 @@ class Ionization(DataSift):
         metallicity: Union[int, float] = 0.5,
         redshift: Union[int, float] = 0.2,
         mode: str = "PIE",
+        columns: Optional[Union[slice, list, np.ndarray]] = None,
     ) -> np.ndarray:
         """
         Interpolates the ionization fraction of the plasma
@@ -98,6 +99,12 @@ class Ionization(DataSift):
             ionization condition
             either CIE (collisional) or PIE (photo).
             The default is 'PIE'.
+        columns : slice, list, np.ndarray, optional
+            Subset of the 495 species columns to interpolate, in table order.
+            ``None`` (the default) interpolates them all.  Callers that only
+            need one element's ions should pass its column range: the
+            interpolation cost and its peak memory both scale with the number
+            of columns.
 
         Returns
         -------
@@ -126,6 +133,7 @@ class Ionization(DataSift):
             (ion_count,),
             lambda x: x,
             (None, None),
+            columns,
         )
         return fracIon
 
@@ -213,20 +221,24 @@ class Ionization(DataSift):
         slice_start = int((_element - 1) * (_element + 2) / 2)
         slice_stop = int(_element * (_element + 3) / 2)
 
+        # Interpolate only this element's columns instead of all 495 species and
+        # discarding the rest afterwards.  For a single element that is a 16x to
+        # 250x reduction in both the interpolation work and the peak (GPU)
+        # memory of the 16-corner gather, which is what made whole-box ion maps
+        # run out of memory.
+        element_columns = slice(slice_start, slice_stop)
+
         if _is_multiple:
-            fracIon = self._interpolate_ion_frac_all(nH, temperature, metallicity, redshift, mode)
-            slices = [slice(None)] * (fracIon.ndim - 1)
-            slices.append(slice(slice_start, slice_stop))  # slice to select only ions of one element
-            fracIon = fracIon[tuple(slices)]
+            fracIon = self._interpolate_ion_frac_all(nH, temperature, metallicity, redshift, mode, columns=element_columns)
             if _ion is not None:
+                slices = [slice(None)] * (fracIon.ndim - 1)
                 # Array starts from 0 but ion from 1
-                slices = slices[:-1]
                 slices.append(slice(_ion - 1, _ion))  # slice to select a particular ion
                 return fracIon[tuple(slices)].flatten().reshape(self._input_shape)  # This is in log10
             else:
                 return fracIon.flatten().reshape((*self._input_shape, _element + 1))
         else:
-            fracIon = self._interpolate_ion_frac_all(nH, temperature, metallicity, redshift, mode).flatten()[slice_start:slice_stop]
+            fracIon = self._interpolate_ion_frac_all(nH, temperature, metallicity, redshift, mode, columns=element_columns).flatten()
             # Array starts from 0 but _ion from 1
             return fracIon[_ion - 1] if _ion is not None else fracIon  # This is in log10
 
@@ -304,9 +316,17 @@ class Ionization(DataSift):
             redshift = np.asarray(redshift)
 
         _is_multiple = self._determine_multiple(nH, temperature, metallicity, redshift, mode)
-        fracIon = np.power(10.0, self._interpolate_ion_frac_all(nH, temperature, metallicity, redshift, mode))
 
-        slices = [slice(None)] * (fracIon.ndim - 1)
+        # Only the aggregate part_type queries below sum over every species, so
+        # only they need the full 495-column table.  A request for a specific
+        # element/ion is served by interpolate_ion_frac at the bottom of this
+        # method, which now interpolates just that element's columns.  Building
+        # the full table here as well doubled the runtime of every single-ion
+        # call and was the allocation that ran the GPU out of memory.
+        if element is None and part_type in ("all", "electron", "neutral", "ion"):
+            fracIon = np.power(10.0, self._interpolate_ion_frac_all(nH, temperature, metallicity, redshift, mode))
+            slices = [slice(None)] * (fracIon.ndim - 1)
+
         if part_type == "all" and element is None:
             ndens = 0
             ion_count = 0
