@@ -7,6 +7,11 @@ jobs:
   lines_of_code_job:
     runs-on: ubuntu-latest
     name: Count lines of code
+    # Needed so the built-in GITHUB_TOKEN may push the badge to the badges
+    # branch; the default token is read-only when the repository opts into
+    # restricted workflow permissions.
+    permissions:
+      contents: write
     steps:
     - name: Checkout
       uses: actions/checkout@v4
@@ -30,6 +35,8 @@ jobs:
       with:
         publish_dir: ./misc
         publish_branch: badges
-        github_token: ${{ secrets.TOKEN_GITHUB }}
+        # The built-in token, rather than a personal access token that has to be
+        # rotated by hand and silently breaks this job when it lapses.
+        github_token: ${{ secrets.GITHUB_TOKEN }}
         user_name: github-actions[bot]
         user_email: github-actions[bot]@users.noreply.github.com
