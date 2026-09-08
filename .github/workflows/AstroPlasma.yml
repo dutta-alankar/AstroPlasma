@@ -10,15 +10,14 @@ jobs:
   python-env:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
-    - uses: actions/setup-python@v4
+    - uses: actions/checkout@v5
+    - uses: actions/setup-python@v6
       with:
         python-version: '3.11'
-    - name: Get present working directory
-      uses: mathiasvr/command-output@v2.0.0
-      id: current_directory
-      with:
-        run: pwd
+    # The working directory used to be captured with mathiasvr/command-output,
+    # which is Node 16 and has had no release since 2023.  It only ever ran
+    # `pwd`, which after checkout is exactly github.workspace, so the step goes
+    # rather than being replaced.
     - name: Install AstroPlasma dependencies
       run: |
         python -m pip install --upgrade pip
@@ -26,5 +25,5 @@ jobs:
         uv pip install --system -r requirements/requirements-dev.txt
     - name: Test AstroPlasma
       run: |
-        export PYTHONPATH=${{ steps.current_directory.outputs.stdout }}
+        export PYTHONPATH=${{ github.workspace }}
         pytest
