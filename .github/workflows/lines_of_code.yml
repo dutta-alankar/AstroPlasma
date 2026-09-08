@@ -14,16 +14,21 @@ jobs:
       contents: write
     steps:
     - name: Checkout
-      uses: actions/checkout@v4
+      uses: actions/checkout@v5
 
+    # Was shadowmoose/GHA-LoC-Badge@1.0.0, which is pinned at its only release
+    # (2020), still declares Node 12 and reports through the retired set-output
+    # command -- six of this job's seven deprecation warnings came from it, and
+    # there is no newer tag to move to.  The script reproduces it exactly: the
+    # same files counted, the same total, and a byte-identical SVG.
     - name: Count lines of code
-      uses: shadowmoose/GHA-LoC-Badge@1.0.0
       id: badge
-      with:
-        debug: true
-        directory: ./
-        badge: ./misc/lines_of_code.svg
-        ignore: misc|example-scripts|cloudy-codes|requirements|astro_plasma/data|README.md|codemeta.json|LICENSE|poetry.lock|poetry.toml|tests/sample_spectrum.txt|pyproject.toml
+      env:
+        LOC_IGNORE: misc|example-scripts|cloudy-codes|requirements|astro_plasma/data|README.md|codemeta.json|LICENSE|poetry.lock|poetry.toml|tests/sample_spectrum.txt|pyproject.toml
+      run: |
+        python3 .github/scripts/loc_badge.py \
+          --ignore "$LOC_IGNORE" \
+          --badge ./misc/lines_of_code.svg
 
     - name: Print the output
       run: |
@@ -31,7 +36,7 @@ jobs:
         echo "Line Count: ${{ steps.badge.outputs.total_lines }}";
 
     - name: Deploy to badges branch
-      uses: peaceiris/actions-gh-pages@v3
+      uses: peaceiris/actions-gh-pages@v4
       with:
         publish_dir: ./misc
         publish_branch: badges
