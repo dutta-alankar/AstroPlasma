@@ -3,8 +3,9 @@ name = "astro-plasma"
 version = "1.0.0"
 description = "A Cloudy database with functions to quickly interpolate physical state of astrophysical plasma without detailed Plasma modelling."
 authors = [
+    {name = "Alankar Dutta", email = "dutta.alankar@gmail.com"},
     {name = "Gurkirat Singh", email = "tbhaxor@gmail.com"},
-    {name = "Alankar Dutta", email = "alankardutta@iisc.ac.in"},
+    {name = "Ritali Ghosh", email = "ritsg11@gmail.com"},
 ]
 license = {text = "MIT"}
 readme = "README.md"
