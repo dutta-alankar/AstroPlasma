@@ -49,12 +49,14 @@ else
   exit 1
 fi
 
-PY311=/u/adutt/.local/share/uv/python/cpython-3.11.15-linux-x86_64-gnu
+# Derive the header location from the venv interpreter itself, so this keeps
+# working when the Python version changes.
+PY_INCLUDE="\$(python -c 'import sysconfig; print(sysconfig.get_paths()["include"])')"
 MPICC=/mpcdf/soft/SLE_15/packages/skylake/openmpi/gcc_12-12.1.0/4.1.8/bin/mpicc
 
 MPICC="\${MPICC}" \
-CPPFLAGS="-I\${PY311}/include/python3.11" \
-CFLAGS="-I\${PY311}/include/python3.11" \
+CPPFLAGS="-I\${PY_INCLUDE}" \
+CFLAGS="-I\${PY_INCLUDE}" \
 "\${UV_BIN}" pip install --python "${REPO_ROOT}/.venv/bin/python" \
   --force-reinstall --no-cache-dir --no-binary=mpi4py mpi4py
 
